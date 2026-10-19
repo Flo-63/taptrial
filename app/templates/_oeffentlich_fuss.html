@@ -1,0 +1,6 @@
+{# Release 2/3: Fußzeile der öffentlichen Seiten (nicht auf dem Zielmonitor): Version, Impressum, Datenschutz #}
+{% set rechtlich = rechtliches_links(installation(request)) %}
+<footer class="oeffentlich-fuss" id="oeffentlich-fuss">
+  <span class="app-version">{{ APP_NAME }} {{ APP_RELEASE }}</span>
+  {% for titel, url in rechtlich %}<a href="{{ url }}" class="rechtlich" data-rechtlich="{{ titel|lower }}"{% if url.startswith('https://') %} rel="noopener"{% endif %}>{{ titel }}</a>{% endfor %}
+</footer>

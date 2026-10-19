@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Gerätelinks – {{ v.name }}</title>
+  <link rel="stylesheet" href="/static/css/basis.css">
+  <link rel="stylesheet" href="/static/css/druck.css">
+  <style>
+    /* A4 hochkant, ein Blatt für die Helfer */
+    @page { size: A4 portrait; margin: 12mm; }
+    body { margin: 0; }
+    .blatt { max-width: 186mm; margin: 0 auto; padding: 6mm 0; }
+    h1 { font-size: 20pt; margin: 0 0 1mm; }
+    .unterzeile { margin: 0 0 6mm; font-size: 11pt; }
+    .raster { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+    .feld { border: 1px solid var(--druck-linie); border-radius: 3mm; padding: 4mm; break-inside: avoid; text-align: center; }
+    .feld h2 { margin: 0 0 2mm; font-size: 15pt; }
+    .feld svg { width: 58mm; height: 58mm; }
+    .feld code { display: block; word-break: break-all; font-size: 8pt; margin-top: 2mm; background: none; }
+    .hinweis { margin-top: 6mm; font-size: 10pt; color: var(--druck-grau); }
+  </style>
+</head>
+<body class="druckansicht">
+  {% set leiste_hinweis = "Enthält Zugangslinks – nicht öffentlich aushängen." %}
+  {% include "_druckleiste.html" %}
+  <div class="blatt">
+    <h1>Gerätelinks</h1>
+    <p class="unterzeile">{{ v.name }} · {{ v.datum.strftime('%d.%m.%Y') }}</p>
+    <div class="raster">
+      {% for l in links %}
+      <section class="feld" data-titel="{{ l.titel }}">
+        <h2>{{ l.titel }}</h2>
+        {{ l.qr|safe }}
+        <code>{{ l.url }}</code>
+      </section>
+      {% endfor %}
+    </div>
+    <p class="hinweis">QR-Code mit dem Handy scannen, dann „Zum Startbildschirm hinzufügen“ und die App immer über dieses Symbol öffnen. Die Links gelten nur für diese Veranstaltung. Dieses Blatt enthält Zugangslinks: nur an Helfer geben, nicht aushängen.</p>
+  </div>
+  {% include "_druckfuss.html" %}
+</body>
+</html>

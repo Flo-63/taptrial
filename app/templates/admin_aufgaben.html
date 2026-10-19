@@ -1,0 +1,119 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf %}
+{% block titel %}Aufgaben{% endblock %}
+{% block kopf %}{{ seitenkopf("Aufgaben", "Alles, was vor dem offiziellen Ergebnis geklärt sein muss. Jeder Fall wird hier direkt gelöst.") }}{% endblock %}
+{% block inhalt %}
+{% set gesperrt = not v.laufend %}
+{% set hier = "/admin/v/" ~ v.id ~ "/aufgaben" %}
+{% macro felder(aktion) %}<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="aktion" value="{{ aktion }}"><input type="hidden" name="zurueck" value="{{ hier }}">{% endmacro %}
+{% if not anzahl and not hinweise %}<p class="alert a-ok" id="keine-aufgaben">Keine offenen Aufgaben – das Ergebnis lässt sich offiziell erklären.</p>{% endif %}
+{% if gesperrt %}<p class="alert a-info">Gesperrt: Die Veranstaltung ist {{ ZUSTAND_TEXT[v.zustand] }}, Korrekturen sind nicht mehr möglich.</p>{% endif %}
+
+<section class="stapel" id="konflikte">
+  <h2 class="abschnitt">Konflikte ({{ erg.blockierende_konflikte|length }})</h2>
+  {% for o in offene %}{% set s = o.stempel %}
+  <article class="card stapel-eng fall" data-fall="offene-zeit" data-uuid="{{ s.uuid }}">
+    <div><span class="badge b-warn">Offene Zeit</span>
+      <h3 class="fall-titel">Zielzeit <span class="mono">{{ s.uhrzeit }}</span> ohne Nummer</h3>
+      <p class="sub">Gerät <span class="mono">{{ s.geraet }}</span>{% if s.korrektur_ms %} · korrigiert {{ korrektur_text(s.korrektur_ms) }}{% endif %}.
+        {% if o.vorschlaege %}Passende Fahrer nach Fahrzeit auf ihrer Strecke:{% else %}Kein Fahrer ist gerade unterwegs.{% endif %}</p></div>
+    <form method="post" action="/admin/v/{{ v.id }}/korrektur" class="stapel-eng">
+      {{ felder('umbuchen') }}<input type="hidden" name="stempel" value="{{ s.uuid }}"><input type="hidden" name="zuordnen" value="1">
+      <div class="field feld-breit"><label for="n-{{ s.uuid }}">Notiz (Pflicht)</label><input id="n-{{ s.uuid }}" name="notiz" required placeholder="z. B. Nummer nicht lesbar"></div>
+      {% if o.vorschlaege %}<div class="btn-reihe">{% for f in o.vorschlaege %}
+        <button type="submit" name="vorschlag" value="{{ f.nr }}" class="btn btn-secondary btn-sm vorschlag" {{ 'disabled' if gesperrt }}>Nr. {{ f.nr }} · {{ f.name }} · {{ f.unterwegs }} unterwegs</button>{% endfor %}</div>{% endif %}
+      <div class="filterleiste">
+        <div class="field"><label for="a-{{ s.uuid }}">Anderer Fahrer (Startnummer)</label><input id="a-{{ s.uuid }}" name="startnummer" inputmode="numeric" class="eingabe-schmal"></div>
+        <button type="submit" class="btn btn-primary" {{ 'disabled' if gesperrt }}>Zuordnen</button>
+      </div>
+    </form>
+    <details class="aktion"><summary class="btn btn-quiet btn-sm btn-danger-text">Fehlstempel stornieren</summary>
+      <form method="post" action="/admin/v/{{ v.id }}/korrektur" class="formular">
+        {{ felder('stornieren') }}<input type="hidden" name="stempel" value="{{ s.uuid }}">
+        <div class="field"><label for="sn-{{ s.uuid }}">Notiz (Pflicht)</label><input id="sn-{{ s.uuid }}" name="notiz" required></div>
+        <div><button type="submit" class="btn btn-danger" {{ 'disabled' if gesperrt }}>Stornieren</button></div>
+      </form></details>
+  </article>
+  {% endfor %}
+
+  {% for f in faelle %}{% set x = f.k %}
+  <article class="card stapel-eng fall" data-fall="{{ x.art|lower }}" data-nr="{{ x.startnummer or '' }}">
+    <div class="card-kopf"><div><span class="badge b-warn">Konflikt</span><h3 class="fall-titel">{{ x.text }}</h3></div>
+      {% if f.fahrer %}<a class="btn btn-quiet btn-sm" href="/admin/v/{{ v.id }}/teilnehmer/{{ f.fahrer }}">Fahrer öffnen</a>{% endif %}</div>
+    {% if x.art in ("MEHRERE_ZIELE", "MEHRERE_STARTS") %}
+    <form method="post" action="/admin/v/{{ v.id }}/korrektur" class="stapel-eng">
+      {{ felder('stornieren') }}
+      <p class="sub">Den falschen Stempel stornieren (z. B. Doppeltipp):</p>
+      <div class="field feld-breit"><label for="d-{{ loop.index }}">Notiz (Pflicht)</label><input id="d-{{ loop.index }}" name="notiz" required placeholder="z. B. Doppelstempel"></div>
+      <div class="btn-reihe">{% for s in f.stempel %}
+        <button type="submit" name="stempel" value="{{ s.uuid }}" class="btn btn-secondary btn-sm" {{ 'disabled' if gesperrt }}>{{ s.uhrzeit }} · {{ s.geraet }} stornieren</button>{% endfor %}</div>
+    </form>
+    {% elif x.art == "UNBEKANNTE_STARTNUMMER" %}
+    {% for s in f.stempel %}
+    <form method="post" action="/admin/v/{{ v.id }}/korrektur" class="filterleiste">
+      {{ felder('umbuchen') }}<input type="hidden" name="stempel" value="{{ s.uuid }}">
+      <span class="mono">{{ s.beschriftung }}</span>
+      <div class="field"><label for="u-{{ s.uuid }}">Richtige Startnummer</label><input id="u-{{ s.uuid }}" name="startnummer" inputmode="numeric" required class="eingabe-schmal"></div>
+      <div class="field feld-breit"><label for="un-{{ s.uuid }}">Notiz (Pflicht)</label><input id="un-{{ s.uuid }}" name="notiz" required></div>
+      <button type="submit" class="btn btn-primary" {{ 'disabled' if gesperrt }}>Umbuchen</button>
+    </form>
+    {% endfor %}
+    {% elif x.art == "ZIEL_VOR_START" %}
+    <p class="sub">Start- oder Zielzeit ist falsch: auf der Fahrer-Seite den falschen Stempel stornieren oder eine manuelle Zeit eintragen.</p>
+    {% elif x.art == "KEINE_KLASSE" %}
+    <div class="btn-reihe"><span class="sub">Geschlecht oder Jahrgang prüfen, oder den Klassensatz ergänzen.</span>
+      {% if f.fahrer %}<a class="btn btn-secondary btn-sm" href="/admin/v/{{ v.id }}/teilnehmer/{{ f.fahrer }}/bearbeiten">Daten bearbeiten</a>{% endif %}
+      <a class="btn btn-quiet btn-sm" href="/admin/v/{{ v.id }}/einstellungen">Einstellungen</a></div>
+    {% endif %}
+  </article>
+  {% endfor %}
+  {% if not erg.blockierende_konflikte %}<p class="alert a-ok">Keine Konflikte.</p>{% endif %}
+</section>
+
+{% if erg.vorlaeufige_dsq %}
+<section class="stapel" id="dsq">
+  <h2 class="abschnitt">Vorläufige DSQ ({{ erg.vorlaeufige_dsq|length }})</h2>
+  {% for z in erg.vorlaeufige_dsq %}
+  <article class="card stapel-eng fall a-warn-karte" data-fall="dsq" data-nr="{{ z.startnummer }}">
+    <div class="card-kopf"><div><span class="badge b-warn">Vorläufige DSQ</span><h3 class="fall-titel">Nr. {{ z.startnummer }} · {{ z.vorname }} {{ z.nachname }}</h3>
+      <p class="sub">Grund der Rennleitung: <span class="vorbehalt">{{ z.dsq_vorlaeufig }}</span></p></div>
+      {% if tid(z.startnummer) %}<a class="btn btn-quiet btn-sm" href="/admin/v/{{ v.id }}/teilnehmer/{{ tid(z.startnummer) }}">Fahrer öffnen</a>{% endif %}</div>
+    <form method="post" action="/admin/v/{{ v.id }}/dsq" class="filterleiste dsq-form" data-nr="{{ z.startnummer }}">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="startnummer" value="{{ z.startnummer }}">
+      <div class="field feld-breit"><label for="dsq-{{ z.startnummer }}">Notiz (Pflicht)</label><input id="dsq-{{ z.startnummer }}" name="notiz" required></div>
+      <div class="btn-reihe"><button type="submit" name="entscheidung" value="verwerfen" class="btn btn-secondary" {{ 'disabled' if gesperrt }}>Verwerfen</button>
+        <button type="submit" name="entscheidung" value="bestaetigen" class="btn btn-danger" {{ 'disabled' if gesperrt }}>DSQ bestätigen</button></div>
+    </form>
+  </article>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if hinweise %}
+<section class="stapel" id="hinweise">
+  <h2 class="abschnitt">Hinweise (blockieren nicht)</h2>
+  {% for h in hinweise %}
+  <article class="card fall card-kopf" data-fall="hinweis" data-nr="{{ h.k.startnummer or '' }}">
+    <div><span class="badge">Hinweis</span><h3 class="fall-titel">{{ h.k.text }}</h3></div>
+    {% if h.fahrer %}<a class="btn btn-quiet btn-sm" href="/admin/v/{{ v.id }}/teilnehmer/{{ h.fahrer }}">Fahrer öffnen</a>{% endif %}
+  </article>
+  {% endfor %}
+</section>
+{% endif %}
+
+<section class="card stapel-eng" id="sonderfaelle">
+  <div><h2>Sonderfälle</h2><p class="sub">Für Korrekturen, die mehrere Fahrer betreffen. Alles zu einem einzelnen Fahrer steht auf der Fahrer-Seite.</p></div>
+  <details class="aktion" id="aktion-tauschen"><summary class="btn btn-secondary btn-sm">Zeiten zweier Fahrer tauschen</summary>
+    <form method="post" action="/admin/v/{{ v.id }}/korrektur" class="formular" id="tauschen">
+      {{ felder('tauschen') }}
+      <div class="feld-reihe">
+        <div class="field"><label for="t-a">Startnummer A</label><input id="t-a" name="startnummer" inputmode="numeric" required></div>
+        <div class="field"><label for="t-b">Startnummer B</label><input id="t-b" name="startnummer_b" inputmode="numeric" required></div>
+        <div class="field"><label for="t-art">Welche Zeit</label><select id="t-art" name="art"><option value="ZIEL">Zielzeit</option><option value="START">Startzeit</option></select></div>
+      </div>
+      <div class="field"><label for="t-notiz">Notiz (Pflicht)</label><input id="t-notiz" name="notiz" required></div>
+      <div><button type="submit" class="btn btn-primary" {{ 'disabled' if gesperrt }}>Tauschen</button></div>
+    </form></details>
+  <a class="btn btn-secondary btn-sm" href="/admin/v/{{ v.id }}/geraetedatei" id="geraetedatei-link">Gerätedatei einlesen</a>
+</section>
+{% endblock %}

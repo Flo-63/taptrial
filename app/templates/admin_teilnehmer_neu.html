@@ -1,0 +1,13 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf %}
+{% block titel %}Teilnehmer hinzufügen{% endblock %}
+{% block kopf %}{% call seitenkopf("Teilnehmer hinzufügen", "Einzelne Nachmeldung. Für viele Teilnehmer: CSV importieren.") %}
+  <a class="btn btn-quiet" href="/admin/v/{{ v.id }}/teilnehmer">Zurück zu Teilnehmer</a>
+{% endcall %}{% endblock %}
+{% block inhalt %}
+<section class="card" id="neu">
+  {% set t = None %}
+  {% include "admin_teilnehmer_formular.html" %}
+  {% if not v.laufend %}<p class="hint">Gesperrt: Die Veranstaltung ist {{ ZUSTAND_TEXT[v.zustand] }}.</p>{% endif %}
+</section>
+{% endblock %}

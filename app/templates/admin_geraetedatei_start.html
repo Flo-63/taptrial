@@ -1,0 +1,17 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf, abbrechen, zuklappen %}
+{% block titel %}Gerätedatei einlesen{% endblock %}
+{% block kopf %}{% call seitenkopf("Gerätedatei einlesen", "Nicht übertragene Einträge eines Handys aus der Exportdatei übernehmen.") %}
+  <a class="btn btn-quiet" href="/admin/v/{{ v.id }}/protokoll">Zurück zum Protokoll</a>
+{% endcall %}{% endblock %}
+{% block inhalt %}
+<section class="card stapel-eng" id="geraetedatei">
+  <p class="sub">Exportdatei eines Geräts („Einträge exportieren“ am Handy). Erst Vorschau, dann „Übernehmen“: angelegt werden nur neue Einträge (gleiche UUID wird erkannt), mit der Gerätekennung aus der Datei. Im Protokoll steht „aus Datei übernommen“. Nur solange die Veranstaltung läuft.</p>
+  <form method="post" action="/admin/v/{{ v.id }}/geraetedatei" enctype="multipart/form-data" class="formular">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="field"><label for="g-datei">Datei</label><input id="g-datei" type="file" name="datei" accept=".json,application/json" required></div>
+    <div><button type="submit" class="btn btn-primary" {{ 'disabled' if not v.laufend }}>Vorschau</button> {{ abbrechen(abbruch_ziel(request, "/admin/v/" ~ v.id ~ "/protokoll")) }}</div>
+    {% if not v.laufend %}<p class="hint">Gesperrt: Die Veranstaltung ist {{ ZUSTAND_TEXT[v.zustand] }}.</p>{% endif %}
+  </form>
+</section>
+{% endblock %}

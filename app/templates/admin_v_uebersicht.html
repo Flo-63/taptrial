@@ -1,0 +1,47 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf %}
+{% block titel %}{{ v.name }}{% endblock %}
+{% block kopf %}{{ seitenkopf("Übersicht", "Was läuft, und was als Nächstes zu tun ist.") }}{% endblock %}
+{% block inhalt %}
+<div class="kennzahlen" id="kennzahlen" data-live>
+  {% set basis = "/admin/v/" ~ v.id %}
+  {% for schluessel, text, ziel in [("teilnehmer", "Teilnehmer", "/teilnehmer"), ("gestartet", "gestartet", "/teilnehmer?stand=gestartet"),
+      ("strecke", "auf der Strecke", "/teilnehmer?stand=strecke"), ("ziel", "im Ziel", "/teilnehmer?stand=ziel"),
+      ("aufgaben", "offene Aufgaben", "/aufgaben")] %}
+  <a class="kpi {{ 'kpi-warn' if schluessel == 'aufgaben' and zahlen.aufgaben }}" id="kpi-{{ schluessel }}" href="{{ basis }}{{ ziel }}"><strong>{{ zahlen[schluessel] }}</strong><span>{{ text }}</span></a>
+  {% endfor %}
+</div>
+<div class="spalten">
+  <section class="card breit" id="naechstes" data-live>
+    <h2>Als Nächstes</h2>
+    <p class="sub">Jede Zeile führt direkt dorthin, wo der Punkt erledigt wird.</p>
+    {% for a in aufgaben if not a.dezent %}
+    <div class="aufgabe" data-aufgabe="{{ a.schluessel }}">
+      <div><strong>{{ a.titel }}</strong><div class="hint">{{ a.hinweis }}</div></div>
+      <a class="btn btn-secondary btn-sm" href="{{ a.url }}">{{ a.knopf }}</a>
+    </div>
+    {% else %}
+    <p class="alert a-ok" id="nichts-zu-tun">Gerade ist nichts zu tun.</p>
+    {% endfor %}
+    {% for a in aufgaben if a.dezent %}
+    <p class="hint aufgabe-dezent" data-aufgabe="{{ a.schluessel }}">{{ a.titel }} – {{ a.hinweis }}. <a class="btn btn-quiet btn-sm" href="{{ a.url }}">{{ a.knopf }}</a></p>
+    {% endfor %}
+  </section>
+  <section class="card schmal" id="stand" data-live>
+    <h2>Stand</h2>
+    <dl class="fakten">
+      <dt>Ergebnis</dt><dd>{{ kopf }}</dd>
+      <dt>Klassensatz</dt><dd>{{ regeln.klassensatz }}{% if regeln.eingefroren_ms %} <span class="badge">eingefroren</span>{% endif %}</dd>
+      <dt>Wertung</dt><dd>{{ regeln.wertungssatz or "keine" }}</dd>
+      <dt>Strecken</dt><dd class="btn-reihe">{% for s in strecken %}<span class="nowrap"><span class="strecke-marke strecke-farbe-{{ loop.index0 % FARBEN }}">{{ s.name }}</span>{% if s.laenge_km %} <span class="mono">{{ km_text(s.laenge_km) }} km</span>{% endif %}</span>{% endfor %}</dd>
+      <dt>Anonymisieren ab</dt><dd class="mono">{{ v.anonymisieren_ab.strftime('%d.%m.%Y') }}</dd>
+    </dl>
+    <div class="btn-reihe card-fuss">
+      <a class="btn btn-quiet btn-sm" href="/ergebnisse{{ '' if v.aktiv else '?veranstaltung=' ~ v.id ~ '&vorschau=1' }}" target="_blank">Öffentliche Ergebnisse</a>
+      <a class="btn btn-quiet btn-sm" href="/monitor{{ '' if v.aktiv else '?veranstaltung=' ~ v.id }}" target="_blank" id="zielmonitor-oeffnen">Zielmonitor öffnen</a>
+      <a class="btn btn-quiet btn-sm" href="/admin/v/{{ v.id }}/einstellungen/zielmonitor#zielmonitor" id="zielmonitor-einstellen">Zielmonitor einstellen</a>
+    </div>
+  </section>
+</div>
+<p class="hint live-stand" id="live-stand">Stand: {{ jetzt_uhrzeit() }}</p>
+{% endblock %}

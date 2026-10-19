@@ -1,0 +1,12 @@
+.venv
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.idea/
+.env
+.kamal/secrets
+data/
+*.sqlite3
+test-results/
+.release-pruefmuster

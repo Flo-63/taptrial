@@ -1,0 +1,94 @@
+# Deutsches Radsportabzeichen – Disziplin A.2 "Bergzeitfahren Straße" (nur Erwachsene)
+# Quelle: German Cycling, "Leistungsanforderungen Deutsches Radsportabzeichen", Stand 12/2025
+# Bewertet wird die Zeit PRO KM (Format M:SS): Fahrzeit / Streckenlänge der Veranstaltung.
+# Gültig nur für Strecken von 3 bis 6 km mit 4-6 % Steigung. Die Steigung prüft die App nicht,
+# sie wird bei der Veranstaltung bestätigt. Eine Stufe gilt als erreicht, wenn Zeit/km <= Schwellenwert.
+
+name = "Deutsches Radsportabzeichen A.2 Bergzeitfahren Straße (Stand 12/2025)"
+art = "pro_km"
+strecke_km_min = 3
+strecke_km_max = 6
+
+[[stufe]]
+klasse = "Herren bis 30"
+bronze = "3:45"
+silber = "2:45"
+gold   = "2:30"
+
+[[stufe]]
+klasse = "Herren 31-40"
+bronze = "4:00"
+silber = "3:00"
+gold   = "2:45"
+
+[[stufe]]
+klasse = "Herren 41-50"
+bronze = "4:20"
+silber = "3:20"
+gold   = "3:00"
+
+[[stufe]]
+klasse = "Herren 51-60"
+bronze = "5:00"
+silber = "3:45"
+gold   = "3:20"
+
+[[stufe]]
+klasse = "Herren 61-70"
+bronze = "6:00"
+silber = "4:20"
+gold   = "3:45"
+
+[[stufe]]
+klasse = "Herren 71-75"
+bronze = "7:30"
+silber = "5:00"
+gold   = "4:20"
+
+[[stufe]]
+klasse = "Herren ü 75"
+bronze = "9:00"
+silber = "6:00"
+gold   = "5:00"
+
+[[stufe]]
+klasse = "Damen bis 30"
+bronze = "4:30"
+silber = "3:20"
+gold   = "3:00"
+
+[[stufe]]
+klasse = "Damen 31-40"
+bronze = "4:50"
+silber = "3:40"
+gold   = "3:20"
+
+[[stufe]]
+klasse = "Damen 41-50"
+bronze = "5:10"
+silber = "4:00"
+gold   = "3:40"
+
+[[stufe]]
+klasse = "Damen 51-60"
+bronze = "6:00"
+silber = "4:30"
+gold   = "4:00"
+
+[[stufe]]
+klasse = "Damen 61-70"
+bronze = "7:10"
+silber = "5:10"
+gold   = "4:30"
+
+[[stufe]]
+klasse = "Damen 71-75"
+bronze = "9:00"
+silber = "6:00"
+gold   = "5:10"
+
+[[stufe]]
+klasse = "Damen ü 75"
+bronze = "10:30"
+silber = "7:10"
+gold   = "6:00"

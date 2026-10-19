@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ergebnisse – {{ APP_NAME }}</title>
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/basis.css">
+  <link rel="stylesheet" href="/static/css/oeffentlich.css">
+</head>
+<body class="ergebnisse">
+  <div class="werkzeuge">
+    {% set q = ('?veranstaltung=' ~ request.query_params.get('veranstaltung') ~ ('&vorschau=1' if request.query_params.get('vorschau') == '1' else '')) if request.query_params.get('veranstaltung') else '' %}
+    <a href="/ergebnisse/druck{{ q }}">Druckansicht</a> · <a href="/ergebnisse.csv{{ q }}">CSV</a> · <a href="/monitor">Zielmonitor</a>
+    <span id="stand" class="stand" hidden></span>
+  </div>
+  <main id="inhalt">{% include "_ergebnisse_inhalt.html" %}</main>
+  {% include "_oeffentlich_fuss.html" %}
+  <script src="/static/js/ergebnisse.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf %}
+{% block titel %}Drucken & Export{% endblock %}
+{% block kopf %}{{ seitenkopf("Drucken & Export", "Alle Ausdrucke und Dateien an einem Ort. Druckansichten öffnen im selben Fenster mit „Drucken“ und „Zurück zum Admin“.") }}{% endblock %}
+{% block inhalt %}
+{% set z = "?zurueck=/admin/v/" ~ v.id ~ "/drucken" %}
+<div class="raster-karten">
+  <section class="card stapel-eng" id="vor-dem-rennen">
+    <h2>Vor dem Rennen</h2>
+    <div class="aufgabe"><div><strong>Start- und Zielprotokoll</strong><div class="hint">A4, Papier-Rückfallebene bei Handy- oder Netzausfall</div></div>
+      <a class="btn btn-secondary btn-sm" href="/admin/v/{{ v.id }}/papierprotokoll{{ z }}" id="papierprotokoll-link">Drucken</a></div>
+    <div class="aufgabe"><div><strong>Gerätelinks mit QR-Codes</strong><div class="hint">A4 für die Helfer (nicht aushängen)</div></div>
+      <a class="btn btn-secondary btn-sm" href="/admin/v/{{ v.id }}/geraetelinks-druck{{ z }}" id="geraetelinks-link">Drucken</a></div>
+    <div class="aufgabe"><div><strong>Aushang „Live-Ergebnisse“</strong><div class="hint">A4 mit QR-Code zu den öffentlichen Ergebnissen</div></div>
+      <a class="btn btn-secondary btn-sm" href="/admin/v/{{ v.id }}/aushang{{ z }}" id="aushang-link">Drucken</a></div>
+  </section>
+  <section class="card stapel-eng" id="nach-dem-rennen">
+    <h2>Nach dem Rennen</h2>
+    <div class="aufgabe"><div><strong>Ergebnisliste</strong><div class="hint">eine Klasse pro Seite, „Als PDF speichern“ möglich</div></div>
+      <a class="btn btn-secondary btn-sm" href="/ergebnisse/druck?veranstaltung={{ v.id }}&amp;zurueck=/admin/v/{{ v.id }}/drucken" id="druckansicht">Drucken</a></div>
+    {% for key, titel in ranglisten %}
+    <div class="aufgabe rangliste-druck"><div><strong>Rangliste {{ titel }}</strong><div class="hint">schnellste Durchfahrt je Fahrer{% if not v.zwischenzeiten_oeffentlich %} · nur mit „Zwischenzeiten öffentlich“{% endif %}</div></div>
+      <div class="btn-reihe"><a class="btn btn-secondary btn-sm" href="/ergebnisse/druck?veranstaltung={{ v.id }}&amp;rangliste={{ key|urlencode }}&amp;zurueck=/admin/v/{{ v.id }}/drucken">Drucken</a>
+        <a class="btn btn-quiet btn-sm" href="/admin/v/{{ v.id }}/export/ergebnis.csv?rangliste={{ key|urlencode }}">CSV</a></div></div>
+    {% endfor %}
+    <div class="aufgabe"><div><strong>Urkunden</strong><div class="hint">alle mit gültiger Zeit · A4 quer · einzeln über den Fahrer</div></div>
+      <a class="btn btn-secondary btn-sm" href="/admin/v/{{ v.id }}/urkunden{{ z }}" id="urkunden-alle">Drucken</a></div>
+  </section>
+  <section class="card stapel-eng" id="dateien">
+    <h2>Dateien</h2>
+    <div class="aufgabe"><div><strong>Ergebnisliste (CSV)</strong><div class="hint">für Excel</div></div>
+      <a class="btn btn-secondary btn-sm" href="/admin/v/{{ v.id }}/export/ergebnis.csv" id="csv-ergebnis">Herunterladen</a></div>
+    <div class="aufgabe"><div><strong>Protokoll (CSV)</strong><div class="hint">alle Einträge</div></div>
+      <a class="btn btn-secondary btn-sm" href="/admin/v/{{ v.id }}/export/protokoll.csv" id="csv-protokoll">Herunterladen</a></div>
+  </section>
+</div>
+{% endblock %}

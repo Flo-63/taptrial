@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hilfe: {{ titel }} – {{ APP_NAME }}</title>
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/basis.css">
+  <link rel="stylesheet" href="/static/css/hilfe.css">
+</head>
+<body class="hilfe {{ 'kurz' if kurz else 'lang' }} {{ 'aus-admin' if zurueck }}">
+  <nav class="hilfe-nav nicht-drucken">
+    {% if zurueck %}<a class="btn btn-secondary btn-sm hilfe-zurueck" href="{{ zurueck }}" id="zurueck-admin">Zurück zum Admin</a>
+    {% else %}<a href="javascript:history.back()">← zurück</a>{% endif %}
+    {% for n, (datei, t, k) in seiten.items() %}<a href="/hilfe/{{ n }}{{ '?zurueck=' ~ zurueck|urlencode if zurueck }}" class="{{ 'aktiv' if n == name }}">{{ t }}</a>{% endfor %}
+    <button onclick="window.print()">Drucken</button>
+  </nav>
+  <main class="hilfe-inhalt">
+    {{ inhalt|safe }}
+    <p class="fuss">{{ APP_NAME }} – {{ APP_UNTERTITEL }} · {{ titel }} · <span class="app-version">Version {{ APP_RELEASE }}</span>{% for t, url in rechtliches_links(installation(request)) %} · <a href="{{ url }}" class="rechtlich">{{ t }}</a>{% endfor %}</p>
+  </main>
+</body>
+</html>

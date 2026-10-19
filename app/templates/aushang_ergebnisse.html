@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Aushang Live-Ergebnisse – {{ v.name }}</title>
+  <link rel="stylesheet" href="/static/css/basis.css">
+  <link rel="stylesheet" href="/static/css/druck.css">
+  <style>
+    /* A4 hochkant, ein Blatt */
+    @page { size: A4 portrait; margin: 15mm; }
+    body { margin: 0; }
+    .blatt { text-align: center; }
+    .blatt { max-width: 180mm; margin: 0 auto; padding: 10mm 0; }
+    h1 { font-size: 34pt; margin: 0 0 4mm; }
+    .veranstaltung { font-size: 18pt; margin: 0 0 10mm; }
+    .qr svg { width: 140mm; height: 140mm; }
+    .url { font-size: 16pt; font-weight: 700; word-break: break-all; margin: 8mm 0 2mm; }
+    .hinweis { font-size: 13pt; color: var(--druck-grau); }
+  </style>
+</head>
+<body class="druckansicht">
+  {% include "_druckleiste.html" %}
+  <div class="blatt">
+    <h1>Live-Ergebnisse</h1>
+    <p class="veranstaltung">{{ v.name }} · {{ v.datum.strftime('%d.%m.%Y') }}</p>
+    <div class="qr">{{ qr|safe }}</div>
+    <p class="url">{{ url }}</p>
+    <p class="hinweis">QR-Code mit dem Handy scannen – Ergebnisse, Zeiten und Plätze laufend aktuell.</p>
+  </div>
+  {% include "_druckfuss.html" %}
+</body>
+</html>

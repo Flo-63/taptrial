@@ -1,0 +1,36 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf, abbrechen, zuklappen %}
+{% block titel %}Vorlagen importieren{% endblock %}
+{% block kopf %}{% call seitenkopf("Vorlagen importieren", "Klassen- oder Wertungssatz aus einer TOML- oder CSV-Datei.") %}
+  <a class="btn btn-quiet" href="/admin/saetze">Zurück zu den Vorlagen</a>
+{% endcall %}{% endblock %}
+{% block inhalt %}
+<div class="raster-karten">
+<section class="card stapel-eng">
+  <h2>Klassensatz</h2>
+  <form method="post" action="/admin/saetze/klassen-import" enctype="multipart/form-data" class="formular" id="klassen-import">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="field"><label for="ki-datei">Datei (TOML oder CSV)</label><input id="ki-datei" type="file" name="datei" accept=".toml,.csv" required>
+      <span class="hint">CSV-Spalten: <code>name;geschlecht;alter_von;alter_bis</code>. Groß-/Kleinschreibung egal.</span></div>
+    <div class="field"><label for="ki-name">Name</label><input id="ki-name" name="name" placeholder="leer = aus der Datei"></div>
+    <div><button type="submit" class="btn btn-primary">Importieren</button> {{ abbrechen(abbruch_ziel(request, "/admin/saetze")) }}</div>
+  </form>
+</section>
+<section class="card stapel-eng">
+  <h2>Wertungssatz</h2>
+  <form method="post" action="/admin/saetze/wertung-import" enctype="multipart/form-data" class="formular" id="wertung-import">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="field"><label for="wi-datei">Datei (TOML oder CSV)</label><input id="wi-datei" type="file" name="datei" accept=".toml,.csv" required>
+      <span class="hint">TOML im bisherigen Format enthält Art und Streckengrenzen. Bei CSV (Spalten <code>klasse;strecke_km;gold;silber;bronze</code>) Art und Grenzen hier angeben.</span></div>
+    <div class="field"><label for="wi-name">Name</label><input id="wi-name" name="name" placeholder="leer = aus der Datei"></div>
+    <div class="field"><label for="wi-ks">Klassensatz</label><select id="wi-ks" name="klassensatz_id">{% for ks in klassensaetze %}<option value="{{ ks.id }}">{{ ks.name }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="wi-art">Art</label><select id="wi-art" name="art"><option value="gesamtzeit">Gesamtzeit</option><option value="pro_km">Zeit pro km</option></select></div>
+    <div class="feld-reihe">
+      <div class="field"><label for="wi-min">Strecke min km (nur Zeit pro km)</label><input id="wi-min" name="strecke_km_min" class="mono"></div>
+      <div class="field"><label for="wi-max">Strecke max km</label><input id="wi-max" name="strecke_km_max" class="mono"></div>
+    </div>
+    <div><button type="submit" class="btn btn-primary">Importieren</button> {{ abbrechen(abbruch_ziel(request, "/admin/saetze")) }}</div>
+  </form>
+</section>
+</div>
+{% endblock %}

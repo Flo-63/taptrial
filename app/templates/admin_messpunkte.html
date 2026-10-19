@@ -1,0 +1,34 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf, abbrechen %}
+{% block titel %}Messpunkte{% endblock %}
+{% block kopf %}{{ seitenkopf("Messpunkte", "Start, Zwischenzeiten und Ziel – jeder Messpunkt hat eigene Geräte, für alle Strecken der Veranstaltung.") }}{% endblock %}
+{% block inhalt %}
+{% set gesperrt = v.zustand == 'anonymisiert' %}
+{% if strecken_eingefroren %}<p class="alert a-info" id="strecken-eingefroren">Eingefroren: Messpunkte lassen sich nicht mehr hinzufügen oder entfernen (es gibt Zeiten); Namen bleiben änderbar.</p>{% endif %}
+<section class="card stapel-eng" id="orte-karte">
+  <p class="hint">Drei Arten: <strong>Start</strong> (erster Punkt einer Strecke, eigenes Startgerät), <strong>Zwischenzeit</strong> (Linie mit Posten-Gerät, mehrfach durchfahrbar) und <strong>Ziel</strong> (letzter Punkt, eigenes Zielgerät). Welche Strecke wo beginnt, vorbeiführt und endet, legt ihr Verlauf fest (Seite der Strecke → „Verlauf“). Links und QR-Codes stehen unter „Geräte“. Nur Messpunkte, die eine Strecke nutzt, bekommen einen Gerätelink; einen Standard-Start/-Ziel, den keine Strecke nutzt, blendet die App aus (solange es keine Zeiten gibt).</p>
+  <form method="post" action="/admin/v/{{ v.id }}/messpunkte" class="stapel-eng" id="orte-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="mp_anzahl" value="{{ orte|length }}">
+    <div class="tbl-box tbl-box-kurz"><table class="tbl" id="messpunkte">
+      <thead><tr><th>Art</th><th>Name</th><th>Genutzt von</th><th>Gerät</th><th>Entfernen</th></tr></thead>
+      <tbody>
+      {% for m in orte %}{% set j = loop.index0 %}
+      <tr data-index="{{ j }}" data-art="{{ m.art }}" data-ort="{{ m.name }}"{% if m.art == "punkt" %} data-messpunkt="{{ m.name }}"{% endif %}>
+        <td class="ort-art">{{ ORTSARTEN[m.art] }}{% if m.standard %} <span class="badge">Standard</span>{% endif %}</td>
+        <td><input type="hidden" name="mp_id_{{ j }}" value="{{ m.id }}">
+          <input name="mp_name_{{ j }}" value="{{ m.name }}" maxlength="100" class="eingabe mp-name" aria-label="Name des Messpunkts {{ loop.index }}" required></td>
+        <td>{% if m.genutzt %}{{ m.strecken|join(", ") }}{% else %}<span class="badge b-warn mp-ungenutzt">von keiner Strecke genutzt</span>{% endif %}</td>
+        <td class="mp-verbunden">{% if not m.genutzt %}<span class="hint">kein Gerätelink</span>{% elif m.verbunden_ms %}<span class="badge b-ok">verbunden</span> <span class="hint">zuletzt {{ (m.verbunden_ms|uhrzeit)[:5] }} Uhr</span>{% else %}<span class="badge">nicht verbunden</span>{% endif %}</td>
+        <td><input type="checkbox" name="mp_entfernen_{{ j }}" value="1" aria-label="Messpunkt {{ m.name }} entfernen" {{ 'disabled' if m.sperre }}>
+          {% if m.sperre %}<span class="hint mp-sperre">Gesperrt: {{ m.sperre }}</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    <div class="btn-reihe">{% if not strecken_eingefroren %}<select id="ort-neu-art" class="eingabe" aria-label="Art des neuen Messpunkts">{% for art, text in ORTSARTEN.items() %}<option value="{{ art }}" {{ 'selected' if art == 'punkt' }}>{{ text }}</option>{% endfor %}</select>
+      <button type="button" class="btn btn-secondary btn-sm" id="messpunkt-neu">Messpunkt hinzufügen</button>{% endif %}
+      <button type="submit" class="btn btn-primary" id="messpunkte-speichern" {{ 'disabled' if gesperrt }}>Messpunkte speichern</button> {{ abbrechen(abbruch_ziel(request, "/admin/v/" ~ v.id)) }}</div>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,15 @@
+{# Rangliste eines Abschnitts (Segmente 15): rl = {"titel", "zeilen": [...]} #}
+<table class="ergebnis rangliste" data-rangliste="{{ rl.schluessel }}">
+  <thead><tr><th class="rang">Rang</th><th class="nr">Nr.</th><th>Name</th><th>Verein</th><th>Klasse</th><th class="zeit">Zeit</th><th>Durchfahrt</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for z in rl.zeilen %}
+  <tr data-nr="{{ z.startnummer }}">
+    <td class="rang">{{ z.rang or '' }}</td><td class="nr">{{ z.startnummer }}</td><td>{{ z.name }}</td><td>{{ z.verein }}</td>
+    <td>{{ z.klasse }}</td><td class="zeit">{{ z.zeit }}</td><td>{{ z.durchfahrt }}</td>
+    <td class="status">{{ "a. K." if z.ausser_konkurrenz }}{{ " " if z.ausser_konkurrenz and z.status != "OK" }}{{ z.status if z.status != "OK" else "" }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="8" class="leer">Noch keine Zeiten.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>

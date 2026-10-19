@@ -1,0 +1,48 @@
+{# Strecken & Zuordnung (Phase 13) – einfache Abfrage im Einrichtungsassistenten (Schritt 2): Name, Länge, Klassen #}
+<div class="strecken-bereich stapel-eng" id="strecken-bereich">
+  <p class="hint">Jede Klasse fährt genau eine Strecke. Strecken entstehen nie von selbst: hinzufügen oder aus einer Datei laden; die <strong>gemessene</strong> Länge hier eintragen.</p>
+  {% if strecken_eingefroren %}<p class="alert a-info" id="strecken-eingefroren">Eingefroren: Strecken und Zuordnung sind fest (es gibt Zeiten); Name und Länge bleiben änderbar{% if strecken_offiziell %}, die Länge erst nach „Zurücknehmen“ des offiziellen Ergebnisses{% endif %}.</p>{% endif %}
+  <div class="alert a-warn" id="strecken-neu-hinweis" hidden><span>Klassensatz oder Wertungssatz geändert: Die Strecken bleiben. Klassen, die es nicht mehr gibt, fallen aus der Zuordnung; neue Klassen gehen an die Strecke passender Länge – bitte danach prüfen. Fehlende Längen legst du als Strecke an oder lädst sie aus einer Datei.</span></div>
+  <input type="hidden" name="strecken_anzahl" value="{{ strecken|length }}">
+  <div class="tbl-box tbl-box-kurz"><table class="tbl" id="strecken-tabelle">
+    <thead><tr><th>Kennzeichen</th><th>Name</th><th>Gemessene Länge (km)</th><th>Art</th><th>Entfernen</th></tr></thead>
+    <tbody>
+    {% for s in strecken %}
+    {% set mit = s.id in mit_segmenten %}
+    <tr data-index="{{ loop.index0 }}" data-name="{{ s.name }}" {{ 'data-mit-segmenten=1' if mit }}>
+      <td><span class="strecke-marke strecke-farbe-{{ loop.index0 % FARBEN }}">{{ s.name }}</span></td>
+      <td><input type="hidden" name="strecke_id_{{ loop.index0 }}" value="{{ s.id }}">
+        <input name="strecke_name_{{ loop.index0 }}" value="{{ s.name }}" maxlength="100" class="eingabe strecke-name" aria-label="Name der Strecke {{ loop.index }}" required></td>
+      <td><input name="strecke_laenge_{{ loop.index0 }}" value="{{ km_text(s.laenge_km) }}" inputmode="decimal" placeholder="z. B. 20,0" class="eingabe eingabe-schmal mono" aria-label="Länge der Strecke {{ loop.index }}" {{ 'readonly' if strecken_offiziell }}></td>
+      <td class="strecke-art">{% if strecken_eingefroren %}{{ "mit Zwischenzeiten" if mit else "einfach" }}{% else %}
+<input type="hidden" name="strecke_art_bestaetigt_{{ loop.index0 }}" value="" class="art-bestaetigt">
+        <label class="check"><input type="radio" name="strecke_art_{{ loop.index0 }}" value="einfach" {{ 'checked' if not mit }}> einfach (nur Start und Ziel)</label>
+        <label class="check"><input type="radio" name="strecke_art_{{ loop.index0 }}" value="messpunkte" {{ 'checked' if mit }}> mit Zwischenzeiten</label>
+        <button type="submit" name="einrichten" value="{{ s.id }}" class="btn btn-secondary btn-sm messpunkte-einrichten" {{ 'hidden' if not mit }}>Zwischenzeiten einrichten</button>
+        <button type="submit" name="laden" value="{{ s.id }}" class="btn btn-quiet btn-sm strecke-datei-laden" id="strecke-laden-{{ loop.index0 }}" formnovalidate>aus Datei laden</button>{% endif %}</td>
+      <td><input type="checkbox" name="strecke_entfernen_{{ loop.index0 }}" value="1" class="strecke-entfernen" aria-label="Strecke {{ loop.index }} entfernen" {{ 'disabled' if strecken_eingefroren or strecken|length == 1 }}></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% if not strecken_eingefroren %}<div class="btn-reihe"><button type="button" class="btn btn-secondary btn-sm" id="strecke-neu">Strecke hinzufügen</button>
+    <button type="submit" name="laden" value="neu" class="btn btn-secondary btn-sm" id="strecke-laden" formnovalidate>Strecke aus Datei laden</button></div>{% endif %}
+  <p class="hint">„aus Datei laden“ speichert diesen Schritt zuerst und kehrt danach hierher zurück – keine Eingabe geht verloren.</p>
+  <p class="hint" id="segmente-hinweis">„mit Zwischenzeiten“: „Zwischenzeiten einrichten“ speichert diesen Schritt und öffnet die Seite der Strecke (Verlauf, Segmente, Rundenblöcke, Auswertungsabschnitte); von dort geht es zurück in den Assistenten. Später jederzeit unter „Strecken“ → „Öffnen“.</p>
+  <h3 class="zwischentitel">Zuordnung der Klassen</h3>
+  <input type="hidden" name="zuordnung_anzahl" value="{{ zuordnungsklassen|length }}">
+  <div class="tbl-box tbl-box-kurz"><table class="tbl" id="zuordnung">
+    <thead><tr><th>Klasse</th><th>Teilnehmer</th><th>Strecke</th></tr></thead>
+    <tbody>
+    {% for kl in zuordnungsklassen %}
+    <tr data-klasse="{{ kl }}">
+      <td>{{ kl }}<input type="hidden" name="zuordnung_klasse_{{ loop.index0 }}" value="{{ kl }}"></td>
+      <td>{{ klassen_anzahl.get(kl, 0) or "" }}</td>
+      <td><select name="zuordnung_strecke_{{ loop.index0 }}" class="strecke-wahl eingabe" aria-label="Strecke für {{ kl }}" {{ 'disabled' if strecken_eingefroren }}>
+        {% for s in strecken %}<option value="{{ loop.index0 }}" {{ 'selected' if zuordnung.get(kl, 0) == loop.index0 }}>{{ s.name }}</option>{% endfor %}
+      </select></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>

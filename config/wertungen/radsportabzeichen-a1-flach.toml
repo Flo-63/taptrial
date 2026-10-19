@@ -1,0 +1,154 @@
+# Deutsches Radsportabzeichen – Disziplin A.1 "Zeitfahren Straße flach"
+# Quelle: German Cycling, "Leistungsanforderungen Deutsches Radsportabzeichen", Stand 12/2025
+#   - Erwachsene Frauen/Männer: 20 km
+#   - Kinder und Jugend weiblich/männlich: 5 km
+# Klassennamen müssen exakt denen in config/altersklassen.toml entsprechen.
+# Zeiten im Format H:MM:SS (Gesamtzeit). Eine Stufe gilt als erreicht, wenn die Fahrzeit <= Schwellenwert ist.
+# Disziplinen A.2/A.3 (Bergzeitfahren, Zeit pro km) sind hier nicht abgebildet.
+
+name = "Deutsches Radsportabzeichen A.1 Straße flach (Stand 12/2025)"
+art = "gesamtzeit"   # Fahrzeit muss auf genau strecke_km gefahren sein
+
+# ---------- Kinder und Jugend männlich (5 km) ----------
+[[stufe]]
+klasse = "Jungen 8-11"
+strecke_km = 5
+bronze = "0:25:00"
+silber = "0:20:00"
+gold   = "0:17:00"
+
+[[stufe]]
+klasse = "Jungen 12-14"
+strecke_km = 5
+bronze = "0:17:00"
+silber = "0:14:00"
+gold   = "0:12:00"
+
+[[stufe]]
+klasse = "Jugend männlich"
+strecke_km = 5
+bronze = "0:12:00"
+silber = "0:11:00"
+gold   = "0:10:00"
+
+# ---------- Erwachsene Männer (20 km) ----------
+[[stufe]]
+klasse = "Herren bis 30"
+strecke_km = 20
+bronze = "0:43:00"
+silber = "0:39:00"
+gold   = "0:34:00"
+
+[[stufe]]
+klasse = "Herren 31-40"
+strecke_km = 20
+bronze = "0:46:00"
+silber = "0:43:00"
+gold   = "0:38:00"
+
+[[stufe]]
+klasse = "Herren 41-50"
+strecke_km = 20
+bronze = "0:50:00"
+silber = "0:46:00"
+gold   = "0:40:00"
+
+[[stufe]]
+klasse = "Herren 51-60"
+strecke_km = 20
+bronze = "0:55:00"
+silber = "0:51:00"
+gold   = "0:43:00"
+
+[[stufe]]
+klasse = "Herren 61-70"
+strecke_km = 20
+bronze = "1:00:00"
+silber = "0:55:00"
+gold   = "0:46:00"
+
+[[stufe]]
+klasse = "Herren 71-75"
+strecke_km = 20
+bronze = "1:07:00"
+silber = "1:00:00"
+gold   = "0:50:00"
+
+[[stufe]]
+klasse = "Herren ü 75"
+strecke_km = 20
+bronze = "1:15:00"
+silber = "1:08:00"
+gold   = "0:55:00"
+
+# ---------- Kinder und Jugend weiblich (5 km) ----------
+[[stufe]]
+klasse = "Mädchen 8-11"
+strecke_km = 5
+bronze = "0:25:00"
+silber = "0:20:00"
+gold   = "0:17:00"
+
+[[stufe]]
+klasse = "Mädchen 12-14"
+strecke_km = 5
+bronze = "0:17:00"
+silber = "0:15:00"
+gold   = "0:14:00"
+
+[[stufe]]
+klasse = "Jugend weiblich"
+strecke_km = 5
+bronze = "0:14:00"
+silber = "0:13:00"
+gold   = "0:12:00"
+
+# ---------- Erwachsene Frauen (20 km) ----------
+[[stufe]]
+klasse = "Damen bis 30"
+strecke_km = 20
+bronze = "0:53:00"
+silber = "0:49:00"
+gold   = "0:44:00"
+
+[[stufe]]
+klasse = "Damen 31-40"
+strecke_km = 20
+bronze = "0:56:00"
+silber = "0:53:00"
+gold   = "0:48:00"
+
+[[stufe]]
+klasse = "Damen 41-50"
+strecke_km = 20
+bronze = "1:00:00"
+silber = "0:56:00"
+gold   = "0:50:00"
+
+[[stufe]]
+klasse = "Damen 51-60"
+strecke_km = 20
+bronze = "1:05:00"
+silber = "1:01:00"
+gold   = "0:53:00"
+
+[[stufe]]
+klasse = "Damen 61-70"
+strecke_km = 20
+bronze = "1:10:00"
+silber = "1:05:00"
+gold   = "0:56:00"
+
+[[stufe]]
+klasse = "Damen 71-75"
+strecke_km = 20
+bronze = "1:17:00"
+silber = "1:10:00"
+gold   = "1:00:00"
+
+[[stufe]]
+klasse = "Damen ü 75"
+strecke_km = 20
+bronze = "1:29:00"
+silber = "1:20:00"
+gold   = "1:05:00"

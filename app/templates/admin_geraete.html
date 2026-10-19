@@ -1,0 +1,66 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf, geraetekarte %}
+{% block titel %}Geräte{% endblock %}
+{% block kopf %}{{ seitenkopf("Geräte", "QR-Code mit dem Handy scannen, dann „Zum Startbildschirm hinzufügen“. Die Links gelten nur für diese Veranstaltung.") }}{% endblock %}
+{% block inhalt %}
+<div id="freigabe-fehlt" data-live>{% if v.laufend and freigabe %}<div class="alert a-warn stapel-eng">
+  <p><strong>Zeitnahme gesperrt:</strong> Die Geräte zeigen „Zeitnahme noch nicht freigegeben“ und nehmen keine Zeiten an. Es fehlt:</p>
+  <div class="btn-reihe">{% for s in freigabe %}<a class="btn btn-secondary btn-sm" href="{{ s.url }}" data-schritt="{{ s.code }}">{{ s.text }}</a>{% endfor %}</div>
+</div>{% endif %}</div>
+{% if v.laufend %}
+<div class="stapel" id="links" data-live>
+  {% for gruppe, karten in geraete_gruppen %}
+  <section class="geraete-gruppe stapel-eng" data-gruppe="{{ gruppe }}">
+    <h2 class="zwischentitel">{{ gruppe }}</h2>
+    <div class="raster-karten">{% for l in karten %}{% if l.ziel_ort %}{% call geraetekarte(l, l.hinweis) %}{% set z = l.ziel_ort %}
+      {# Segmente 51: „Ziel und Rennleitung getrennt“ je Ziel auf seiner Karte (Verhalten wie A98) #}
+      <form method="post" action="/admin/v/{{ v.id }}/rennleitung" class="stapel-eng rennleitung-modus" data-zielort="{{ z.name }}">
+        <input type="hidden" name="csrf" value="{{ csrf }}">{% if not z.standard %}<input type="hidden" name="ort" value="{{ z.id }}">{% endif %}
+        <label class="check"><input type="checkbox" name="zusammen" value="1" {{ 'checked' if not z.getrennt }}> Ziel und Rennleitung auf einem Gerät umschaltbar</label>
+        <p class="hint">Aus: eigener Rennleitungs-Link mit eigenem Token; der Ziel-Link zeigt nur „Erfassen“ und darf nur Einläufe erfassen (±1 s und Rückgängig am eigenen letzten Einlauf).</p>
+        {% if hat_zeiten %}<p class="alert a-warn">Es gibt schon Zeiten. Nach dem Umschalten brauchen vorhandene Geräte neue Links.</p>
+        <label class="check"><input type="checkbox" name="bestaetigung" value="1"> Verstanden, trotzdem umschalten</label>{% endif %}
+        <div><button type="submit" class="btn btn-secondary btn-sm" id="rennleitung-speichern{{ '' if z.standard else '-' ~ z.id }}">Speichern</button></div>
+      </form>{% endcall %}{% else %}{{ geraetekarte(l, l.hinweis) }}{% endif %}{% endfor %}</div>
+  </section>
+  {% endfor %}
+  <section class="geraete-gruppe stapel-eng" data-gruppe="Öffentlich">
+    <h2 class="zwischentitel">Öffentlich</h2>
+    <div class="raster-karten">{{ geraetekarte(monitor, "Öffentlich, ohne Token: für den Bildschirm am Ziel.") }}</div>
+  </section>
+</div>
+{% else %}
+<p class="alert a-info">Gesperrt: Die Gerätelinks sind ungültig, weil die Veranstaltung {{ ZUSTAND_TEXT[v.zustand] }} ist.</p>
+{% endif %}
+<section class="card card-flach" id="uhren-karte" data-live>
+  <div class="card-kopf"><div><h2>Verbundene Geräte und Uhren</h2>
+    <p class="sub">Letzte Meldung je Gerät und Abweichung der Geräteuhr zum Server (+ = Gerät geht nach). Gemessene Zeiten werden nicht verändert. Vor dem Start müssen Start und Ziel unter 0,5 s liegen.</p></div></div>
+  {% if uhren %}
+  <div class="tbl-box tbl-box-kurz"><table class="tbl" id="uhren">
+    <thead><tr><th>Gerät</th><th>Rolle</th><th>Letzte Meldung</th><th>Uhr</th></tr></thead>
+    <tbody>
+      {% for u in uhren %}
+      <tr><td class="mono">{{ u.geraet }}</td><td>{{ u.rolle }}</td><td class="zeit">{{ u.gemessen }}</td>
+        <td>{% if u.warnung %}<span class="badge b-warn uhr-warnung">{{ u.text }} – Gerät prüfen</span>{% else %}<span class="badge b-ok">{{ u.text }}</span>{% endif %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <p class="leer-zustand" id="uhren">Noch keine Messung – die Geräte melden sich beim nächsten Sync.</p>
+  {% endif %}
+</section>
+<p class="hint live-stand" id="live-stand">Stand: {{ jetzt_uhrzeit() }}</p>
+{% if v.laufend %}
+<section class="card stapel-eng" id="tokens">
+  <div><h2>Zugang sperren</h2><p class="sub">Neuer Link für eine Rolle, z. B. wenn ein Handy verloren ist. Alte Links gelten sofort nicht mehr; Geräte dieser Rolle brauchen den neuen Link.</p></div>
+  <div class="btn-reihe">
+  {% for rolle, text in token_rollen %}
+  <form method="post" action="/admin/v/{{ v.id }}/token" data-bestaetigen="Neuen {{ text.split(' erneuern')[0] }} erzeugen? Der alte Link funktioniert danach sofort nicht mehr." data-bestaetigen-knopf="Token erneuern">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="rolle" value="{{ rolle }}">
+    <button type="submit" class="btn btn-secondary" id="erneuern-{{ rolle }}">{{ text }}</button>
+  </form>
+  {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

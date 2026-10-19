@@ -1,0 +1,48 @@
+{% extends "geraet_basis.html" %}
+{% block inhalt %}
+<section class="naechster" aria-live="polite">
+  <div class="label">Nächster</div>
+  <div id="naechster-box">
+    <div class="nr">Nr. <span id="naechster-nr">…</span></div>
+    <div id="naechster-name" class="name"></div>
+    <div id="naechster-strecke" class="strecke-zeile"></div>
+    <button id="btn-wahl-aufheben" class="btn-klein" hidden>Wahl aufheben</button>
+  </div>
+  <div id="alle-gestartet" class="endzustand" hidden>Alle Fahrer gestartet</div>
+  <div id="dns-hinweis" class="info" hidden></div>
+</section>
+
+<button id="btn-start" class="btn btn-gross btn-start" disabled>START</button>
+
+<div class="reihe">
+  <button id="btn-ueberspringen" class="btn" disabled>Überspringen</button>
+  <button id="btn-dns" class="btn btn-warnung" disabled>DNS</button>
+</div>
+<button id="btn-rueckgaengig" class="btn btn-breit" disabled>Rückgängig</button>
+<div class="reihe umschalter" role="group" aria-label="Anzeige">
+  <button id="toggle-nummer" class="btn btn-umschalter" aria-pressed="true">Nummer wählen</button>
+  <button id="toggle-warteliste" class="btn btn-umschalter" aria-pressed="false">Warteliste anzeigen</button>
+</div>
+
+<div id="letzter-start" class="info"></div>
+<div id="fortschritt" class="info"></div>
+
+<section id="auswahl-bestaetigung" class="auswahl-bestaetigung" hidden>
+  <div id="auswahl-text" class="auswahl-text"></div>
+  <div class="reihe">
+    <button id="btn-auswahl-bestaetigen" class="btn btn-start-klein">Als Nächsten übernehmen</button>
+    <button id="btn-auswahl-abbrechen" class="btn">Abbrechen</button>
+  </div>
+</section>
+
+<section id="auswahl" class="auswahl">
+  <h2>Nummer wählen</h2>
+  <div id="auswahl-liste" class="kacheln"></div>
+</section>
+
+<section class="warteliste-box" id="warteliste-box" hidden>
+  <h2>Warteliste</h2>
+  <ol id="warteliste" class="warteliste"></ol>
+</section>
+{% endblock %}
+

@@ -1,0 +1,37 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf %}
+{% block titel %}Veranstaltungen{% endblock %}
+{% block kopf %}{{ seitenkopf("Veranstaltungen", ("" if reiter == "alle" else filter_text ~ " · ") ~ "Genau eine Veranstaltung ist aktiv und erscheint auf Startseite, Monitor und Ergebnissen.") }}{% endblock %}
+{% block inhalt %}
+{% if faellige and reiter in ("alle", "faellig") %}
+<section class="alert a-warn stapel-eng" id="faellige">
+  <strong>Anonymisierung fällig</strong>
+  {% for f in faellige %}
+  <div class="aufgabe"><span>{{ f.name }} – Frist {{ f.anonymisieren_ab.strftime('%d.%m.%Y') }}{% if f.zustand == 'laufend' %} (erst abschließen){% endif %}</span>
+    <a class="btn btn-secondary btn-sm" href="/admin/v/{{ f.id }}/status">Status &amp; Datenschutz</a></div>
+  {% endfor %}
+  <span class="hint">Es wird nichts automatisch gelöscht.</span>
+</section>
+{% endif %}
+<div class="card card-flach"><div class="tbl-box"><table class="tbl" id="veranstaltungen">
+  <thead><tr><th>Name</th><th>Datum</th><th>Zustand</th><th>Teilnehmer</th><th>Offen</th><th class="aktionen"></th></tr></thead>
+  <tbody>
+  {% for x in veranstaltungen %}
+  <tr class="row" data-href="/admin/v/{{ x.id }}">
+    <td><a class="tbl-link" href="/admin/v/{{ x.id }}">{{ x.name }}</a>{% if x.aktiv %} <span class="badge b-brand">aktiv</span>{% endif %}</td>
+    <td class="mono">{{ x.datum.strftime('%d.%m.%Y') }}</td>
+    <td><span class="badge {{ 'b-ok' if x.zustand == 'laufend' else ('b-danger' if x.zustand == 'anonymisiert' else '') }}">{{ ZUSTAND_TEXT[x.zustand] }}</span>
+      {% if x.einrichtung_schritt %}<span class="badge">in Einrichtung · Schritt {{ x.einrichtung_schritt }}/5</span>{% endif %}</td>
+    <td>{{ anzahl.get(x.id, 0) }}</td>
+    <td>{% if offen.get(x.id) %}<span class="badge b-warn">{{ offen[x.id] }} Aufgabe{{ 'n' if offen[x.id] != 1 }}</span>{% else %}–{% endif %}</td>
+    <td class="aktionen">{% if x.einrichtung_schritt %}<a class="btn btn-secondary btn-sm einrichtung-fortsetzen" href="/admin/einrichtung/{{ x.id }}/{{ x.einrichtung_schritt }}">Einrichtung fortsetzen</a>
+      {% else %}<a class="btn btn-secondary btn-sm" href="/admin/v/{{ x.id }}">Öffnen</a>{% endif %}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="6"><div class="leer-zustand">{% if alle_anzahl %}<span>Keine Veranstaltung in „{{ filter_text }}“.</span>
+    <a class="btn btn-secondary" href="/admin">Alle zeigen</a>{% else %}<span>Noch keine Veranstaltung.</span>
+    <a class="btn btn-primary" href="/admin/einrichtung/neu">Neue Veranstaltung einrichten</a>{% endif %}</div></td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}

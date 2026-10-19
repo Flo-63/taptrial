@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{% block titel %}Admin{% endblock %} – {{ APP_NAME }}</title>
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/basis.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body class="admin">
+{% set mit_seitenleiste = csrf and ((v and not schritte) or leiste) %}
+<header class="topbar" id="topbar">
+  {% if mit_seitenleiste %}<button type="button" class="top-btn top-btn-rand menue-knopf" id="menue-knopf" aria-expanded="false" aria-controls="seitenleiste">Menü</button>{% endif %}
+  <a class="marke" href="/admin"><span class="marke-zeichen" aria-hidden="true">TT</span><span>{{ APP_NAME }}</span></a>
+  {% if csrf %}
+  <nav class="top-nav" aria-label="Hauptbereiche">
+    <a class="top-btn {{ 'top-on' if bereich != 'vorlagen' }}" href="/admin" id="nav-veranstaltungen">Veranstaltungen</a>
+    <a class="top-btn {{ 'top-on' if bereich == 'vorlagen' }}" href="/admin/saetze" id="nav-vorlagen">Vorlagen</a>
+  </nav>
+  {% endif %}
+  <div class="top-rechts">
+    {% set hilfe_anker = hilfe or (reiter if v and reiter else ('vorlagen' if bereich == 'vorlagen' else ('einrichtung' if schritte else ('veranstaltungen' if csrf else 'anmelden')))) %}
+    {% set hier = request.url.path ~ ('?' ~ request.url.query if request.url.query else '') %}
+    <a class="top-btn" href="/hilfe/admin?zurueck={{ hier|urlencode }}#{{ hilfe_anker }}" id="nav-hilfe">Hilfe</a>
+    {% if csrf %}
+    <form method="post" action="/admin/abmelden" class="abmelden">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button type="submit" class="top-btn top-btn-rand">Abmelden</button>
+    </form>
+    {% endif %}
+  </div>
+</header>
+<div class="rahmen {{ 'mit-seitenleiste' if mit_seitenleiste }}">
+  {% if mit_seitenleiste %}
+  {% if v and not schritte %}{% set nz = nav_zahlen(v) %}{% set b = "/admin/v/" ~ v.id %}
+  {% set gruppen = [
+      ("", [("uebersicht", "Übersicht", b, None)]),
+      ("Veranstaltung", [("einstellungen", "Einstellungen", b ~ "/einstellungen", None),
+                         ("strecken", "Strecken", b ~ "/strecken", None),
+                         ("messpunkte", "Messpunkte", b ~ "/messpunkte", None),
+                         ("teilnehmer", "Teilnehmer", b ~ "/teilnehmer", nz.teilnehmer)]),
+      ("Zeitnahme", [("geraete", "Geräte", b ~ "/geraete", None),
+                     ("aufgaben", "Aufgaben", b ~ "/aufgaben", nz.aufgaben),
+                     ("protokoll", "Protokoll", b ~ "/protokoll", None)]),
+      ("Auswertung", [("ergebnis", "Ergebnis", b ~ "/ergebnis", None),
+                      ("drucken", "Drucken & Export", b ~ "/drucken", None)]),
+      ("Verwaltung", [("status", "Status & Datenschutz", b ~ "/status", None)])] %}
+  {% else %}{% set gruppen = leiste.gruppen %}{% endif %}
+  <aside class="seitenleiste" id="seitenleiste">
+    <div class="sl-kopf">
+      {% if v and not schritte %}
+      <div class="sl-titel" id="v-name">{{ v.name }}</div>
+      <div class="sl-badges"><span class="mono">{{ v.datum.strftime('%d.%m.%Y') }}</span>
+        <span class="badge {{ 'b-ok' if v.laufend else ('b-danger' if v.zustand == 'anonymisiert' else '') }}">{{ ZUSTAND_TEXT[v.zustand] }}</span>
+        {% if v.aktiv %}<span class="badge b-brand">aktiv</span>{% endif %}</div>
+      {% else %}
+      <div class="sl-titel">{{ leiste.titel }}</div>
+      {% if leiste.knopf %}<a class="btn btn-primary btn-sm sl-knopf" href="{{ leiste.knopf[1] }}" id="{{ leiste.knopf[2] }}">{{ leiste.knopf[0] }}</a>{% endif %}
+      {% endif %}
+    </div>
+    <nav id="sl-nav" class="sl-nav" aria-label="{{ v.name if v else leiste.titel }}">
+      {% for gruppe, punkte in gruppen %}
+      {% if gruppe %}<div class="nav-group">{{ gruppe }}</div>{% endif %}
+      {% for schluessel, text, url, zahl in punkte %}
+      <a class="nav-item {{ 'nav-on' if reiter == schluessel }}" href="{{ url }}" data-seite="{{ schluessel }}"
+         {% if reiter == schluessel %}aria-current="page"{% endif %}><span>{{ text }}</span>
+        {% if zahl is not none and schluessel == 'aufgaben' %}{% if zahl %}<span class="zaehler-badge" id="nav-aufgaben-zahl">{{ zahl }}</span>{% endif %}
+        {% elif zahl is not none %}<span class="hint">{{ zahl }}</span>{% endif %}</a>
+      {% endfor %}
+      {% endfor %}
+    </nav>
+  </aside>
+  {% endif %}
+  <main class="inhalt">
+    {% if meldung %}<p class="alert a-ok meldung" role="status">{{ meldung }}</p>{% endif %}
+    {% if fehler %}<p class="alert a-danger fehler" role="alert">{{ fehler }}</p>{% endif %}
+    {% if warnung %}<p class="alert a-warn" role="status" id="warnung">Hinweis: {{ warnung }}</p>{% endif %}
+    {% if v and not v.laufend %}<p class="alert a-info hinweis">Diese Veranstaltung ist {{ ZUSTAND_TEXT[v.zustand] }} und schreibgeschützt.</p>{% endif %}
+    {% block kopf %}{% endblock %}
+    {% block inhalt %}{% endblock %}
+    <footer class="admin-fuss" id="admin-fuss"><span class="app-version">{{ APP_NAME }} {{ APP_RELEASE }}</span></footer>
+  </main>
+</div>
+<dialog class="dialog" id="bestaetigung-dialog" aria-labelledby="bestaetigung-titel">
+  <form method="dialog">
+    <h2 id="bestaetigung-titel">Bitte bestätigen</h2>
+    <p id="bestaetigung-text"></p>
+    <div class="btn-reihe"><button type="submit" value="nein" class="btn btn-quiet" id="dialog-abbrechen">Abbrechen</button>
+      <button type="submit" value="ja" class="btn btn-primary" id="dialog-ok">Bestätigen</button></div>
+  </form>
+</dialog>
+<script src="/static/js/admin.js"></script>
+<script>
+  // Fixierter Rahmen: Höhe der Kopfzeile für Seitenleiste und Sprungziele; Handy: Menü-Button
+  (() => {
+    const kopf = document.getElementById("topbar");
+    const setzen = () => document.documentElement.style.setProperty("--kopf-hoehe", `${kopf.offsetHeight}px`);
+    setzen();
+    new ResizeObserver(setzen).observe(kopf);
+    const knopf = document.getElementById("menue-knopf");
+    if (!knopf) return;
+    knopf.addEventListener("click", () => {
+      const offen = knopf.getAttribute("aria-expanded") !== "true";
+      knopf.setAttribute("aria-expanded", String(offen));
+      document.getElementById("seitenleiste").classList.toggle("offen", offen);
+    });
+  })();
+</script>
+</body>
+</html>

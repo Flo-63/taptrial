@@ -1,0 +1,18 @@
+<table class="ergebnis">
+  <thead><tr><th class="rang">Rang</th><th class="nr">Nr.</th><th>Name</th><th>Verein</th>
+    {% if mit_klasse %}<th>Klasse</th>{% endif %}<th class="zeit">Zeit</th>
+    {% if d.wertung %}<th>Abzeichen</th>{% endif %}<th>Status</th>{% for s in segmente or [] %}<th class="segment-kopf">{{ s }}</th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for z in zeilen %}
+  <tr data-nr="{{ z.startnummer }}" class="{{ 'vorbehalt' if z.vorbehalt }} status-{{ z.status|lower }}">
+    <td class="rang">{{ (z.rang_klasse if not mit_klasse else z.rang) or '' }}</td>
+    <td class="nr">{{ z.startnummer }}</td><td>{{ z.name }}</td><td>{{ z.verein }}</td>
+    {% if mit_klasse %}<td>{{ z.klasse }}</td>{% endif %}
+    <td class="zeit">{{ z.zeit }}</td>
+    {% if d.wertung %}<td class="stufe stufe-{{ (z.stufe or '')|lower }}">{{ z.stufe_text }}</td>{% endif %}
+    <td class="status">{{ z.status_text }}</td>
+    {% for s in segmente or [] %}<td class="zeit segment">{{ z.segmente[loop.index0] or "–" if z.segmente else "" }}</td>{% endfor %}
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>

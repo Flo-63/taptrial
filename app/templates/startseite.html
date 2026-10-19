@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ APP_NAME }} – {{ APP_UNTERTITEL }}</title>
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/icons/icon-180.png" sizes="180x180">
+  <link rel="stylesheet" href="/static/css/basis.css">
+  <link rel="stylesheet" href="/static/css/oeffentlich.css">
+</head>
+<body class="startseite">
+  <header class="start-kopf">
+    {% set inst = installation(request) %}
+    <p class="start-verein" id="start-verein">{{ inst.vereinsname or APP_NAME }}</p>
+    {% if v %}
+    <h1 id="veranstaltung">{{ v.name }}</h1>
+    <p class="start-datum" id="datum">{{ v.datum.strftime('%d.%m.%Y') }}</p>
+    {% else %}
+    <h1 id="veranstaltung">Derzeit keine Veranstaltung</h1>
+    {% endif %}
+  </header>
+  <main class="start-knoepfe">
+    <a class="start-knopf" id="link-ergebnisse" href="/ergebnisse"><strong>Ergebnisse</strong><span>für Teilnehmer und Zuschauer</span></a>
+    <a class="start-knopf" id="link-monitor" href="/monitor"><strong>Zielmonitor</strong><span>Großbildschirm im Zielbereich</span></a>
+    <a class="start-knopf start-knopf-admin" id="link-admin" href="/admin"><strong>Anmeldung Admin</strong><span>für Veranstalter</span></a>
+    <p class="start-hinweis" id="hinweis-helfer">Start, Ziel und Rennleitung: Link bzw. QR-Code von der Rennleitung verwenden.</p>
+  </main>
+  {% include "_oeffentlich_fuss.html" %}
+</body>
+</html>

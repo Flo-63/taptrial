@@ -1,0 +1,6 @@
+{# Leiste über jeder Druckansicht: Drucken und zurück zur Seite, von der man kam #}
+<nav class="druckleiste nicht-drucken" aria-label="Druckansicht">
+  <button type="button" class="btn btn-primary" id="drucken" onclick="window.print()">Drucken</button>
+  {% if zurueck %}<a class="btn btn-secondary" href="{{ zurueck }}" id="zurueck-admin">{{ "Zurück zum Admin" if zurueck.startswith("/admin") else "Zurück zu den Ergebnissen" }}</a>{% endif %}
+  {% if leiste_hinweis %}<span class="hint">{{ leiste_hinweis }}</span>{% endif %}
+</nav>

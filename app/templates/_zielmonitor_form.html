@@ -1,0 +1,60 @@
+{# Zielmonitor-Konfiguration (Segmente 14), eingebunden unter Einstellungen → Zielmonitor und Ergebnisse
+   und als Schritt 4 im Assistenten (Segmente 66, assistent = true) #}
+{% from "_admin.html" import abbrechen %}
+<form method="post" action="/admin/v/{{ v.id }}/zielmonitor" class="stapel" id="zielmonitor-form">
+  <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="ziel" value="{{ monitor_ziel }}">
+  {# Enter in einem Feld speichert (sonst wäre „Auf“ der ersten Seite – deaktiviert – der Standardknopf) #}
+  <button type="submit" name="aktion" value="speichern" class="nur-standard" tabindex="-1" aria-hidden="true">Speichern</button>
+  {% if request.query_params.get("ok", "").startswith("Zielmonitor gespeichert") %}<span id="zielmonitor-gespeichert" hidden></span>{% endif %}
+  <section class="card stapel-eng" id="monitor-seiten">
+    <h2>Seiten</h2>
+    <p class="hint">Eingeschaltete Seiten wechseln nacheinander. „Ergebnis“ blättert intern durch alle Klassen (Anzeigedauer je Unterseite); „Live“ zeigt oben „Letzte Zieleinläufe“ und „Auf der Strecke“.</p>
+    <div class="tbl-box"><table class="tbl" id="seiten-tabelle">
+      <thead><tr><th>Seite</th><th>An</th><th>Dauer (s)</th><th>Live</th><th>Optionen</th><th class="aktionen">Reihenfolge</th></tr></thead>
+      <tbody>
+      {% for s in konf.seiten %}{% set i = loop.index0 %}
+      <tr data-typ="{{ s.typ }}" data-index="{{ i }}">
+        <td><strong>{{ SEITENTYPEN.get(s.typ, s.typ) }}</strong></td>
+        <td><input type="checkbox" name="seite_an_{{ i }}" value="1" {{ 'checked' if s.an }} aria-label="Seite {{ loop.index }} an"></td>
+        <td><input name="seite_dauer_{{ i }}" value="{{ s.dauer }}" inputmode="numeric" class="eingabe eingabe-schmal mono" aria-label="Anzeigedauer Seite {{ loop.index }}"></td>
+        <td><input type="checkbox" name="seite_live_{{ i }}" value="1" {{ 'checked' if s.live }} aria-label="Live-Bereich auf Seite {{ loop.index }}"></td>
+        <td>{% if s.typ == "ergebnis" %}
+          {% if mit_wertung %}<label class="check"><input type="checkbox" name="seite_abzeichen_{{ i }}" value="1" {{ 'checked' if s.abzeichen }}> Abzeichen-Spalte</label>{% endif %}
+          {% if strecken|length > 1 %}<div class="btn-reihe">{% for st in strecken %}<label class="check"><input type="checkbox" name="seite_strecken_{{ i }}" value="{{ st.id }}" {{ 'checked' if st.id in (s.strecken or []) }}> {{ st.name }}</label>{% endfor %}</div>
+          <span class="hint">keine Strecke gewählt = alle</span>{% endif %}
+        {% else %}
+          <select name="seite_abschnitt_{{ i }}" class="eingabe" aria-label="Abschnitt Seite {{ loop.index }}">
+            <option value="">– Abschnitt wählen –</option>
+            {% for key, name in abschnitte %}<option value="{{ key }}" {{ 'selected' if s.abschnitt == key }}>{{ name }}</option>{% endfor %}
+          </select>
+          <label>Top <input name="seite_top_{{ i }}" value="{{ s.top }}" inputmode="numeric" class="eingabe eingabe-schmal mono" aria-label="Top N Seite {{ loop.index }}"></label>
+        {% endif %}</td>
+        <td class="aktionen"><div class="btn-reihe">
+          <button type="submit" name="aktion" value="auf:{{ i }}" class="btn btn-quiet btn-sm" {{ 'disabled' if loop.first }} aria-label="Seite {{ loop.index }} nach oben">Auf</button>
+          <button type="submit" name="aktion" value="ab:{{ i }}" class="btn btn-quiet btn-sm" {{ 'disabled' if loop.last }} aria-label="Seite {{ loop.index }} nach unten">Ab</button>
+          <button type="submit" name="aktion" value="weg:{{ i }}" class="btn btn-quiet btn-sm btn-danger-text" aria-label="Seite {{ loop.index }} entfernen">Entfernen</button></div></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="hint">Keine Seiten – der Monitor zeigt dann das Ergebnis.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    <div class="btn-reihe"><select name="neuer_typ" class="eingabe" aria-label="Seitentyp">{% for typ, name in SEITENTYPEN.items() %}<option value="{{ typ }}">{{ name }}</option>{% endfor %}</select>
+      <button type="submit" name="aktion" value="neu" class="btn btn-secondary btn-sm" id="seite-neu">Seite hinzufügen</button></div>
+  </section>
+  <section class="card stapel-eng" id="monitor-live">
+    <h2>Live-Bereich: Abschnittszeiten</h2>
+    <p class="hint">Je ausgewähltem Abschnitt ein Feld bei „Auf der Strecke“ mit der letzten Zeit des Fahrers. „mit Pfeil und Differenz“ vergleicht mit der vorherigen Durchfahrt (▼ schneller, ▲ langsamer; nur bei Zeit für „jede Durchfahrt“ und nur für gewählte Felder). Bei wenig Platz fallen erst die Differenz, dann der Pfeil weg.</p>
+    {% for key, name in abschnitte %}
+    <div class="btn-reihe live-feld" data-feld="{{ key }}"><label class="check"><input type="checkbox" name="live_abschnitt" value="{{ key }}" {{ 'checked' if key in konf.live_abschnitte }}> {{ name }}</label>
+      {% if key in live_wiederkehrend %}{% set an = key in konf.live_abschnitte %}<label class="check hint"><input type="checkbox" name="live_vergleich" value="{{ key }}" {{ 'checked' if an and key in konf.live_vergleich }} {{ 'disabled' if not an }} data-vorgabe="{{ '1' if key in live_vorgabe else '0' }}" aria-label="{{ name }}: mit Pfeil und Differenz"> mit Pfeil und Differenz</label>{% endif %}</div>
+    {% else %}
+    <p class="hint">Keine Abschnitte – erst unter „Strecken“ → Strecke öffnen → „Verlauf“ bzw. „Auswertungsabschnitte“ anlegen.</p>
+    {% endfor %}
+  </section>
+  {% if assistent %}{# Segmente 66: Schritt im Assistenten – „Weiter“ speichert und geht zur Zusammenfassung #}
+  <div class="btn-reihe"><a class="btn btn-quiet" href="/admin/einrichtung/{{ v.id }}/3" id="zurueck">Zurück</a><button type="submit" name="weiter" value="1" class="btn btn-primary" id="weiter">Weiter</button> {{ abbrechen("/admin") }}</div>
+  {% else %}
+  <div><button type="submit" name="aktion" value="speichern" class="btn btn-primary" id="zielmonitor-speichern">Speichern</button> {{ abbrechen(abbruch_ziel(request, "/admin/v/" ~ v.id)) }}</div>
+  {% endif %}
+</form>

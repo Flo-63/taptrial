@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>{{ titel }} – {{ APP_NAME }}</title>
+  <link rel="manifest" href="/{{ rolle }}.webmanifest{% if token %}?token={{ token }}{{ profil_parameter }}{% endif %}">
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/static/icons/icon-192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/static/icons/icon-180.png" sizes="180x180">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body class="geraet geraet-{{ rolle }}">
+  <header id="statusleiste" class="statusleiste">
+    <span class="rolle">{{ titel }}</span>
+    <span id="netz" class="netz">…</span>
+    <span id="ausstehend">0 ausstehend</span>
+    <span>letzter Sync <span id="letzter-sync">–</span></span>
+    <span id="uhr-pruefung" class="uhr-pruefung" title="Abweichung der Geräteuhr gegenüber dem Server">Uhr ungeprüft</span>
+    <span class="uhr-box" title="Aktuelle Uhrzeit dieses Geräts (keine Rennuhr)">Uhrzeit <span id="uhr" class="uhr"></span></span>
+  </header>
+  <div id="fehler" class="fehler" hidden></div>
+  <section id="sperre" class="sperre" hidden aria-live="polite">
+    <h1>Zeitnahme noch nicht freigegeben</h1>
+    <p>Es fehlt:</p>
+    <ul id="sperre-schritte"></ul>
+    <p>Das erledigt die Turnierleitung im Admin. Diese Seite schaltet sich danach von selbst frei.</p>
+    <p id="sperre-ausstehend" class="klein" hidden></p>
+  </section>
+  <section id="ende-box" class="ende-box" hidden aria-live="polite">
+    <p id="ende-text" class="ende-text"></p>
+    <div id="ungesendet-box" class="ungesendet" hidden>
+      <p><strong id="ungesendet-text"></strong></p>
+      <p class="klein">Diese Einträge bleiben auf dem Gerät, bis sie exportiert und an die Rennleitung gegeben wurden.</p>
+      <button id="btn-exportieren" class="btn">Einträge exportieren</button>
+    </div>
+  </section>
+  <section id="frueher-box" class="ungesendet frueher-box" hidden aria-live="polite">
+    <p><strong id="frueher-text"></strong></p>
+    <p class="klein">Diese Einträge gehören zu einer anderen Veranstaltung als dieser Link. Sie werden nicht gesendet und bleiben auf dem Gerät, bis sie gesichert und an die Rennleitung gegeben wurden.</p>
+    <button id="btn-frueher-exportieren" class="btn">Als Datei sichern</button>
+  </section>
+  <main>
+{% block inhalt %}{% endblock %}
+  </main>
+  <footer class="geraet-fuss">
+    <p><a id="link-hilfe" class="link-hilfe" href="/hilfe/{{ rolle }}">Hilfe</a></p>
+    {% block einstellungen %}{% endblock %}
+    <button id="btn-zuruecksetzen" class="btn-klein">Gerät zurücksetzen</button>
+    <p class="klein">Löscht Teilnehmerliste, Stand, Zugang und übertragene Einträge auf diesem Gerät. Nicht übertragene Einträge bleiben erhalten.</p>
+  </footer>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js", { scope: "/" });
+    }
+  </script>
+  <script type="module" src="/static/js/{{ skript or rolle }}.js"></script>
+</body>
+</html>

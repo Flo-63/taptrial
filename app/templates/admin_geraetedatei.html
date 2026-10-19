@@ -1,0 +1,37 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf %}
+{% block titel %}Gerätedatei einlesen{% endblock %}
+{% block kopf %}{{ seitenkopf("Vorschau: " ~ dateiname, "Gerät " ~ p.geraet) }}{% endblock %}
+{% block inhalt %}
+{% if p.andere_veranstaltung %}
+<p class="alert a-warn" id="gd-warnung"><span><strong>Achtung: Die Datei gehört zu einer anderen Veranstaltung als „{{ v.name }}“.</strong> Nur übernehmen, wenn du sicher bist.</span></p>
+{% endif %}
+<section class="card stapel-eng" id="geraetedatei-vorschau">
+  <div class="kennzahlen">
+    <div class="kpi"><strong id="gd-anzahl">{{ p.anzahl }}</strong><span>Einträge in der Datei</span></div>
+    <div class="kpi"><strong id="gd-vorhanden">{{ p.vorhanden }}</strong><span>davon schon vorhanden (gleiche UUID)</span></div>
+    <div class="kpi"><strong id="gd-neu">{{ p.neu|length }}</strong><span>davon neu</span></div>
+    <div class="kpi"><strong id="gd-ungueltig">{{ p.ungueltig }}</strong><span>ungültig (werden nicht übernommen)</span></div>
+  </div>
+  {% if p.neu %}
+  <h2 class="zwischentitel">Neue Einträge</h2>
+  <div class="tbl-box tbl-box-kurz"><table class="tbl" id="gd-liste">
+    <thead><tr><th>Erfasst</th><th>Art</th><th>Nr.</th><th>Zeit</th><th>Wert</th></tr></thead>
+    <tbody>
+    {% for e in p.neu %}
+    <tr><td class="zeit">{{ uhrzeit(e.erstellt_ms) }}</td><td>{{ ART_TEXT.get(e.art, e.art) }}</td><td class="mono">{{ e.startnummer or '' }}</td><td class="zeit">{{ uhrzeit(e.zeit_ms) if e.zeit_ms else '' }}</td><td>{{ e.wert or '' }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% endif %}
+  <form method="post" action="/admin/v/{{ v.id }}/geraetedatei/uebernehmen" id="gd-form" class="stapel-eng">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="inhalt" value="{{ inhalt }}">
+    {% if p.andere_veranstaltung %}
+    <label class="check"><input type="checkbox" name="trotzdem" value="1" required> Trotzdem in „{{ v.name }}“ übernehmen</label>
+    {% endif %}
+    <div class="btn-reihe"><button type="submit" class="btn btn-primary" id="gd-uebernehmen">Übernehmen</button>
+      <a class="btn btn-quiet" href="/admin/v/{{ v.id }}/geraetedatei">Abbrechen</a></div>
+  </form>
+</section>
+{% endblock %}

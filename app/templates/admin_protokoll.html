@@ -1,0 +1,39 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf, abbrechen, zuklappen %}
+{% block titel %}Protokoll{% endblock %}
+{% block kopf %}{% call seitenkopf("Protokoll", "Alle Einträge aller Geräte. Nichts wird gelöscht, Korrekturen sind eigene Einträge.") %}
+  <a class="btn btn-secondary" href="/admin/v/{{ v.id }}/geraetedatei" id="geraetedatei-link">Gerätedatei einlesen</a>
+  <a class="btn btn-quiet" href="/admin/v/{{ v.id }}/export/protokoll.csv" id="protokoll-csv">Als CSV</a>
+{% endcall %}{% endblock %}
+{% block inhalt %}
+<form method="get" class="filterleiste" id="protokoll-filter">
+  <div class="field filter-wahl"><label for="p-nr">Startnummer</label><input id="p-nr" name="nr" inputmode="numeric" value="{{ nr }}" placeholder="alle"></div>
+  <div class="field filter-wahl"><label for="p-art">Art</label><select id="p-art" name="art" class="auto-senden">
+    {% for schluessel, (text, _) in PROTOKOLL_ARTEN.items() %}<option value="{{ schluessel }}" {{ 'selected' if art == schluessel }}>{{ text }}</option>{% endfor %}
+  </select></div>
+  <div class="btn-reihe"><button type="submit" class="btn btn-secondary">Filtern</button>
+    {% if nr or art %}<a class="btn btn-quiet" href="/admin/v/{{ v.id }}/protokoll">Alle zeigen</a>{% endif %}</div>
+</form>
+<div class="card card-flach"><div class="tbl-box"><table class="tbl" id="protokoll">
+  <thead><tr><th>Erfasst</th><th>Empfangen</th><th>Art</th><th>Nr.</th><th>Zeit</th><th>Wert</th><th>Gerät</th><th>Notiz</th><th></th></tr></thead>
+  <tbody>
+  {% for e in ereignisse %}
+  <tr class="{{ '' if e.uuid in gueltig else 'storniert' }}" data-art="{{ e.art }}">
+    <td class="zeit">{{ e.erstellt_ms|uhrzeit }}</td><td class="zeit">{{ e.empfangen_ms|uhrzeit }}{% if e.quelle == 'datei' %} <span class="badge quelle" title="{{ quelle_text(e) }}">aus Datei übernommen</span>{% endif %}</td><td>{{ ART_TEXT.get(e.art, e.art) }}</td>
+    <td class="mono">{{ e.startnummer if e.startnummer is not none else '' }}</td><td class="zeit">{{ e.zeit_ms|uhrzeit if e.zeit_ms else '' }}{% if korrekturen.get(e.uuid) %} <span class="badge b-warn korrigiert">korrigiert ({{ korrektur_text(korrekturen[e.uuid]) }})</span>{% endif %}</td>
+    <td>{% if e.art == 'ZEITKORREKTUR' and e.delta_ms %}{{ korrektur_text(e.delta_ms) }}{% elif e.art == 'DURCHFAHRT' %}{{ mp_namen.get(e.wert, e.wert) }}{% else %}{{ e.wert or '' }}{% endif %}</td><td class="mono">{{ e.geraet }}</td><td class="notiz">{{ e.notiz or '' }}</td>
+    <td>{% if e.uuid not in gueltig %}storniert{% elif e.uuid in nicht_gezaehlt %}<span class="badge b-warn nicht-gezaehlt" title="Zählt nicht für die Segmentzeiten">nicht gezählt: {{ nicht_gezaehlt[e.uuid] }}</span>
+      {% if nicht_gezaehlt[e.uuid] == "Doppeltipp" and v.laufend %}<details class="aktion doppeltipp-werten"><summary class="btn btn-quiet btn-sm">Doch werten</summary>
+        <form method="post" action="/admin/v/{{ v.id }}/korrektur" class="formular">
+          <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="aktion" value="doppeltipp_werten"><input type="hidden" name="zurueck" value="{{ hier }}">
+          <input type="hidden" name="stempel" value="{{ e.uuid }}">
+          <div class="field"><label for="dw-{{ e.uuid }}">Notiz (Pflicht)</label><input id="dw-{{ e.uuid }}" name="notiz" required></div>
+          <div><button type="submit" class="btn btn-primary btn-sm">Werten</button> {{ zuklappen() }}</div>
+        </form></details>{% endif %}{% endif %}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="9" class="hint">Keine Einträge.</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}

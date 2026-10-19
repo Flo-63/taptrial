@@ -1,0 +1,19 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf %}
+{% block titel %}Teilnehmer bearbeiten{% endblock %}
+{% block kopf %}{% call seitenkopf("Nr. " ~ t.startnummer ~ " bearbeiten", t.vorname ~ " " ~ t.nachname) %}
+  <a class="btn btn-quiet" href="/admin/v/{{ v.id }}/teilnehmer/{{ t.id }}">Zurück zum Fahrer</a>
+{% endcall %}{% endblock %}
+{% block inhalt %}
+<section class="card">
+  {% include "admin_teilnehmer_formular.html" %}
+</section>
+<div class="danger-zone" id="teilnehmer-loeschen">
+  <div class="dz-row"><div><strong>Teilnehmer löschen</strong><div class="hint">Nur möglich, solange es keine Ereignisse zu dieser Nummer gibt.</div></div>
+    <form method="post" action="/admin/v/{{ v.id }}/teilnehmer/{{ t.id }}/loeschen" class="loeschen"
+          data-bestaetigen="Nr. {{ t.startnummer }} {{ t.vorname }} {{ t.nachname }} löschen?" data-bestaetigen-knopf="Löschen">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button type="submit" class="btn btn-danger" {{ 'disabled' if not v.laufend }}>Teilnehmer löschen …</button>
+    </form></div>
+</div>
+{% endblock %}

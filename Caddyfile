@@ -1,0 +1,6 @@
+# Caddy für TapTrial (docker-compose.caddy.yml): nur die Domain in .env eintragen (TAPTRIAL_DOMAIN).
+# Caddy holt das Zertifikat selbst und leitet http auf https um.
+{$TAPTRIAL_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8000
+}

@@ -1,0 +1,54 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf, abbrechen %}
+{% block titel %}Strecken{% endblock %}
+{% block kopf %}{% call seitenkopf("Strecken", "Jede Klasse fährt genau eine Strecke. Verlauf, Zwischenzeiten und Auswertungsabschnitte stehen auf der Seite der Strecke.") %}
+  <a class="btn btn-secondary" href="/admin/v/{{ v.id }}/strecken/laden" id="strecke-laden">Aus Datei laden</a>
+  <form method="post" action="/admin/v/{{ v.id }}/strecken/neu"><input type="hidden" name="csrf" value="{{ csrf }}">
+    <button type="submit" class="btn btn-secondary" id="strecke-neu" {{ 'disabled' if strecken_eingefroren or v.zustand == 'anonymisiert' }}>Strecke hinzufügen</button></form>
+{% endcall %}{% endblock %}
+{% block inhalt %}
+{% set gesperrt = v.zustand == 'anonymisiert' %}
+{% if strecken_eingefroren %}<p class="alert a-info" id="strecken-eingefroren">Eingefroren: Strecken hinzufügen und entfernen, Klassenzuordnung und Streckenverlauf sind fest (es gibt Zeiten); Namen und Längen bleiben änderbar{% if strecken_offiziell %}, die Länge erst nach „Zurücknehmen“ des offiziellen Ergebnisses{% endif %}. Auswertungsabschnitte lassen sich weiter ändern.</p>{% endif %}
+{% set uebersicht_je = {} %}{% for u in segment_uebersicht %}{% set _ = uebersicht_je.update({u.strecke: u}) %}{% endfor %}
+<section class="card stapel-eng" id="strecken">
+  <h2>Strecken</h2>
+  <div class="tbl-box tbl-box-kurz"><table class="tbl" id="strecken-liste">
+    <thead><tr><th>Strecke</th><th>Gemessene Länge</th><th>Abfolge</th><th>Klassen</th><th></th></tr></thead>
+    <tbody>
+    {% for s in strecken %}{% set i = loop.index0 %}
+    <tr class="strecke-kurz" data-strecke="{{ s.name }}">
+      <td><span class="strecke-marke strecke-farbe-{{ i % FARBEN }}">{{ s.name }}</span></td>
+      <td class="mono">{{ km_text(s.laenge_km) ~ " km" if s.laenge_km else "–" }}</td>
+      <td class="mono abfolge-kurz">{{ uebersicht_je[s.name].abfolge if s.name in uebersicht_je else "Start · Ziel" }}</td>
+      {% set kl = s.klassen|map(attribute="klasse")|list %}
+      <td>{% if kl %}{{ kl|length }}{% else %}<span class="badge b-warn">keine</span>{% endif %}</td>
+      <td><a class="btn btn-secondary btn-sm" href="/admin/v/{{ v.id }}/strecken/{{ s.id }}" id="strecke-oeffnen-{{ i }}">Öffnen</a></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+
+<section class="card stapel-eng" id="klassenzuordnung">
+  <h2>Klassenzuordnung</h2>
+  <p class="hint">Jede Klasse fährt genau eine Strecke. Eine Klasse mit Teilnehmern braucht eine Strecke; eine Strecke ohne Klasse ergibt einen Hinweis.{% if strecken_eingefroren %} Gesperrt: es gibt bereits Zeiten.{% endif %}</p>
+  <form method="post" action="/admin/v/{{ v.id }}/strecken/zuordnung" class="stapel-eng" id="zuordnung-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="tbl-box tbl-box-kurz"><table class="tbl" id="zuordnung">
+      <thead><tr><th>Klasse</th><th>Teilnehmer</th><th>Strecke</th></tr></thead>
+      <tbody>
+      {% for kl in zuordnungsklassen %}
+      <tr data-klasse="{{ kl }}">
+        <td>{{ kl }}</td>
+        <td class="mono">{{ klassen_anzahl.get(kl, 0) or "" }}</td>
+        <td><select name="klasse:{{ kl }}" class="eingabe strecke-wahl" aria-label="Strecke für {{ kl }}" {{ 'disabled' if strecken_eingefroren }}>
+          {% for s in strecken %}<option value="{{ s.id }}" {{ 'selected' if zuordnung.get(kl) == loop.index0 }}>{{ s.name }}</option>{% endfor %}
+        </select></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    <div><button type="submit" class="btn btn-primary" id="zuordnung-speichern" {{ 'disabled' if strecken_eingefroren or gesperrt }}>Zuordnung speichern</button> {{ abbrechen(abbruch_ziel(request, "/admin/v/" ~ v.id)) }}</div>
+  </form>
+</section>
+{% endblock %}

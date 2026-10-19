@@ -1,0 +1,16 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf, abbrechen %}
+{% block titel %}Branding{% endblock %}
+{% block kopf %}{{ seitenkopf("Branding", "Vereinsname dieser Installation – gilt für alle Veranstaltungen.") }}{% endblock %}
+{% block inhalt %}
+<section class="card stapel-eng" id="branding">
+  <form method="post" action="/admin/saetze/branding" class="stapel-eng" id="branding-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="field"><label for="vereinsname">Vereinsname</label>
+      <input id="vereinsname" name="vereinsname" class="eingabe" maxlength="100" value="{{ werte.vereinsname }}">
+      <p class="hint">Steht auf der Startseite über der Veranstaltung. Leer: dort steht „{{ APP_NAME }}“.</p></div>
+    <p class="hint">Logo und Farben folgen später (Roadmap).</p>
+    <div class="btn-reihe"><button type="submit" class="btn btn-primary" id="branding-speichern">Speichern</button> {{ abbrechen(abbruch_ziel(request, "/admin/saetze")) }}</div>
+  </form>
+</section>
+{% endblock %}

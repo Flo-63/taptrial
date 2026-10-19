@@ -1,0 +1,68 @@
+{% extends "geraet_basis.html" %}
+{% block inhalt %}
+<div class="ziel-kopf">
+  <nav id="haupt-reiter" class="reiter" role="tablist">
+    <button id="tab-erfassen" class="reiter-btn aktiv" role="tab" aria-selected="true">Erfassen</button>
+    <button id="tab-rennleitung" class="reiter-btn" role="tab" aria-selected="false">
+      Rennleitung <span id="badge-offen" class="badge" hidden></span>
+    </button>
+  </nav>
+  <div id="kopf-erfassen">
+    <button id="btn-ohne-nummer" class="btn btn-ziel">Zeit ohne Nummer</button>
+    <div id="ziel-info" class="ziel-info" aria-live="polite"></div>
+    <div id="letzter-einlauf" class="letzter-einlauf">
+      <div id="letzter-text" class="letzter-text">Noch kein Einlauf erfasst</div>
+      <button id="btn-minus" class="btn btn-korrektur" disabled aria-label="Zielzeit 1 Sekunde früher">−1 s</button>
+      <button id="btn-plus" class="btn btn-korrektur" disabled aria-label="Zielzeit 1 Sekunde später">+1 s</button>
+      <button id="btn-einlauf-zurueck" class="btn btn-einlauf-zurueck" disabled>Rückgängig</button>
+    </div>
+  </div>
+  <nav id="kopf-rennleitung" class="rl-reiter" role="tablist" hidden aria-label="Bereiche der Rennleitung">
+    <button id="rl-tab-offen" class="rl-reiter-btn" role="tab" data-bereich="offen">Offene Zeiten (0)</button>
+    <button id="rl-tab-letzte" class="rl-reiter-btn" role="tab" data-bereich="letzte">Letzte Einläufe</button>
+    <button id="rl-tab-status" class="rl-reiter-btn" role="tab" data-bereich="status">Status</button>
+  </nav>
+</div>
+
+<section id="sicht-erfassen" role="tabpanel">
+  <div id="fahrer" class="kacheln kacheln-ziel"></div>
+</section>
+
+<section id="sicht-rennleitung" role="tabpanel" hidden>
+  <section id="zuordnen-box" class="zuordnen-box" hidden>
+    <div class="zuordnen">
+      <div id="zuordnen-text"></div>
+      <button id="btn-zuordnen-abbrechen" class="btn">Abbrechen</button>
+    </div>
+    <div id="auswahl" class="kacheln kacheln-ziel"></div>
+  </section>
+
+  <section id="rl-offen" class="rl-bereich" role="tabpanel" aria-labelledby="rl-tab-offen">
+  <h2>Offene Zeiten – antippen, dann Fahrer wählen</h2>
+  <div id="offene-zeiten" class="offene"></div>
+  <p id="keine-offenen" class="leer">Keine offenen Zeiten.</p>
+  </section>
+
+  <section id="rl-letzte" class="rl-bereich" role="tabpanel" aria-labelledby="rl-tab-letzte" hidden>
+  <h2>Letzte Zieleinläufe (alle Zielgeräte) – Zeile antippen für Aktionen</h2>
+  <ol id="letzte" class="letzte"></ol>
+  <p id="keine-letzten" class="leer">Noch keine Zieleinläufe.</p>
+  </section>
+
+  <section id="rl-status" class="rl-bereich" role="tabpanel" aria-labelledby="rl-tab-status" hidden>
+  <h2>Status DNF / DSQ vorläufig – Fahrer antippen</h2>
+  <section id="status-box" class="status-box" hidden>
+    <div id="status-text" class="status-text"></div>
+    <input id="status-grund" class="status-grund" type="text" maxlength="200"
+           placeholder="Grund (Pflicht für DSQ vorläufig)" autocomplete="off">
+    <div class="reihe reihe-3">
+      <button id="btn-status-dnf" class="btn btn-warnung" data-wert="DNF">DNF</button>
+      <button id="btn-status-dsq" class="btn btn-warnung" data-wert="DSQ_VORLAEUFIG">DSQ vorläufig</button>
+      <button id="btn-status-ok" class="btn" data-wert="OK">Status aufheben</button>
+    </div>
+    <button id="btn-status-abbrechen" class="btn">Abbrechen</button>
+  </section>
+  <div id="status-auswahl" class="kacheln kacheln-ziel"></div>
+  </section>
+</section>
+{% endblock %}

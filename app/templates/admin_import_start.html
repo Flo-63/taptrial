@@ -1,0 +1,35 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf, abbrechen, zuklappen %}
+{% block titel %}CSV importieren{% endblock %}
+{% block kopf %}{% call seitenkopf("CSV importieren", "Teilnehmerliste hochladen; danach zeigt eine Vorschau alle Zeilen zum Korrigieren.") %}
+  <a class="btn btn-quiet" href="/admin/v/{{ v.id }}/teilnehmer">Zurück zu Teilnehmer</a>
+{% endcall %}{% endblock %}
+{% block inhalt %}
+{% if entwurf_vorhanden %}<div class="alert a-warn" id="offener-entwurf"><span>Es gibt einen offenen Import-Entwurf.</span>
+  <a class="btn btn-secondary btn-sm" href="/admin/v/{{ v.id }}/import/vorschau">Vorschau fortsetzen</a></div>{% endif %}
+<section class="card stapel-eng" id="import">
+  <h2>Datei hochladen</h2>
+  <form method="post" action="/admin/v/{{ v.id }}/import" enctype="multipart/form-data" class="formular">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="field"><label for="i-datei">CSV-Datei</label><input id="i-datei" type="file" name="datei" accept=".csv,text/csv" required>
+      <span class="hint">Importiert wird erst, wenn die ganze Liste fehlerfrei ist.</span></div>
+    <div><button type="submit" class="btn btn-primary" {{ 'disabled' if not v.laufend }}>Hochladen und prüfen</button> {{ abbrechen(abbruch_ziel(request, "/admin/v/" ~ v.id ~ "/teilnehmer")) }}</div>
+    {% if not v.laufend %}<p class="hint">Gesperrt: Die Veranstaltung ist {{ ZUSTAND_TEXT[v.zustand] }}.</p>{% endif %}
+  </form>
+</section>
+<section class="card stapel-eng" id="csv-hinweis">
+  <div class="card-kopf"><div><h2>Format</h2>
+    <p class="sub">Erste Zeile: Spaltennamen. Trennzeichen {% for t in csv_trennzeichen %}<code>{{ t }}</code>{{ " oder " if not loop.last }}{% endfor %}.
+      Groß-/Kleinschreibung (Spaltennamen und Werte) und Leerzeichen am Rand sind egal.</p></div>
+    <a class="btn btn-secondary btn-sm" href="/admin/beispiel-teilnehmer.csv" id="beispiel-csv">Beispiel-CSV herunterladen</a></div>
+  <div class="tbl-box tbl-box-kurz"><table class="tbl csv-spalten">
+    <thead><tr><th>Spalte</th><th></th><th>Bedeutung</th><th>Werte</th><th>fehlt/leer</th></tr></thead>
+    <tbody>
+    {% for s in csv_spalten %}
+    <tr><td><code>{{ s.name }}</code></td><td>{{ "Pflicht" if s.pflicht else "optional" }}</td>
+      <td>{{ s.beschreibung }}</td><td>{{ s.werte }}</td><td>{{ s.standard if not s.pflicht else "Fehler" }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endblock %}

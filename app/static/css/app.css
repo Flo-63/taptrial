@@ -1,0 +1,214 @@
+/* Mobil, große Touch-Flächen, hoher Kontrast (Sonne, Handschuhe). */
+:root {
+  --bg: #111;
+  --fg: #fff;
+  --grau: #888;
+  --flaeche: #222;
+  --gelb: #ffd400;
+  --gruen: #1db954;
+  --rot: #e53935;
+  --orange: #fb8c00;
+  --status-hoehe: 52px;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 18px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+main { padding: 12px; padding-bottom: 40px; max-width: 700px; margin: 0 auto; }
+h2 { font-size: 1rem; color: var(--grau); text-transform: uppercase; margin: 20px 0 8px; }
+
+.statusleiste {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: center; align-content: center;
+  /* feste Höhe: Änderungen im Text dürfen den Inhalt darunter nicht verschieben */
+  height: var(--status-hoehe); overflow: hidden;
+  padding: 0 12px; background: #000; border-bottom: 1px solid #333; font-size: 0.85rem;
+}
+.statusleiste .rolle { font-weight: 700; color: var(--gelb); }
+.statusleiste .uhr-box { margin-left: auto; white-space: nowrap; color: var(--grau); font-size: 0.8rem; }
+.statusleiste .uhr { color: var(--fg); font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.1rem; }
+.netz { padding: 2px 8px; border-radius: 4px; font-weight: 700; }
+.netz.ist-online { background: var(--gruen); color: #000; }
+.netz.ist-offline { background: var(--rot); color: #fff; }
+.uhr-pruefung { color: var(--grau); white-space: nowrap; font-size: 0.8rem; }
+.uhr-pruefung.uhr-warnung { background: var(--rot); color: #fff; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+/* Overlay statt im Fluss, damit Kacheln nicht springen */
+.fehler {
+  position: fixed; left: 8px; right: 8px; bottom: 8px; z-index: 20;
+  background: var(--rot); color: #fff; padding: 12px; font-weight: 700; border-radius: 10px;
+}
+
+/* Segmente 46: Sperrbildschirm bis zur Freigabe – Bedienung ausgeblendet */
+.sperre { margin: 16px; padding: 20px; border-radius: 12px; background: #2a2a2a; border: 3px solid var(--gelb, #e0b000); }
+.sperre h1 { margin: 0 0 12px; font-size: 1.5rem; }
+.sperre ul { margin: 0 0 12px; padding-left: 1.4em; font-size: 1.2rem; font-weight: 700; }
+body.gesperrt main { display: none; }
+
+.btn {
+  display: block; width: 100%; min-height: 64px; padding: 12px;
+  font-size: 1.15rem; font-weight: 700; border: 2px solid #444; border-radius: 12px;
+  background: var(--flaeche); color: var(--fg); cursor: pointer;
+}
+.btn:disabled { opacity: 0.35; }
+.btn:active:not(:disabled) { transform: scale(0.98); }
+.btn-gross { min-height: 140px; font-size: 3rem; letter-spacing: 0.1em; margin: 12px 0; }
+.btn-start { background: var(--gruen); border-color: var(--gruen); color: #000; }
+.btn-warnung { border-color: var(--orange); color: var(--orange); }
+.btn.bestaetigen { background: var(--orange); color: #000; }
+.reihe { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+
+.naechster { text-align: center; padding: 8px 0; }
+.naechster .label { color: var(--grau); text-transform: uppercase; font-size: 0.9rem; }
+.naechster .nr { font-size: 3.4rem; font-weight: 800; color: var(--gelb); line-height: 1.1; }
+.naechster .name { font-size: 1.4rem; min-height: 1.6em; }
+.info { color: #ccc; margin: 6px 0; text-align: center; }
+
+.warteliste { margin: 0; padding-left: 1.4em; color: #ccc; }
+.warteliste li { padding: 4px 0; }
+.warteliste li.uebersprungen { color: var(--orange); }
+
+.kacheln { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 8px; }
+.kachel {
+  min-height: 72px; font-size: 1.6rem; font-weight: 800;
+  border: 2px solid #444; border-radius: 12px; background: var(--flaeche); color: var(--fg);
+}
+
+/* Zielgerät */
+.btn-ziel { background: var(--gelb); border-color: var(--gelb); color: #000; font-size: 1.9rem; min-height: 88px; }
+.ziel-kopf {
+  position: sticky; top: var(--status-hoehe); z-index: 8;
+  background: var(--bg); margin: -12px -12px 12px; padding: 8px 12px; border-bottom: 1px solid #333;
+}
+.reiter { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.reiter[hidden] { display: none; }
+.reiter-btn {
+  min-height: 52px; font-size: 1.1rem; font-weight: 700; border-radius: 10px;
+  border: 2px solid #444; background: var(--flaeche); color: #ccc;
+}
+.reiter-btn.aktiv { background: var(--fg); color: #000; border-color: var(--fg); }
+.badge { color: var(--orange); font-weight: 800; }
+.reiter-btn.aktiv .badge { color: #b35900; }
+#kopf-erfassen .btn-ziel { margin-top: 8px; }
+.leer { color: var(--grau); margin: 4px 0; }
+.zuordnen-box { margin-bottom: 12px; }
+.zuordnen {
+  margin-bottom: 8px;
+  background: var(--orange); color: #000; font-weight: 700; padding: 10px; border-radius: 12px;
+  display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+}
+.zuordnen .btn { min-height: 48px; width: auto; }
+.offene { display: flex; flex-wrap: wrap; gap: 8px; }
+.offen {
+  min-height: 56px; padding: 8px 14px; font-size: 1.2rem; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: #332b00; color: var(--gelb); border: 2px solid var(--gelb); border-radius: 12px;
+}
+.offen.gewaehlt { background: var(--gelb); color: #000; }
+.letzte { margin: 0; padding: 0; list-style: none; }
+.letzte li { border-bottom: 1px solid #333; font-variant-numeric: tabular-nums; }
+/* kompakte Zeile; antippen klappt −1 s · +1 s · Umbuchen · Rückgängig auf (immer nur eine) */
+.letzte .letzte-text {
+  display: block; width: 100%; min-height: 44px; padding: 6px 4px; text-align: left;
+  background: none; border: 0; color: var(--fg); font: inherit; font-size: 0.95rem; line-height: 1.3;
+}
+.letzte .letzte-text::after { content: " ▸"; color: var(--grau); }
+.letzte li.aufgeklappt { background: var(--flaeche); }
+.letzte li.aufgeklappt .letzte-text::after { content: " ▾"; }
+.letzte-aktionen { display: grid; grid-template-columns: auto auto 1fr 1fr; gap: 6px; padding: 0 4px 8px; }
+.letzte-aktionen[hidden] { display: none; }
+.rl-reiter { display: grid; grid-template-columns: 1.4fr 1.2fr 0.8fr; gap: 6px; margin-top: 8px; }
+.rl-reiter[hidden] { display: none; }
+.rl-reiter-btn {
+  min-height: 44px; padding: 4px 6px; font-size: 0.95rem; font-weight: 700; border-radius: 10px;
+  border: 2px solid #555; background: var(--flaeche); color: #ddd;
+}
+.rl-reiter-btn.aktiv { background: var(--fg); color: #000; border-color: var(--fg); }
+.rl-bereich h2 { margin-top: 4px; }
+/* „im Ziel“ in Status-Kacheln: dezent mit Text, Kontrast > 4,5:1 (WCAG AA) */
+.kachel.im-ziel { border-color: #2f6b45; }
+.kachel-im-ziel { font-size: 0.8rem; font-weight: 700; color: #8fdca8; }
+.btn-klein {
+  min-height: 44px; padding: 6px 10px; font-size: 0.95rem; font-weight: 700;
+  border: 2px solid #555; border-radius: 10px; background: var(--flaeche); color: var(--fg);
+}
+.btn-klein.bestaetigen { background: var(--orange); color: #000; }
+.kacheln-ziel .kachel { min-height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.kachel-nr { font-size: 1.9rem; font-weight: 800; line-height: 1; }
+.kachel-name { font-size: 0.75rem; font-weight: 400; color: #ccc; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kachel.nicht-gestartet { opacity: 0.4; border-style: dashed; }
+.kachel.erledigt { background: var(--gruen); color: #000; border-color: var(--gruen); }
+
+/* Rennleitung */
+.status-box { background: var(--flaeche); border: 2px solid var(--orange); border-radius: 12px; padding: 10px; margin-bottom: 10px; }
+.status-text { font-weight: 700; margin-bottom: 4px; }
+.reihe-3 { grid-template-columns: 1fr 1fr 1fr; }
+.kachel-status { font-size: 0.8rem; font-weight: 800; color: var(--orange); }
+.kachel.gewaehlt { outline: 3px solid var(--orange); }
+.kachel.erwartet { box-shadow: 0 0 0 3px var(--fg); } /* erwartet (AUSBAU A8): nur Rahmen, kein Status */
+
+/* Endzustand / Info */
+.endzustand { font-size: 2.2rem; font-weight: 800; color: var(--gruen); line-height: 1.2; }
+.ziel-info { min-height: 1.6em; margin-top: 6px; text-align: center; font-weight: 700; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ziel-info.fertig { color: var(--gruen); }
+
+/* DSQ vorläufig (gelb, unter Vorbehalt) und bestätigt (rot) */
+.kachel.vorbehalt { border-color: var(--gelb); }
+.kachel.vorbehalt .kachel-status, .vorbehalt-text { color: var(--gelb); }
+.kachel-status.dsq { color: var(--rot); }
+.status-grund { width: 100%; min-height: 52px; font-size: 1.1rem; padding: 8px 10px; margin: 8px 0;
+  border-radius: 10px; border: 2px solid #555; background: #000; color: var(--fg); }
+
+/* Aufräumen / Gerät zurücksetzen */
+.ende-box { margin: 12px; padding: 14px; border-radius: 12px; background: #1d2a1f; border: 2px solid var(--gruen); }
+.ende-text { font-size: 1.2rem; font-weight: 700; margin: 0 0 8px; }
+.ungesendet { background: #3d1d1d; border: 2px solid var(--rot); border-radius: 10px; padding: 10px; }
+.frueher-box { margin: 12px; }
+.ungesendet strong { color: #ff8a80; font-size: 1.2rem; }
+.klein { font-size: 0.85rem; color: var(--grau); }
+.geraet-fuss { max-width: 700px; margin: 40px auto 20px; padding: 0 12px; text-align: center; }
+.link-hilfe { color: var(--gelb); font-weight: 700; font-size: 1.1rem; }
+.geraet-fuss .btn-klein.bestaetigen { background: var(--orange); color: #000; }
+/* Strecken (Phase 13): Kennzeichen immer mit Text, Farbe nur zusätzlich */
+.strecke-marke { display: inline-block; padding: 1px 7px; border-radius: 9px; font-weight: 800; font-size: 0.8rem; color: #fff; white-space: nowrap; border: 1px solid #fff; }
+/* Streckenfarben (AUSBAU A3): ohne Rot, Orange, Gelb (schon belegt), kein Grün als Hauptfarbe; weißer Text ≥ 4,5:1 */
+.strecke-farbe-0 { background: #1565c0; } .strecke-farbe-1 { background: #7b1fa2; } .strecke-farbe-2 { background: #00695c; }
+.strecke-farbe-3 { background: #455a64; } .strecke-farbe-4 { background: #4527a0; } .strecke-farbe-5 { background: #212121; }
+.kachel-strecke { margin-top: 3px; font-size: 0.7rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.strecke-zeile { min-height: 1.6em; font-size: 1.2rem; }
+.strecke-zeile .strecke-marke { font-size: 1.1rem; padding: 2px 12px; border-radius: 12px; }
+/* Schnellkorrektur (Phase 14a): Leiste mit fester Höhe, verschiebt keine Kacheln */
+.letzter-einlauf { display: flex; align-items: center; gap: 8px; height: 3.6rem; margin-top: 6px; overflow: hidden; }
+.letzter-text { flex: 1; min-width: 0; font-size: 0.95rem; line-height: 1.2; max-height: 2.4em; overflow: hidden; color: #ddd; }
+.btn-korrektur { flex: none; width: 3.6rem; min-height: 3.2rem; padding: 0 4px; font-size: 1.05rem; font-weight: 800; }
+.btn-einlauf-zurueck { flex: none; width: 6.4rem; min-height: 3.2rem; padding: 0 4px; font-size: 0.95rem; font-weight: 800; }
+.btn-einlauf-zurueck.bestaetigen { background: var(--orange); color: #000; border-color: var(--orange); }
+.korrigiert-text { color: var(--orange); font-weight: 700; }
+.korrektur-hinweis { color: var(--rot); font-weight: 700; font-size: 0.85rem; }
+/* Start: Nummer wählen mit Bestätigung, gewählter Nächster hervorgehoben */
+.auswahl-bestaetigung { margin: 10px 0; padding: 10px; border: 2px solid var(--gelb); border-radius: 12px; background: #332b00; }
+.auswahl-text { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; }
+#naechster-box.gewaehlt .nr::after { content: " (gewählt)"; font-size: 1rem; color: var(--gelb); }
+.einstellung { margin: 8px 0; }
+.einstellung input { width: auto; margin-right: 6px; }
+.warteliste li { cursor: default; }
+/* Start: Anzeige-Umschalter (Nummer wählen / Warteliste) */
+.btn-breit { width: 100%; }
+.umschalter { margin-top: 8px; }
+.durchfahrten-hinweis { margin: 6px 12px 0; }
+.btn-umschalter { font-size: 1rem; }
+.btn-umschalter[aria-pressed="true"] { background: var(--gelb); border-color: var(--gelb); color: #000; }
+.btn-umschalter[aria-pressed="true"]::before { content: "✓ "; }
+/* Start: DNS-Fahrer unter „Nummer wählen“ (AUSBAU A1) */
+.auswahl .kachel.dns { opacity: 0.5; border-style: dashed; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.auswahl .kachel.dns .kachel-status { font-size: 0.8rem; color: var(--orange); }
+.auswahl .kachel.dns.bestaetigen { opacity: 1; border-color: var(--orange); }
+/* Posten (Segmente) */
+.posten-titel { text-align: center; font-size: 1.5rem; font-weight: 800; color: var(--gelb); }
+.kachel-runde { font-size: 0.8rem; font-weight: 800; color: var(--gelb); }
+.kachel.erledigt .kachel-runde { color: #000; }
+.letzte .letzte-zwischen { font-size: 0.8rem; color: #aaa; padding: 0 4px 6px; }

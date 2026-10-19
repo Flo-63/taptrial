@@ -1,0 +1,27 @@
+# Release 6: bei jedem Push auf main ruff und pytest (ohne E2E – die brauchen Browser und Zeit;
+# lokal: uv run pytest -q tests/e2e).
+name: Tests
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: Abhängigkeiten
+        run: uv sync --frozen
+      - name: ruff
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+      - name: pytest (ohne E2E)
+        run: uv run pytest -q --ignore=tests/e2e

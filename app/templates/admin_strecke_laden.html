@@ -1,0 +1,57 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf, abbrechen %}
+{% block titel %}Strecke aus Datei laden{% endblock %}
+{% block kopf %}
+<div><a class="btn btn-quiet btn-sm" href="{{ abbruch_ziel(request, '/admin/v/' ~ v.id ~ '/strecken') }}" id="zurueck-strecken">Zurück</a></div>
+{{ seitenkopf("Strecke aus Datei laden", "Eine gespeicherte Streckendefinition (.toml) übernehmen: Verlauf, Messpunkte und Abschnitte. Die Klassen ordnest du danach zu.") }}
+{% endblock %}
+{% block inhalt %}
+{% set rueck = abbruch_ziel(request, "/admin/v/" ~ v.id ~ "/strecken") %}
+{% if sperre %}<p class="alert a-info" id="laden-gesperrt">Gesperrt: {{ sperre }}</p>{% endif %}
+{% if not vorschau %}
+<section class="card stapel-eng" id="laden">
+  <h2>Datei wählen</h2>
+  <form method="post" action="/admin/v/{{ v.id }}/strecken/laden{{ '?zurueck=' ~ rueck|urlencode if request.query_params.get('zurueck') }}" enctype="multipart/form-data" class="formular">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="ersetzen" value="{{ ersetzen }}"><input type="hidden" name="platz" value="{{ platz }}">
+    <div class="field"><label for="strecke-datei">Streckendatei (.toml)</label><input id="strecke-datei" type="file" name="datei" accept=".toml,text/plain" required></div>
+    <div class="btn-reihe"><button type="submit" class="btn btn-primary" id="vorschau-zeigen" {{ 'disabled' if sperre }}>Vorschau</button> {{ abbrechen(rueck) }}</div>
+  </form>
+</section>
+{% else %}
+{% set e = vorschau.entwurf %}
+<section class="card stapel-eng" id="vorschau">
+  <h2>Vorschau: {{ e.name or "(ohne Namen)" }}</h2>
+  <dl class="fakten">
+    <dt>Gemessene Länge</dt><dd>{{ km_text(e.laenge_km) ~ " km" if e.laenge_km else "–" }}</dd>
+    {% if e.beschreibung %}<dt>Beschreibung</dt><dd>{{ e.beschreibung }}</dd>{% endif %}
+    {% if e.komoot %}<dt>Komoot</dt><dd class="mono">{{ e.komoot }}</dd>{% endif %}
+    <dt>Abfolge</dt><dd class="mono" id="vorschau-abfolge">{{ vorschau.abfolge }}</dd>
+    <dt>Durchfahrten</dt><dd>{% for n, k in vorschau.anzahl %}{{ n }} {{ k }}×{{ ", " if not loop.last }}{% else %}–{% endfor %}</dd>
+    <dt>Messpunkte</dt><dd id="vorschau-messpunkte">{% if vorschau.wiederverwendet %}wiederverwendet: {{ vorschau.wiederverwendet|join(", ") }}{% endif %}{% if vorschau.wiederverwendet and vorschau.neu %} · {% endif %}{% if vorschau.neu %}neu angelegt: {{ vorschau.neu|join(", ") }}{% endif %}</dd>
+    <dt>Abschnitte</dt><dd>{{ e.abschnitte|map(attribute="name")|join(", ") or "nur die Segmente" }}</dd>
+  </dl>
+  {% if e.hinweise %}<p class="alert a-warn" id="vorschau-hinweise">{{ e.hinweise|join(" ") }}</p>{% endif %}
+  {% set fehler = e.fehler + vorschau.ortkonflikte %}
+  {% if fehler %}<div class="alert a-danger" id="vorschau-fehler"><strong>Prüfhinweise – so nicht übernehmbar:</strong><ul class="fakten-liste">{% for f in fehler %}<li>{{ f }}</li>{% endfor %}</ul></div>
+  {% else %}<p class="alert a-ok" id="vorschau-ok">Die Datei ist in Ordnung.</p>{% endif %}
+  <form method="post" action="/admin/v/{{ v.id }}/strecken/uebernehmen" class="formular" id="uebernehmen-form"{% if vorschau.ersetzbar %}
+        data-bestaetigen="{{ vorschau.verlust }} Fortfahren?" data-bestaetigen-knopf="Ersetzen" data-bestaetigen-wenn="#modus-ersetzen:checked"{% endif %}>
+    <input type="hidden" name="bestaetigt" value="">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="ziel" value="{{ request.query_params.get('zurueck', '') }}"><input type="hidden" name="platz" value="{{ platz }}">
+    {% if platz %}<p class="hint" id="laden-platz">Für den Platz „{{ platz }}“ im Assistenten: Die Strecke übernimmt dessen Klassen.</p>{% endif %}
+    <textarea name="inhalt" hidden>{{ inhalt }}</textarea>
+    {% set alt = vorschau.ersetzbar %}
+    {% if alt %}<input type="hidden" name="ersetzen" value="{{ alt.id }}">
+    <fieldset class="stapel-eng" id="laden-modus"><legend>{{ "Es gibt schon eine Strecke mit diesem Namen." if vorschau.namenskonflikt else "Strecke „" ~ alt.name ~ "“ aus dieser Datei laden?" }}</legend>
+      <label class="check"><input type="radio" name="modus" value="ersetzen" id="modus-ersetzen" required> Bestehende Strecke „{{ alt.name }}“ ersetzen</label>
+      <span class="hint" id="ersetzen-verlust">{{ vorschau.verlust }} Name und Klassenzuordnung bleiben.</span>
+      <label class="check"><input type="radio" name="modus" value="neu" id="modus-neu" required> Unter anderem Namen anlegen</label>
+      <span class="hint">Bitte wählen – nichts ist vorausgewählt.</span>
+    </fieldset>{% endif %}
+    <div class="field" id="laden-name-feld"><label for="laden-name">Name der {{ "neuen " if alt }}Strecke</label><input id="laden-name" name="name" value="{{ e.name }}" maxlength="100" {{ '' if alt else 'required' }}>
+      {% if vorschau.namenskonflikt %}<span class="hint" id="namenskonflikt"><strong>Beim Anlegen unter anderem Namen: bitte ändern.</strong></span>{% endif %}</div>
+    <div class="btn-reihe"><button type="submit" class="btn btn-primary" id="uebernehmen" {{ 'disabled' if fehler or sperre }}>Übernehmen</button> {{ abbrechen(rueck) }}</div>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

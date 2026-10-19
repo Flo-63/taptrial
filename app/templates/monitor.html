@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zielmonitor – {{ APP_NAME }}</title>
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/basis.css?v={{ version }}">
+  <link rel="stylesheet" href="/static/css/oeffentlich.css?v={{ version }}">
+</head>
+<body class="monitor" data-version="{{ version }}">
+  <header class="mon-kopf">
+    <div class="mon-kopf-info">
+      <div class="mon-kopf-links">
+        <span id="mon-titel" class="mon-titel">Zielmonitor</span>
+        <span id="mon-status" class="mon-status"></span>
+        <span id="mon-stand" class="stand" hidden></span>
+      </div>
+      <span id="mon-zaehlung" class="mon-zaehlung"></span>
+    </div>
+    <a id="mon-qr" class="mon-qr" aria-label="Ergebnisse aufs Handy" href="{{ qr_url }}" data-url="{{ qr_url }}" target="_blank" rel="noopener">
+      {{ qr|safe }}<span>Ergebnisse<br>aufs Handy</span>
+    </a>
+  </header>
+  <p id="mon-keine-ergebnisse" class="mon-keine-ergebnisse" hidden></p>
+  {# Segmente 72: eine Spaltenkopfzeile, ein gemeinsames Raster für alle Bereiche #}
+  <div class="mon-zeile mon-spaltenkopf" id="mon-spaltenkopf" aria-hidden="true">
+    <span class="rang">Platz</span><span class="nr">Nr.</span><span class="name">Name</span><span class="klasse">Klasse</span>
+    <span class="abschnitt">Abschnitt</span><span class="zeit">Zeit</span><span class="status" id="mon-kopf-status">Abz./Status</span>
+  </div>
+  <main class="mon-bereiche">
+    <section class="mon-box" id="box-unterwegs" hidden>
+      <h2 class="mon-leiste"><span class="mon-leiste-name">Auf der Strecke</span> <span class="mon-anzahl" id="anzahl-unterwegs"></span>
+        <span class="mon-leiste-rechts"><span class="mon-orientierung">laufende Zeiten nur zur Orientierung</span>
+          <span id="seite-unterwegs" class="mon-seite"></span><span class="mon-fortschritt" id="fortschritt-unterwegs" hidden><i></i></span></span></h2>
+      <table class="mon-liste" id="mon-unterwegs"><tbody></tbody></table>
+    </section>
+    <section class="mon-box" id="box-letzte" hidden>
+      <h2 class="mon-leiste"><span class="mon-leiste-name">Letzte Zieleinläufe</span> <span class="mon-anzahl" id="anzahl-letzte"></span>
+        <span class="mon-leiste-rechts"><span id="seite-letzte" class="mon-seite"></span><span class="mon-fortschritt" id="fortschritt-letzte" hidden><i></i></span></span></h2>
+      <table class="mon-liste" id="mon-letzte"><tbody></tbody></table>
+    </section>
+    <section class="mon-box mon-ergebnis" id="box-ergebnis">
+      <h2 class="mon-leiste"><span class="mon-leiste-name" id="mon-bereich">Ergebnis</span> <span class="mon-anzahl" id="anzahl-ergebnis"></span>
+        <span class="mon-leiste-rechts"><span id="mon-seite" class="mon-seite"></span><span class="mon-fortschritt" id="fortschritt-ergebnis" hidden><i></i></span></span></h2>
+      <div id="mon-klassen"></div>
+    </section>
+  </main>
+  <script src="/static/js/monitor.js?v={{ version }}"></script>
+</body>
+</html>

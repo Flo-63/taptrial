@@ -1,0 +1,37 @@
+# TapTrial mit Caddy davor: automatisches HTTPS (Let's Encrypt). Voraussetzung: Die Domain zeigt auf
+# diesen Rechner, Ports 80 und 443 sind von außen erreichbar.
+#
+#   cp .env.example .env    # RCB_TOKEN_ADMIN und TAPTRIAL_DOMAIN eintragen
+#   docker compose -f docker-compose.caddy.yml up -d
+#
+# Caddy teilt sich das Netz mit der App (network_mode) und spricht sie über 127.0.0.1 an – damit
+# vertraut die App den X-Forwarded-Kopfzeilen von Caddy ohne weitere Einstellung.
+services:
+  app:
+    image: ghcr.io/flo-63/taptrial:${TAPTRIAL_VERSION:-latest}
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - taptrial-daten:/data
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    network_mode: "service:app"
+    environment:
+      TAPTRIAL_DOMAIN: ${TAPTRIAL_DOMAIN:?TAPTRIAL_DOMAIN in .env eintragen}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-daten:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+    restart: unless-stopped
+
+volumes:
+  taptrial-daten:
+  caddy-daten:
+  caddy-config:

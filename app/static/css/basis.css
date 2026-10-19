@@ -1,0 +1,285 @@
+/* Zentrales Stylesheet (ADMIN-REVIEW 2.3, Schritt 1): Design-Tokens und Bausteine.
+   Admin, öffentliche Seiten und Hilfe nutzen es; seitenspezifisches CSS nur für Layout.
+   Farbwerte stehen ausschließlich hier in den Token-Blöcken (Test test_keine_farben_ausserhalb).
+   Branding (AUSBAU D1) überschreibt später nur die --brand*-Tokens. */
+
+/* IBM Plex Sans/Mono, lokal ausgeliefert (SIL Open Font License 1.1, static/fonts/OFL.txt) */
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("/static/fonts/ibm-plex-sans-latin-400.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 500; font-display: swap;
+  src: url("/static/fonts/ibm-plex-sans-latin-500.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 600; font-display: swap;
+  src: url("/static/fonts/ibm-plex-sans-latin-600.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 700; font-display: swap;
+  src: url("/static/fonts/ibm-plex-sans-latin-700.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("/static/fonts/ibm-plex-mono-latin-400.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 500; font-display: swap;
+  src: url("/static/fonts/ibm-plex-mono-latin-500.woff2") format("woff2"); }
+
+/* --- Tokens ------------------------------------------------------------------------------ */
+:root {
+  /* Marke (Branding überschreibt nur diese) */
+  --brand: #1F4E8C; --brand-ink: #FFFFFF; --brand-soft: #E6EDF7; --brand-dunkel: #163A69;
+  /* Flächen und Text */
+  --ground: #F3F4F6; --surface: #FFFFFF; --line: #DCDFE4; --line-soft: #ECEEF1;
+  --text: #18202A; --text-2: #3A4552; --muted: #5A6573; --muted-2: #8A94A1;
+  --th-bg: #F8F9FA; --hover: #F6F8FB; --info-soft: #EEF1F5; --code-bg: #F1F3F5;
+  --kopf: #18202A; --kopf-hover: #2A3644; --kopf-text: #E8ECF1; --kopf-linie: #3B4756;
+  /* Status */
+  --ok: #1E6B3A; --ok-soft: #E3F2E8; --ok-line: #9CCFAD; --ok-ink: #123F22;
+  --warn: #7A5200; --warn-soft: #FFF3D6; --warn-line: #E9C86A; --warn-ink: #4D3400;
+  --danger: #B3261E; --danger-soft: #FCE8E6; --danger-line: #E8B4AF; --danger-ink: #7A1A14;
+  --gefahr-trenner: #F1D3CF;
+  /* Abzeichen-Stufen (hell) */
+  --gold: #8A6A00; --silber: #5B6470; --bronze: #8C5A2B;
+  /* Streckenfarben (AUSBAU A3, Werte von Branch jetzt): nie Rot, Orange, Gelb; immer mit Text */
+  --strecke-ink: #FFFFFF;
+  --strecke-0: #1565C0; --strecke-1: #7B1FA2; --strecke-2: #00695C;
+  --strecke-3: #455A64; --strecke-4: #4527A0; --strecke-5: #212121;
+  /* Druck */
+  --druck-text: #000000; --druck-grau: #333333; --druck-linie: #999999; --papier: #FFFFFF;
+  --druck-kopf-bg: #EEEEEE; --urkunde-text: #1A1A1A; --urkunde-rahmen: #555555; --urkunde-logo: #BBBBBB;
+  --urkunde-gold: #D4AF37; --urkunde-silber: #C0C0C0; --urkunde-bronze: #CD7F32;
+  --wasserzeichen: rgba(200, 0, 0, 0.12);
+  /* Dunkle Variante (Zielmonitor, Startseite; Geräteseiten folgen später, R6) */
+  --d-ground: #0D0F12; --d-surface: #171A1F; --d-surface-2: #1F2329; --d-schwarz: #000000;
+  --d-text: #F2F4F6; --d-text-2: #D0D5DA; --d-text-3: #C5CBD2; --d-muted: #9AA3AD; --d-muted-2: #8A929B;
+  --d-muted-3: #6C757D; --d-line: #333333; --d-line-2: #444444; --d-line-3: #2A2F36; --d-line-4: #23272D;
+  --d-line-5: #3A4048; --d-line-6: #555555; --d-line-7: #6B737C;
+  --d-gelb: #FFD400; --d-orange: #E8541E; --d-ok: #6EE391; --d-ok-line: #2E8B57;
+  --d-warn: #FFB74D; --d-warn-bg: #2B2620; --d-danger: #FF6B6B; --d-stand: #FF8A65;
+  --d-gold: #B8860B; --d-silber: #AEB6BF; --d-bronze: #A0522D; --d-stufe-ink: #000000; --d-stufe-ink-hell: #FFFFFF;
+  /* Schrift, Abstände, Radien */
+  --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 28px;
+  --r: 8px; --r-sm: 6px; --r-pill: 999px;
+  --schatten: 0 1px 2px rgba(24, 32, 42, 0.08);
+  --schatten-dialog: 0 10px 30px rgba(24, 32, 42, 0.25);
+  --fokus: 0 0 0 3px rgba(31, 78, 140, 0.35);
+  --backdrop: rgba(24, 32, 42, 0.45);
+  --formular-breite: 640px;
+}
+
+/* --- Grundlagen --------------------------------------------------------------------------- */
+* { box-sizing: border-box; }
+[hidden], input[type=hidden] { display: none !important; }
+body { margin: 0; font-family: var(--font); color: var(--text); background: var(--ground);
+  font-size: 15px; line-height: 1.45; }
+a { color: var(--brand); }
+a:hover { color: var(--brand-dunkel); }
+:focus-visible { outline: none; box-shadow: var(--fokus); }
+.mono, .zeit { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.hint, .klein { font-size: 13px; color: var(--muted); font-weight: 400; }
+.sub { margin: 0; color: var(--muted); font-size: 14px; }
+code { font-family: var(--mono); background: var(--code-bg); padding: 0 4px; border-radius: 3px; font-size: 0.9em; }
+
+/* --- Buttons: Primär, Sekundär, Ruhig, Gefahr (keine Textlinks für Aktionen) ---------------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px;
+  padding: 0 16px; border-radius: var(--r-sm); font: 600 14px var(--font); border: 1px solid transparent;
+  cursor: pointer; text-decoration: none; white-space: nowrap; background: var(--surface); color: var(--text); }
+.btn-primary { background: var(--brand); color: var(--brand-ink); }
+.btn-primary:hover { background: var(--brand-dunkel); color: var(--brand-ink); }
+.btn-secondary { background: var(--surface); color: var(--brand); border-color: var(--brand); }
+.btn-secondary:hover { background: var(--brand-soft); color: var(--brand); }
+.btn-quiet { background: transparent; color: var(--text); border-color: var(--line); }
+.btn-quiet:hover { background: var(--info-soft); color: var(--text); }
+.btn-danger { background: var(--danger); color: var(--brand-ink); }
+.btn-danger:hover { background: var(--danger-ink); color: var(--brand-ink); }
+.btn-quiet.btn-danger-text { color: var(--danger); }
+.btn-sm { min-height: 32px; padding: 0 12px; font-size: 13px; }
+.btn[disabled], .btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+.btn-reihe { display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center; }
+@media (max-width: 700px) { .btn { min-height: 44px; } .btn-sm { min-height: 36px; } }
+
+/* --- Badges ----------------------------------------------------------------------------- */
+.badge { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 11px;
+  font-size: 12px; font-weight: 600; background: var(--info-soft); color: var(--text); white-space: nowrap;
+  vertical-align: middle; }
+.b-ok { background: var(--ok-soft); color: var(--ok); }
+.b-warn { background: var(--warn-soft); color: var(--warn); }
+.b-danger { background: var(--danger-soft); color: var(--danger); }
+.b-brand { background: var(--brand-soft); color: var(--brand); }
+.zaehler-badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--warn);
+  color: var(--brand-ink); font-size: 12px; font-weight: 700; display: inline-flex; align-items: center;
+  justify-content: center; }
+
+/* Streckenkennzeichen (Text + Farbe, nie nur Farbe) */
+.strecke-marke { display: inline-block; padding: 1px 8px; border-radius: 10px; font-weight: 700;
+  font-size: 0.85em; color: var(--strecke-ink); white-space: nowrap; }
+.strecke-farbe-0 { background: var(--strecke-0); } .strecke-farbe-1 { background: var(--strecke-1); }
+.strecke-farbe-2 { background: var(--strecke-2); } .strecke-farbe-3 { background: var(--strecke-3); }
+.strecke-farbe-4 { background: var(--strecke-4); } .strecke-farbe-5 { background: var(--strecke-5); }
+@media print { .strecke-marke { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+
+/* --- Karte, Seitenkopf -------------------------------------------------------------------- */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: var(--s5); }
+.card > h2, .card-kopf h2 { margin: 0 0 4px; font-size: 17px; }
+.card-kopf { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--s3); flex-wrap: wrap;
+  margin-bottom: var(--s3); }
+.card-flach { padding: 0; overflow: hidden; }
+.card-flach > .card-kopf { padding: var(--s5) var(--s5) var(--s2); margin: 0; }
+.stapel { display: flex; flex-direction: column; gap: var(--s5); }
+.stapel-eng { display: flex; flex-direction: column; gap: var(--s3); }
+.spalten { display: flex; flex-wrap: wrap; gap: var(--s5); align-items: flex-start; }
+.spalten > .breit { flex: 2 1 420px; min-width: 0; }
+.spalten > .schmal { flex: 1 1 260px; min-width: 0; }
+.raster-karten { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--s4); }
+.page-head { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--s3); flex-wrap: wrap; }
+.page-head h1 { margin: 0; font-size: 24px; line-height: 1.2; }
+.page-head .sub { margin-top: 4px; }
+
+/* --- Meldungen: Erfolg, Info, Warnung, Fehler ---------------------------------------------- */
+.alert { display: flex; gap: var(--s3); align-items: center; justify-content: space-between; flex-wrap: wrap;
+  padding: var(--s3) var(--s4); border-radius: var(--r); border: 1px solid var(--line); background: var(--info-soft);
+  margin: 0; }
+.a-ok { background: var(--ok-soft); border-color: var(--ok-line); color: var(--ok-ink); }
+.a-info { background: var(--info-soft); border-color: var(--line); color: var(--text); }
+.a-warn { background: var(--warn-soft); border-color: var(--warn-line); color: var(--warn-ink); }
+.a-danger { background: var(--danger-soft); border-color: var(--danger-line); color: var(--danger-ink); }
+.leer-zustand { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s3); padding: var(--s5);
+  color: var(--muted); }
+
+/* --- Tabelle (Sticky Header, Zeile anklickbar) ---------------------------------------------- */
+.tbl-box { overflow: auto; max-height: calc(100vh - 220px); min-height: 120px; }
+.tbl { width: 100%; border-collapse: collapse; background: var(--surface); }
+.tbl th { position: sticky; top: 0; z-index: 1; background: var(--th-bg); text-align: left; font-size: 12px;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); padding: 10px 12px;
+  border-bottom: 1px solid var(--line); font-weight: 600; }
+.tbl td { padding: 10px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+.tbl tr.row { cursor: pointer; }
+.tbl tr.row:hover td { background: var(--hover); }
+.tbl td.aktionen, .tbl th.aktionen { text-align: right; white-space: nowrap; width: 1%; }
+.tbl tr.storniert td { color: var(--muted-2); text-decoration: line-through; }
+.tbl tr.vorbehalt-zeile td { background: var(--warn-soft); }
+.tbl td.zeit { white-space: nowrap; }
+.tbl-link { color: inherit; text-decoration: none; font-weight: 600; }
+.tbl-link:hover { color: var(--brand); text-decoration: underline; }
+@media (max-width: 700px) { .tbl-box { max-height: 65vh; } }
+
+/* --- Formularfelder (höchstens 640 px, Hilfe unter dem Feld) --------------------------------- */
+.formular { display: flex; flex-direction: column; gap: 14px; max-width: var(--formular-breite); }
+.feld-reihe { display: flex; gap: var(--s4); flex-wrap: wrap; }
+.feld-reihe > .field { flex: 1 1 180px; }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; max-width: var(--formular-breite); }
+.field > label, .field > .label { font-weight: 600; font-size: 13px; }
+.field input:not([type=checkbox]):not([type=radio]), .field select, .field textarea,
+.eingabe { height: 40px; padding: 0 10px; border: 1px solid var(--line); border-radius: var(--r-sm);
+  font: 400 15px var(--font); background: var(--surface); color: var(--text); width: 100%; }
+.field textarea { height: auto; min-height: 80px; padding: 8px 10px; }
+.field input[type=file] { height: auto; padding: 8px 10px; }
+.field input:disabled, .field select:disabled { background: var(--info-soft); color: var(--muted); }
+.check { display: flex; gap: 8px; align-items: center; font-weight: 400; font-size: 14px; }
+.check input { width: auto; margin: 0; flex: none; }
+.filterleiste { display: flex; gap: var(--s3); flex-wrap: wrap; align-items: flex-end; }
+
+/* --- Gefahrenzone --------------------------------------------------------------------------- */
+.danger-zone { border: 1px solid var(--danger-line); border-radius: var(--r); background: var(--surface); }
+.danger-zone > .dz-kopf { padding: var(--s4) var(--s5); border-bottom: 1px solid var(--gefahr-trenner); }
+.danger-zone > .dz-kopf h2 { margin: 0; font-size: 17px; color: var(--danger); }
+.dz-row { display: flex; justify-content: space-between; align-items: center; gap: var(--s4); flex-wrap: wrap;
+  padding: var(--s4) var(--s5); border-bottom: 1px solid var(--gefahr-trenner); }
+.dz-row:last-child { border-bottom: 0; }
+
+/* --- Dialog (Bestätigung) ------------------------------------------------------------------- */
+dialog.dialog { border: 1px solid var(--line); border-radius: var(--r); padding: var(--s5); max-width: 480px;
+  width: calc(100% - 32px); box-shadow: var(--schatten-dialog); color: var(--text); background: var(--surface); }
+dialog.dialog::backdrop { background: var(--backdrop); }
+dialog.dialog h2 { margin: 0 0 var(--s2); font-size: 18px; }
+dialog.dialog .btn-reihe { justify-content: flex-end; margin-top: var(--s4); }
+
+/* --- Schrittleiste (Assistent, Lebenszyklus) -------------------------------------------------- */
+.schritte { display: flex; gap: var(--s2); margin: 0; padding: 0; list-style: none; flex-wrap: wrap; }
+.schritte > li { flex: 1 1 140px; padding: 10px 12px; border-radius: var(--r-sm); background: var(--info-soft);
+  color: var(--muted); font-size: 13px; font-weight: 600; }
+.schritte > li.erledigt { background: var(--ok-soft); color: var(--ok); }
+.schritte > li.aktuell { background: var(--brand); color: var(--brand-ink); }
+.schritte a { color: inherit; text-decoration: none; }
+
+/* --- Kennzahlen und Aufgabenliste ------------------------------------------------------------- */
+.kennzahlen { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--s3); }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 2px; text-decoration: none; color: inherit; }
+.kpi strong { font-size: 26px; font-weight: 600; }
+.kpi span { font-size: 13px; color: var(--muted); }
+a.kpi:hover { border-color: var(--brand); }
+.kpi.kpi-warn { border-color: var(--warn-line); background: var(--warn-soft); }
+.aufgabe { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); flex-wrap: wrap;
+  padding: var(--s3) 0; border-bottom: 1px solid var(--line-soft); }
+.aufgabe:last-child { border-bottom: 0; }
+.fakten { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; margin: var(--s3) 0 0; font-size: 14px; }
+.fakten dt { color: var(--muted); }
+.fakten dd { margin: 0; }
+.card-fuss { margin-top: var(--s4); }
+.nowrap { white-space: nowrap; }
+.eingabe-schmal { width: 8em; }
+.tbl-box-kurz { max-height: 420px; min-height: 0; border: 1px solid var(--line-soft); border-radius: var(--r-sm); }
+.tbl .eingabe { height: 36px; }
+.zwischentitel { margin: var(--s2) 0 0; font-size: 15px; }
+.ausgegraut { opacity: 0.45; pointer-events: none; }
+.formular-breit { max-width: var(--formular-breite); }
+.field > label, .field > .label { margin: 0; display: block; }
+.field input, .field select, .field textarea, .tbl .eingabe { margin: 0; }
+.formular > .check, .stapel-eng > .check { margin: 0; }
+.stapel > *, .stapel-eng > *, .card > p, .card > .sub { margin-top: 0; margin-bottom: 0; }
+/* Aktionen als aufklappbare Formulare (Fahrer-Seite) */
+.aktionen-liste { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: flex-start; }
+details.aktion > summary { list-style: none; }
+details.aktion > summary::-webkit-details-marker { display: none; }
+details.aktion[open] { flex-basis: 100%; }
+details.aktion[open] > summary { background: var(--brand-soft); }
+details.aktion > form { margin-top: var(--s3); padding: var(--s4); border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.merkmal-zeile { display: flex; justify-content: space-between; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.a-warn-karte { border-color: var(--warn-line); background: var(--warn-soft); }
+.filterleiste > .feld-breit, .feld-reihe > .feld-breit { flex: 1 1 260px; }
+.filter-suche { flex: 1 1 260px; max-width: 420px; }
+.filter-wahl { flex: 0 1 200px; }
+.kopf-badges { margin-top: 6px; }
+.abschnitt { margin: 0; font-size: 17px; }
+.fall-titel { margin: 8px 0 2px; font-size: 16px; }
+.dz-row > div:first-child { flex: 1 1 360px; min-width: 0; }
+.tbl td.aktionen .btn-reihe { flex-wrap: nowrap; justify-content: flex-end; }
+/* Reiterleiste (Einstellungen, Segmente 17): eigene Adresse je Reiter; auf dem Handy waagerecht scrollbar */
+.reiterleiste { display: flex; gap: var(--s1); max-width: 100%; min-width: 0; overflow-x: auto; border-bottom: 1px solid var(--line); margin-top: var(--s3); scrollbar-width: thin; }
+.reiter-link { flex: none; padding: var(--s2) var(--s3); color: var(--text-2); text-decoration: none; font-weight: 500; font-size: 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.reiter-link:hover { color: var(--text); background: var(--hover); }
+.reiter-link[aria-current="page"] { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
+/* Reiter im Editor (Segmente 27): Buttons statt Links, Wechsel ohne Speichern; Fehler markiert den Reiter */
+button.reiter-link { background: none; border: 0; border-bottom: 2px solid transparent; font-family: inherit; cursor: pointer; }
+.reiter-link[aria-selected="true"] { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
+.reiter-link.reiter-fehler { color: var(--danger); }
+.reiter-link.reiter-fehler::after { content: " !"; font-weight: 700; }
+[data-reiter-inhalt][hidden] { display: none !important; }
+/* Zentrale Aktionsleiste eines Editors: bleibt unten im Blick */
+.aktionsleiste { position: sticky; bottom: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2);
+  padding: var(--s3) var(--s4); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
+  box-shadow: var(--schatten); }
+/* Verlauf als Punktfolge (Segmente 28) */
+.punktfolge, .pf-innen { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s2); }
+.punktfolge > li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); padding: var(--s2) var(--s3);
+  border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); min-width: 0; }
+.punktfolge > li.pf-fest { background: var(--th-bg); font-weight: 600; }
+.punktfolge > li.pf-block { flex-direction: column; align-items: stretch; border-left: 3px solid var(--brand); }
+.pf-block-kopf { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); }
+.pf-innen > li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); padding-left: var(--s4); }
+.pf-wahl { min-width: 0; max-width: 100%; flex: 1 1 10rem; }
+.pf-block-name { flex: 1 1 8rem; min-width: 0; }
+.pf-wdh-label { display: inline-flex; align-items: center; gap: 4px; }
+.pf-wdh-label .pf-wdh { width: 4.5rem; flex: none; }
+.ab-vorschau { display: block; margin-top: 4px; white-space: normal; }
+.pf-knoepfe { display: inline-flex; gap: 2px; }
+.pf-block-punkt { align-self: flex-start; }
+[aria-invalid="true"] { border-color: var(--danger) !important; outline-color: var(--danger); }
+.feld-fehler { display: block; color: var(--danger); font-size: 13px; margin-top: 4px; }
+
+/* Standardknopf für Enter im Formular (unsichtbar, Segmente 34) */
+.nur-standard { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+/* Release 1: kleine Fußzeile der Druckansichten („erstellt mit TapTrial“) */
+.druck-fuss { margin: 12px 0 0; color: var(--muted); font-size: 8pt; text-align: right; }
+/* Release 2: Version klein in der Fußzeile (Admin, öffentliche Seiten) */
+.admin-fuss { margin-top: 32px; padding-top: 8px; border-top: 1px solid var(--line-soft); color: var(--muted); font-size: 12px; }
+.oeffentlich-fuss { max-width: 1000px; margin: 0 auto; padding: 12px 16px 24px; color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.oeffentlich-fuss a { color: inherit; }
+.startseite .oeffentlich-fuss { justify-content: center; color: var(--d-muted); }
+@media print { .oeffentlich-fuss { display: none; } }

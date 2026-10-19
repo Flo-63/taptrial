@@ -1,0 +1,56 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf %}
+{% block titel %}Teilnehmer{% endblock %}
+{% block kopf %}{% call seitenkopf("Teilnehmer", "Zeile anklicken öffnet den Fahrer mit allen Daten, Zeiten und Korrekturen.") %}
+  <a class="btn btn-secondary" href="/admin/v/{{ v.id }}/import" id="csv-importieren" {{ 'aria-disabled=true' if not v.laufend }}>CSV importieren</a>
+  <a class="btn btn-primary" href="/admin/v/{{ v.id }}/teilnehmer/neu" id="teilnehmer-hinzufuegen" {{ 'aria-disabled=true' if not v.laufend }}>Teilnehmer hinzufügen</a>
+{% endcall %}{% endblock %}
+{% block inhalt %}
+{% if entwurf_vorhanden %}<div class="alert a-warn" id="offener-entwurf"><span>Es gibt einen offenen Import-Entwurf.</span>
+  <a class="btn btn-secondary btn-sm" href="/admin/v/{{ v.id }}/import/vorschau">Vorschau fortsetzen</a></div>{% endif %}
+{% if not teilnehmer %}
+<section class="card leer-zustand" id="keine-teilnehmer">
+  <p>Noch keine Teilnehmer.</p>
+  <div class="btn-reihe"><a class="btn btn-primary" href="/admin/v/{{ v.id }}/import">CSV importieren</a>
+    <a class="btn btn-secondary" href="/admin/v/{{ v.id }}/teilnehmer/neu">Teilnehmer hinzufügen</a></div>
+</section>
+{% else %}
+<form method="get" class="filterleiste" id="filter">
+  <div class="field filter-suche"><label for="t-suche">Suche</label><input id="t-suche" name="q" value="{{ filter.q }}" placeholder="Name, Nummer oder Verein"></div>
+  {% if erg.mehrere_strecken %}
+  <div class="field filter-wahl"><label for="t-strecke">Strecke</label><select id="t-strecke" name="strecke" class="auto-senden">
+    <option value="">alle</option>
+    {% for s in erg.strecken %}<option value="{{ loop.index0 }}" {{ 'selected' if filter.strecke == loop.index0|string }}>{{ s.name }}</option>{% endfor %}
+  </select></div>
+  {% endif %}
+  <div class="field filter-wahl"><label for="t-stand">Stand</label><select id="t-stand" name="stand" class="auto-senden">
+    {% for schluessel, text in STAND_FILTER.items() %}<option value="{{ schluessel }}" {{ 'selected' if filter.stand == schluessel }}>{{ text }}</option>{% endfor %}
+  </select></div>
+  <div class="btn-reihe"><button type="submit" class="btn btn-secondary">Filtern</button>
+    {% if filter.q or filter.strecke or filter.stand != 'alle' %}<a class="btn btn-quiet" href="/admin/v/{{ v.id }}/teilnehmer" id="filter-aus">Alle zeigen</a>{% endif %}</div>
+</form>
+<p id="merkmale-zaehler" class="hint">{{ gefiltert|length }} von {{ teilnehmer|length }} ·
+  {% if wertung_an %}Abzeichen: {{ anzahl_abzeichen }}{% else %}<span id="wertung-aus">Wertung aus</span> (Abzeichen spielt keine Rolle){% endif %}
+  · außer Konkurrenz (a. K.): {{ anzahl_ak }}</p>
+<div class="card card-flach"><div class="tbl-box"><table class="tbl" id="teilnehmer">
+  <thead><tr><th>Nr.</th><th>Name</th><th>Verein</th><th>Klasse</th>{% if erg.mehrere_strecken %}<th>Strecke</th>{% endif %}
+    {% if wertung_an %}<th>Abzeichen</th>{% endif %}<th>a. K.</th><th>Stand</th><th class="aktionen"></th></tr></thead>
+  <tbody>
+  {% for t in gefiltert %}{% set z = zeilen[t.startnummer] %}{% set st = stand_von(z) %}
+  <tr class="row" data-nr="{{ t.startnummer }}" data-href="/admin/v/{{ v.id }}/teilnehmer/{{ t.id }}">
+    <td class="mono"><strong>{{ t.startnummer }}</strong></td>
+    <td><a class="tbl-link" href="/admin/v/{{ v.id }}/teilnehmer/{{ t.id }}">{{ t.vorname }} {{ t.nachname }}</a></td>
+    <td>{{ t.verein or '' }}</td><td>{{ z.klasse or '–' }}</td>
+    {% if erg.mehrere_strecken %}<td><span class="strecke-marke strecke-farbe-{{ z.strecke % 6 }}">{{ erg.strecken[z.strecke].name }}</span></td>{% endif %}
+    {% if wertung_an %}<td data-merkmal="abzeichen">{{ 'ja' if t.abzeichen else '–' }}</td>{% endif %}
+    <td data-merkmal="ausser_konkurrenz">{{ 'ja' if t.ausser_konkurrenz else '–' }}</td>
+    <td><span class="badge {{ st[2] }}">{{ st[1] }}</span></td>
+    <td class="aktionen"><a class="btn btn-quiet btn-sm" href="/admin/v/{{ v.id }}/teilnehmer/{{ t.id }}">Öffnen</a></td>
+  </tr>
+  {% else %}
+  <tr><td colspan="9" class="hint">Kein Teilnehmer passt zum Filter.</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% endif %}
+{% endblock %}

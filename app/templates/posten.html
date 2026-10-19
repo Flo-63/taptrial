@@ -1,0 +1,22 @@
+{% extends "geraet_basis.html" %}
+{% block inhalt %}
+<div class="ziel-kopf">
+  <div id="posten-titel" class="posten-titel">Zwischenzeit</div>
+  <div id="posten-info" class="ziel-info" aria-live="polite"></div>
+  <div id="letzter-einlauf" class="letzter-einlauf">
+    <div id="letzter-text" class="letzter-text">Noch keine Durchfahrt erfasst</div>
+    <button id="btn-minus" class="btn btn-korrektur" disabled aria-label="Zeit 1 Sekunde früher">−1 s</button>
+    <button id="btn-plus" class="btn btn-korrektur" disabled aria-label="Zeit 1 Sekunde später">+1 s</button>
+    <button id="btn-einlauf-zurueck" class="btn btn-einlauf-zurueck" disabled>Rückgängig</button>
+  </div>
+</div>
+
+<section id="sicht-posten">
+  <div class="reihe umschalter" role="group" aria-label="Anzeige">
+    <button id="toggle-durchfahrten" class="btn btn-umschalter" aria-pressed="true">Durchfahrten anzeigen</button>
+    <button id="toggle-alle" class="btn btn-umschalter" aria-pressed="false">Alle Fahrer</button>
+  </div>
+  <p id="durchfahrten-hinweis" class="klein durchfahrten-hinweis" hidden>Unter jeder Nummer: die wievielte Durchfahrt hier als Nächstes kommt.</p>
+  <div id="fahrer" class="kacheln kacheln-ziel"></div>
+</section>
+{% endblock %}

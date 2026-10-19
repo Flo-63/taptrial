@@ -1,0 +1,185 @@
+/* Öffentliche Seiten: Ergebnisse (hell, druckbar) und Zielmonitor (dunkel, groß, Querformat) */
+
+/* Ergebnisse */
+body.ergebnisse { background: var(--ground); color: var(--text); }
+body.ergebnisse main { max-width: 1000px; margin: 0 auto; padding: 12px 16px 40px; }
+.werkzeuge { max-width: 1000px; margin: 0 auto; padding: 10px 16px 0; font-size: 0.9rem; }
+.stand { display: inline-block; margin-left: 12px; background: var(--danger); color: var(--brand-ink); padding: 2px 8px; border-radius: 4px; font-weight: 700; }
+.ergebnis-kopf h1 { margin: 8px 0 4px; font-size: 1.6rem; }
+.ergebnis-kopf .datum { color: var(--muted); font-weight: 400; font-size: 1rem; }
+.ergebnisstatus { display: inline-block; font-weight: 700; padding: 3px 10px; border-radius: 4px; margin: 4px 0; }
+.ergebnisstatus.vorlaeufig { background: var(--warn-soft); color: var(--warn); }
+.ergebnisstatus.offiziell { background: var(--ok-soft); color: var(--ok); }
+.zaehlung, .wertung { color: var(--muted); margin: 4px 0; }
+.sprung { margin: 10px 0; font-size: 0.9rem; }
+.liste h2 { font-size: 1.15rem; margin: 22px 0 6px; }
+table.ergebnis { width: 100%; border-collapse: collapse; background: var(--surface); }
+table.ergebnis th, table.ergebnis td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line-soft); }
+table.ergebnis th { font-size: 0.75rem; text-transform: uppercase; color: var(--muted); }
+td.zeit { font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.ergebnis { table-layout: fixed; }
+table.ergebnis th.rang, table.ergebnis th.nr { width: 4em; }
+table.ergebnis th.zeit { width: 7em; }
+table.ergebnis th:last-child { width: 9em; }
+tr.vorbehalt td { background: var(--warn-soft); }
+tr.vorbehalt td.status { color: var(--warn); font-weight: 700; }
+tr.status-dsq td { color: var(--danger); }
+tr.status-dsq td.status { font-weight: 800; }
+tr.status-dnf td.status, tr.status-dns td.status { font-weight: 700; color: var(--muted); }
+tr.status-dnf td, tr.status-dns td { color: var(--muted); }
+.stufe-gold { color: var(--gold); font-weight: 700; }
+.stufe-silber { color: var(--silber); font-weight: 700; }
+.stufe-bronze { color: var(--bronze); font-weight: 700; }
+.leer { color: var(--muted); }
+
+/* Druck: eine Klasse pro Seite */
+body.druck { color: var(--druck-text); background: var(--papier); padding: 10px 20px; }
+.druck .seite { page-break-after: always; break-after: page; }
+.druck .seite:last-of-type { page-break-after: auto; break-after: auto; }
+.druck-kopf { border-bottom: 2px solid var(--druck-text); padding-bottom: 6px; margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 4px 20px; align-items: center; }
+@media print {
+  .nicht-drucken, .werkzeuge, .sprung { display: none !important; }
+  body { background: var(--papier) !important; }
+  .liste { break-before: page; }
+  .liste:first-of-type { break-before: auto; }
+  tr.vorbehalt td { background: var(--warn-soft) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* Zielmonitor */
+/* Zielmonitor (Segmente 72): Abstand 1–3 m, Tablet quer oder hochkant. Ein gemeinsames Raster für alle
+   Bereiche (Platz · Nr. · Name · Klasse · Abschnitt · Zeit · Abz./Status); monitor.js setzt die
+   Zeilenhöhe --zh (4–6 % der Fensterhöhe) und die Schriftgröße --f (aus der Zeilenhöhe, durch die
+   Breite begrenzt). Gelb nur für Startnummern. */
+body.monitor { --mon-gelb: var(--d-gelb); --mon-grau: var(--d-muted); --zh: 48px; --f: 48px; --skala-zeit: 1;
+  --rand: max(8px, 0.9vw); --spalt: max(6px, 0.6vw);
+  --raster: minmax(0, 90fr) minmax(0, 130fr) minmax(0, 590fr) minmax(0, 300fr) minmax(0, 420fr) minmax(0, 220fr) minmax(0, 170fr);
+  background: var(--d-ground); color: var(--d-text); height: 100vh; overflow: hidden;
+  display: flex; flex-direction: column; font-size: clamp(12px, 1.8vh, 24px); }
+/* Kopfleiste: Veranstaltung, Ergebnisstand, Kennzahlen, QR */
+.mon-kopf { flex: none; box-sizing: border-box; min-height: max(9vh, 64px); display: flex; gap: 0.8em; align-items: center;
+  padding: 0.3em var(--rand); background: var(--d-schwarz); border-bottom: 2px solid var(--d-line); font-size: clamp(13px, min(2.4vh, 2.4vw), 32px); }
+.mon-kopf-info { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 1.2em; }
+.mon-kopf-links { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0.8em; min-width: 0; }
+.mon-titel { font-weight: 800; font-size: 1.15em; }
+.mon-status { padding: 0.05em 0.6em; border-radius: 0.4em; font-weight: 700; font-size: 0.8em; border: 1px solid var(--d-line-6); color: var(--d-text-2); }
+.mon-status.offiziell { border-color: var(--d-ok-line); color: var(--d-ok); }
+.mon-status:empty { display: none; }
+.mon-zaehlung { font-weight: 600; color: var(--d-text-2); font-size: 0.85em; }
+.mon-kopf .stand { color: var(--d-stand); font-weight: 700; }
+/* QR-Code zu den Live-Ergebnissen (AUSBAU B11): ganz rechts in der Kopfleiste */
+.mon-qr { display: flex; align-items: center; gap: 0.4em; color: var(--mon-grau); text-decoration: none; font-size: 0.55em; line-height: 1.15; }
+.mon-qr svg { width: max(60px, 7.5vh); height: max(60px, 7.5vh); display: block; border-radius: 0.2em; }
+/* gemeinsames Raster: Spaltenkopf und jede Zeile aller Bereiche */
+.mon-zeile, .monitor .mon-liste tr { display: grid; grid-template-columns: var(--raster); column-gap: var(--spalt); align-items: center;
+  padding: 0 var(--rand); box-sizing: border-box; }
+.mon-spaltenkopf { flex: none; padding-top: 0.3em; padding-bottom: 0.3em; color: var(--mon-grau); font-size: clamp(10px, 1.3vh, 18px);
+  text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--d-line); }
+.mon-spaltenkopf > span { font-size: inherit; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.mon-spaltenkopf .zeit, .monitor .mon-liste td.zeit { text-align: right; }
+.mon-bereiche { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.mon-box { flex: none; min-width: 0; }
+.mon-box[hidden] { display: none; }
+/* Bereichsleiste: Name, Anzahl, rechts Hinweis und „Seite x/y“ mit Fortschrittsbalken */
+.mon-leiste { display: flex; align-items: center; gap: 0.6em; margin: 0; padding: 0.25em var(--rand); font-size: clamp(11px, 1.5vh, 20px);
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--d-text-2); background: var(--d-schwarz); border-top: 1px solid var(--d-line); }
+.mon-leiste-name { white-space: nowrap; }
+.mon-anzahl { color: var(--mon-grau); font-weight: 600; }
+.mon-leiste-rechts { margin-left: auto; display: flex; align-items: center; gap: 0.8em; min-width: 0; text-transform: none; letter-spacing: 0; }
+.mon-orientierung { color: var(--d-muted-3); font-weight: 400; font-size: 0.85em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.mon-seite { color: var(--d-text-2); font-weight: 600; white-space: nowrap; }
+.mon-fortschritt { display: inline-block; width: 4em; height: 0.3em; border-radius: 0.15em; background: var(--d-line-2); overflow: hidden; }
+.mon-fortschritt[hidden] { display: none; }
+.mon-fortschritt i { display: block; height: 100%; width: 0; background: var(--d-text-3); }
+/* Zeilen: Höhe aus monitor.js, abwechselnd hinterlegt statt Trennlinien */
+.monitor .mon-liste, .monitor .mon-liste tbody { display: block; width: 100%; border-collapse: collapse; }
+.monitor .mon-liste tr { height: var(--zh); }
+.monitor .mon-liste tbody tr:nth-child(even) { background: var(--d-surface); }
+.monitor .mon-liste td, .monitor .mon-liste th { display: block; padding: 0; min-width: 0; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: max(10px, calc(var(--f) * 0.45)); }
+.monitor td.rang { font-weight: 800; font-size: max(13px, calc(var(--f) * 0.55)); }
+.monitor td.nr { overflow: visible; }
+.monitor .nr-feld { display: inline-block; box-sizing: border-box; min-width: 2.4em; height: calc(var(--f) * 0.8); line-height: calc(var(--f) * 0.8); padding: 0 0.3em;
+  border-radius: 0.25em; background: var(--mon-gelb); color: var(--d-stufe-ink); font-weight: 800; text-align: center; font-size: max(13px, calc(var(--f) * 0.55)); font-variant-numeric: tabular-nums; }
+.monitor td.name { font-weight: 600; font-size: max(12px, calc(var(--f) * 0.63)); }
+.monitor td.klasse { color: var(--d-text-3); }
+.monitor td.klasse .mon-strecke::before { content: " · "; }
+.monitor td.zeit { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 700; color: var(--d-text);
+  font-size: max(12px, calc(var(--f) * 0.7 * var(--skala-zeit))); }
+.monitor td.zeit.laufzeit { font-weight: 400; color: var(--mon-grau); font-size: max(12px, calc(var(--f) * 0.63 * var(--skala-zeit))); }
+.monitor td.status { color: var(--mon-grau); }
+/* Ergebnis nach Klasse: Gruppenzeile mit Klassenname und Strecke als umrandete Marke */
+.monitor tr.mon-klasse-kopf { background: transparent; }
+.monitor .mon-liste tr.mon-klasse-kopf th { grid-column: 1 / -1; font-weight: 800; color: var(--d-text); font-size: max(14px, calc(var(--f) * 0.6)); }
+.monitor .mon-klasse-kopf .mon-strecke { display: inline-block; margin-left: 0.6em; padding: 0 0.45em; border: 1px solid var(--d-line-7); border-radius: 0.4em;
+  color: var(--d-text-3); font-size: 0.6em; font-weight: 600; vertical-align: middle; }
+.monitor tr.vorbehalt { background: var(--d-warn-bg) !important; }
+.monitor tr.vorbehalt td { background: transparent; }
+.monitor tr.vorbehalt td.status { color: var(--d-warn); font-weight: 700; }
+.monitor tr.status-dsq td { color: var(--d-danger); }
+.monitor tr.status-dnf td, .monitor tr.status-dns td { color: var(--d-muted-2); }
+/* Abzeichen: eigene, unterscheidbare Farben (nicht das Gelb der Startnummern) */
+.monitor .stufe-gold { background: var(--d-gold); color: var(--d-stufe-ink); } .monitor .stufe-silber { background: var(--d-silber); color: var(--d-stufe-ink); }
+.monitor .stufe-bronze { background: var(--d-bronze); color: var(--d-stufe-ink-hell); }
+.monitor .abzeichen, .monitor td.stufe span { padding: 0.05em 0.45em; border-radius: 0.3em; font-weight: 700; }
+/* Abschnitt (Segmente 9/62/72): kleiner gedämpfter Name, Zeit in Mono, dahinter ▼/▲ und Differenz;
+   mehrere Felder teilen sich die Spalte; bei Platzmangel fallen erst Differenz, dann Pfeil weg */
+.monitor td.abschnitt { display: flex; align-items: baseline; gap: 0.8em; }
+.monitor .segment { flex: 1 1 0; min-width: 0; display: flex; align-items: baseline; gap: 0.35em; overflow: hidden; white-space: nowrap; }
+.monitor .seg-label { flex: 0 1 auto; min-width: 3em; overflow: hidden; text-overflow: ellipsis; color: var(--mon-grau); }
+.monitor .seg { flex: none; display: flex; align-items: baseline; }
+.monitor .seg-zeit { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--d-text-2); font-size: 1.1em; }
+.monitor .seg-pfeil { margin-left: 0.3em; }
+.monitor .seg-pfeil.schneller { color: var(--mon-gelb); }
+.monitor .seg-pfeil.langsamer { color: var(--mon-grau); }
+.monitor .seg-diff { margin-left: 0.2em; color: var(--d-text-3); }
+/* mehrere Felder: Name klein darüber, damit Zeit und Pfeil Platz haben */
+.monitor td.abschnitt.gestapelt { align-items: center; }
+.monitor td.abschnitt.gestapelt .segment { flex-direction: column; align-items: flex-start; gap: 0; line-height: 1.05; }
+.monitor td.abschnitt.gestapelt .seg-label { min-width: 0; max-width: 100%; font-size: 0.75em; }
+.monitor .segment.ohne-diff .seg-diff, .monitor .segment.ohne-pfeil .seg-pfeil { display: none; }
+.monitor .mon-liste td.leer, .monitor p.leer { color: var(--mon-grau); padding: 0.4em var(--rand); margin: 0; }
+/* schmale Fenster (A179): unter 1200 px ohne Klasse, unter 900 px Abschnitt unter dem Namen */
+@media (max-width: 1199px) {
+  body.monitor { --raster: minmax(0, 90fr) minmax(0, 130fr) minmax(0, 590fr) minmax(0, 420fr) minmax(0, 220fr) minmax(0, 170fr); }
+  .monitor .mon-liste td.klasse, .mon-spaltenkopf .klasse { display: none; }
+}
+@media (max-width: 899px) {
+  .mon-qr span { display: none; }
+  .mon-qr svg { width: 60px; height: 60px; }
+  .mon-kopf { min-height: 0; }
+  body.monitor { --raster: minmax(0, 60fr) minmax(0, 130fr) minmax(0, 480fr) minmax(0, 320fr) minmax(0, 210fr); }
+  .monitor .nr-feld { min-width: 2.1em; }
+  .monitor .mon-liste td.abschnitt, .mon-spaltenkopf .abschnitt { display: none; }
+  .monitor .mon-liste.zweizeilig tr.mit-abschnitt { height: calc(var(--zh) * 1.4);
+    grid-template-areas: "rang nr name zeit status" "rang nr abschnitt abschnitt abschnitt"; align-content: center; }
+  .monitor .mon-liste.zweizeilig tr.mit-abschnitt td.abschnitt { display: flex; grid-area: abschnitt; }
+  .monitor .mon-liste.zweizeilig .mit-abschnitt td.rang { grid-area: rang; } .monitor .mon-liste.zweizeilig .mit-abschnitt td.nr { grid-area: nr; }
+  .monitor .mon-liste.zweizeilig .mit-abschnitt td.name { grid-area: name; } .monitor .mon-liste.zweizeilig .mit-abschnitt td.zeit { grid-area: zeit; }
+  .monitor .mon-liste.zweizeilig .mit-abschnitt td.status { grid-area: status; }
+}
+/* Segmente 46: vor der Freigabe ohne Zeiten nur der Hinweis */
+.mon-keine-ergebnisse { font-size: 2rem; text-align: center; margin: 3rem 1rem; }
+body.monitor.keine-ergebnisse .mon-bereiche, body.monitor.keine-ergebnisse .mon-spaltenkopf,
+body.monitor.keine-ergebnisse #mon-status, body.monitor.keine-ergebnisse #mon-zaehlung { display: none; }
+
+/* Startseite */
+body.startseite { background: var(--d-ground); color: var(--d-text); min-height: 100vh; }
+.start-kopf { padding: 28px 16px 12px; text-align: center; border-bottom: 4px solid var(--d-orange); background: var(--d-schwarz); }
+.start-verein { margin: 0; color: var(--d-gelb); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.85rem; }
+.start-kopf h1 { margin: 6px 0 2px; font-size: 1.9rem; }
+.start-datum { margin: 0; color: var(--d-text-3); }
+.start-knoepfe { max-width: 560px; margin: 0 auto; padding: 22px 16px 40px; display: flex; flex-direction: column; gap: 14px; }
+.start-knopf { display: flex; flex-direction: column; gap: 2px; padding: 20px 22px; border-radius: 14px; background: var(--d-surface-2); border: 2px solid var(--d-line); color: var(--d-text); text-decoration: none; }
+.start-knopf strong { font-size: 1.5rem; }
+.start-knopf span { color: var(--d-muted); font-size: 0.95rem; }
+.start-knopf:hover, .start-knopf:focus { border-color: var(--d-gelb); }
+.start-knopf-admin { background: transparent; }
+.start-hinweis { color: var(--d-muted); font-size: 0.9rem; text-align: center; margin-top: 10px; }
+/* Strecken (Phase 13): Kennzeichen und Farben aus basis.css; hier nur die Größe */
+.ergebnisse .strecke-marke, .druck .strecke-marke { padding: 0.05em 0.5em; border-radius: 0.6em; font-size: 1em; }
+.strecke-titel { margin-top: 1.5em; }
+.strecke-laenge { font-size: 0.7em; font-weight: 400; color: var(--muted); }
+section.strecke + section.strecke { border-top: 2px solid var(--line); }
+/* Zwischenzeiten (Segmente) */
+th.segment-kopf, td.segment { font-size: 0.8em; white-space: nowrap; }
+th.segment-kopf { color: var(--muted); font-weight: 600; }

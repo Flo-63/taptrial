@@ -1,0 +1,23 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf, abbrechen %}
+{% block titel %}Impressum & Datenschutz{% endblock %}
+{% block kopf %}{{ seitenkopf("Impressum & Datenschutz", "Für die öffentlichen Seiten dieser Installation (Startseite, Ergebnisse, Druck, Hilfe) – gilt für alle Veranstaltungen.") }}{% endblock %}
+{% block inhalt %}
+<section class="card stapel-eng" id="rechtliches">
+  <p class="hint">Je Seite entweder einen <strong>Link</strong> (https, z. B. auf die Seiten des Vereins) oder einen <strong>Text</strong> eintragen – dann zeigt die App ihn unter /impressum bzw. /datenschutz. Welche Daten die App öffentlich zeigt, steht im Handbuch (Abschnitt „Öffentliche Daten“).</p>
+  <form method="post" action="/admin/saetze/rechtliches" class="stapel-eng" id="rechtliches-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    {% for art, titel in RECHTLICHES.items() %}
+    <fieldset class="stapel-eng" id="feld-{{ art }}">
+      <legend><strong>{{ titel }}</strong></legend>
+      <div class="field"><label for="{{ art }}-url">Link (https)</label>
+        <input id="{{ art }}-url" name="{{ art }}_url" class="eingabe" type="url" maxlength="500" placeholder="https://" value="{{ werte[art ~ '_url'] }}"></div>
+      <div class="field"><label for="{{ art }}-text">oder Text</label>
+        <textarea id="{{ art }}-text" name="{{ art }}_text" class="eingabe" rows="6" maxlength="20000">{{ werte[art ~ '_text'] }}</textarea>
+        <p class="hint">Leerzeile = neuer Absatz.</p></div>
+    </fieldset>
+    {% endfor %}
+    <div class="btn-reihe"><button type="submit" class="btn btn-primary" id="rechtliches-speichern">Speichern</button> {{ abbrechen(abbruch_ziel(request, "/admin/saetze")) }}</div>
+  </form>
+</section>
+{% endblock %}

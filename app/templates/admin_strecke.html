@@ -1,0 +1,129 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf %}
+{% block titel %}Strecke {{ s.name }}{% endblock %}
+{% block kopf %}
+{% set rueck = request.query_params.get("zurueck", "") %}
+{% call seitenkopf("Strecke " ~ s.name, "Grunddaten, Verlauf und Auswertungsabschnitte – „Alles speichern“ übernimmt alle Reiter auf einmal.") %}
+  <span class="strecke-marke strecke-farbe-{{ index % FARBEN }}">{{ s.name }}</span>
+{% endcall %}
+<nav class="reiterleiste" id="strecke-reiter" role="tablist" aria-label="Bereiche der Strecke">
+  {% for key, text in (("grunddaten", "Grunddaten"), ("verlauf", "Verlauf"), ("abschnitte", "Auswertungsabschnitte")) %}<button type="button" class="reiter-link" role="tab" data-reiter="{{ key }}" aria-selected="{{ 'true' if loop.first else 'false' }}">{{ text }}</button>{% endfor %}
+</nav>{% endblock %}
+{% block inhalt %}
+{% macro punkt_wahl(name, klasse, label, art, punkt, nr) %}{% set wert = (nr if art == 'einmalig' else 1) ~ ":" ~ punkt %}{% set optionen = ab_optionen[art] %}<select name="{{ name }}" class="eingabe {{ klasse }}" aria-label="{{ label }}">
+  {% if wert not in optionen|map(attribute=0) %}<option value="{{ wert }}" selected>{{ punkt }}{% if art == 'einmalig' %} · {{ nr }}. Durchfahrt{% endif %} (nicht in der Abfolge)</option>{% endif %}
+  {% for w, text in optionen %}<option value="{{ w }}" {{ 'selected' if w == wert }}>{{ text }}</option>{% endfor %}</select>{% endmacro %}
+{% set rueck = request.query_params.get("zurueck", "") %}
+{% set gesperrt = v.zustand == 'anonymisiert' %}
+{% set liste_url = abbruch_ziel(request, '/admin/v/' ~ v.id ~ '/strecken') %}
+{% if strecken_eingefroren %}<p class="alert a-info" id="strecken-eingefroren">Eingefroren: Verlauf ist fest (es gibt Zeiten); Name, Länge, Segmentnamen und -längen bleiben änderbar{% if strecken_offiziell %}, die Streckenlänge erst nach „Zurücknehmen“ des offiziellen Ergebnisses{% endif %}. Auswertungsabschnitte lassen sich weiter ändern.</p>{% endif %}
+<form method="post" action="/admin/v/{{ v.id }}/strecken/{{ s.id }}" class="stapel strecke-editor" id="strecke-form" autocomplete="off" novalidate>
+  <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="zurueck" value="{{ rueck }}">
+  <p class="alert a-danger" id="strecke-fehler" role="alert" hidden></p>
+
+  <section class="card stapel-eng" id="grunddaten" data-reiter-inhalt="grunddaten" role="tabpanel">
+    <h2>Grunddaten</h2>
+    <div class="feld-reihe">
+      <div class="field"><label for="s-name">Name</label><input id="s-name" name="name" value="{{ s.name }}" maxlength="100" required>
+        <span class="hint">Kurz halten (z. B. „5 km“) – er steht auf jeder Ziel-Kachel.</span></div>
+      <div class="field"><label for="s-laenge">Gemessene Länge (km)</label><input id="s-laenge" name="laenge" value="{{ km_text(s.laenge_km) }}" inputmode="decimal" placeholder="z. B. 20,0" class="mono" {{ 'readonly' if strecken_offiziell }}></div>
+    </div>
+    <div class="field"><label for="s-beschreibung">Beschreibung</label><textarea id="s-beschreibung" name="beschreibung" rows="2" maxlength="2000">{{ s.beschreibung or '' }}</textarea>
+      <span class="hint">Nur im Admin sichtbar.</span></div>
+    <div class="field"><label for="s-komoot">Komoot-Link</label><input id="s-komoot" name="komoot" value="{{ s.komoot_url or '' }}" type="url" inputmode="url" placeholder="https://www.komoot.com/…" maxlength="500"></div>
+    <div class="btn-reihe">{% if s.komoot_url %}<a class="btn btn-secondary btn-sm" href="{{ s.komoot_url }}" target="_blank" rel="noopener noreferrer" id="komoot-oeffnen">Strecke in Komoot öffnen</a>{% endif %}
+      <a class="btn btn-secondary btn-sm" href="/admin/v/{{ v.id }}/strecken/{{ s.id }}/datei" id="strecke-datei">Als Datei speichern</a></div>
+    <p class="hint">Welche Klassen diese Strecke fahren, steht unter „Strecken“ → „Klassenzuordnung“.</p>
+  </section>
+
+  <section class="card stapel-eng" id="streckenverlauf" data-reiter-inhalt="verlauf" role="tabpanel">
+    <h2>Verlauf</h2>
+    <p class="hint">Die Punkte in Fahrreihenfolge – vom Start bis zum Ziel. Ein <strong>Rundenblock</strong> enthält Punkte, die mehrmals hintereinander gefahren werden; er endet dort, wo er beginnt (z. B. Kreisel → Berg → Kreisel). Messpunkte (Start, Zwischenzeiten, Ziel) legst du auf der Seite „Messpunkte“ an. Ein vergessener Posten-Tipp hat keine Folgen für Gesamtzeit und Rang.</p>
+    <div class="feld-reihe" id="strecke-orte">
+      <div class="field"><label for="s-startort">Start (erster Punkt)</label>
+        <select name="startort" id="s-startort" {{ 'disabled' if strecken_eingefroren }}>{% for m in startorte %}<option value="{{ m.id }}" {{ 'selected' if m.id == startort.id }}>{{ m.name }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="s-zielort">Ziel (letzter Punkt)</label>
+        <select name="zielort" id="s-zielort" {{ 'disabled' if strecken_eingefroren }}>{% for m in zielorte %}<option value="{{ m.id }}" {{ 'selected' if m.id == zielort.id }}>{{ m.name }}</option>{% endfor %}</select></div>
+    </div>
+    <datalist id="punkte-liste"><option value="Start"></option><option value="Ziel"></option>{% for m in messpunkte %}<option value="{{ m.name }}"></option>{% endfor %}</datalist>
+    <script type="application/json" id="verlauf-start">{{ verlauf_start|tojson }}</script>
+    <input type="hidden" name="verlauf" id="verlauf-daten" value="{{ {'punkte': verlauf_start.punkte}|tojson|forceescape }}">
+    <ol class="punktfolge" id="punktfolge" aria-label="Punkte in Fahrreihenfolge">
+      <li class="pf-fest">{{ startort.name }}</li>{% for x in verlauf_start.punkte %}<li class="pf-punkt">{{ x if x is string else (x.block ~ " ×" ~ x.wdh ~ ": " ~ x.punkte|join(" · ")) }}</li>{% endfor %}<li class="pf-fest">{{ zielort.name }}</li>
+    </ol>
+    {% if not strecken_eingefroren %}<div class="btn-reihe"><button type="button" class="btn btn-secondary btn-sm" id="punkt-neu" {{ 'disabled' if not messpunkte }}>Punkt hinzufügen</button>
+      <button type="button" class="btn btn-secondary btn-sm" id="block-neu" {{ 'disabled' if not messpunkte }}>Rundenblock hinzufügen</button></div>
+    {% if not messpunkte %}<p class="hint">Noch keine Zwischenzeiten – erst auf der Seite „Messpunkte“ anlegen.</p>{% endif %}{% endif %}
+    <h3 class="zwischentitel">Segmente</h3>
+    <p class="hint">Ergeben sich aus der Punktfolge: je Abschnitt zwischen zwei Punkten ein Segment – jedes ist automatisch ein Auswertungsabschnitt. Name (optional) und Länge. Welche Abschnitte als Spalte erscheinen und wo der Zielmonitor vergleicht, steht unter Einstellungen → „Zielmonitor und Ergebnisse“.</p>
+    <div class="tbl-box tbl-box-kurz"><table class="tbl" id="segmente-tabelle">
+      <thead><tr><th>Segment</th><th>Name</th><th>Länge (km)</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="alert a-info segment-abfolge" id="verlauf-vorschau" data-strecke="{{ s.name }}"><span><strong>Abfolge:</strong> <span class="abfolge mono">{{ uebersicht.abfolge if uebersicht else "Start · Ziel" }}</span>
+      <br><span class="durchfahrten">{% if uebersicht and uebersicht.anzahl %}Durchfahrten je Zwischenzeit: {% for name, n in uebersicht.anzahl %}{{ name }} {{ n }}×{{ ", " if not loop.last }}{% endfor %}{% else %}Keine Messpunkte – Zeitnahme nur an Start und Ziel.{% endif %}</span></span></div>
+  </section>
+
+  <section class="card stapel-eng" id="auswertungsabschnitte" data-reiter-inhalt="abschnitte" role="tabpanel">
+    <h2>Auswertungsabschnitte</h2>
+    <p class="hint" id="abschnitte-einleitung">Ein Auswertungsabschnitt ist ein Teil der Strecke, für den eine eigene Zeit ermittelt wird – z. B. eine Runde oder eine Bergwertung. Jedes Segment und jeder Rundenblock ist automatisch einer (nicht löschbar). Für einen eigenen Abschnitt wählst du Anfang und Ende und ob die Zeit für jede Durchfahrt (z. B. jede Runde) oder nur für eine bestimmte (z. B. die 1. Runde) gilt. Anzeigen (Spalten) und Vergleich (Zielmonitor) stellst du unter Einstellungen → „Zielmonitor und Ergebnisse“ ein.</p>
+    {% for h in abschnitt_hinweise %}<p class="alert a-info ab-hinweis">{{ h }}</p>{% endfor %}
+    <input type="hidden" name="ab_anzahl" value="{{ abschnitte_hier|length }}">
+    <div class="tbl-box tbl-box-kurz"><table class="tbl" id="abschnitte" data-strecke="{{ index }}">
+      <thead><tr><th>Abschnitt</th><th>Anfang</th><th>Ende</th><th>Zeit für</th><th>Entfernen</th></tr></thead>
+      <tbody>
+      {% for a in abschnitte_hier %}{% set j = loop.index0 %}{% set bestimmt = a.art == 'einmalig' %}
+      {% if a.block %}
+      <tr data-index="{{ j }}" data-abschnitt="{{ a.id }}" class="ab-block">
+        <td><input type="hidden" name="ab_block_{{ j }}" value="{{ a.block }}"><input type="hidden" name="ab_id_{{ j }}" value="{{ a.id }}"><strong>{{ a.name }}</strong> <span class="badge">Rundenblock</span>
+          <span class="hint ab-vorschau">{{ abschnitt_texte.get(a.id, "") }}</span></td>
+        <td>{{ a.von }}</td><td>{{ a.nach }}</td><td>{{ ART_TEXT[a.art] }}</td>
+        <td class="hint" title="Automatisch aus dem Verlauf – nicht löschbar">automatisch</td>
+      </tr>
+      {% else %}
+      <tr data-index="{{ j }}" data-abschnitt="{{ a.id }}" class="ab-zeile">
+        <td><input type="hidden" name="ab_id_{{ j }}" value="{{ a.id }}"><input name="ab_name_{{ j }}" value="{{ a.name }}" maxlength="100" class="eingabe ab-name" aria-label="Name des Abschnitts {{ loop.index }}">
+          <span class="hint ab-vorschau">{{ abschnitt_texte.get(a.id, "") }}</span></td>
+        <td>{{ punkt_wahl("ab_von_" ~ j, "ab-von", "Anfang (Abschnitt " ~ loop.index ~ ")", a.art, a.von, a.von_nr) }}</td>
+        <td>{{ punkt_wahl("ab_nach_" ~ j, "ab-nach", "Ende (Abschnitt " ~ loop.index ~ ")", a.art, a.nach, a.nach_nr) }}</td>
+        <td><select name="ab_art_{{ j }}" class="eingabe ab-art" aria-label="Zeit für (Abschnitt {{ loop.index }})">
+          {% for wert, text in ART_TEXT.items() %}<option value="{{ wert }}" {{ 'selected' if a.art == wert }}>{{ text }}</option>{% endfor %}</select></td>
+        <td><input type="checkbox" name="ab_entfernen_{{ j }}" value="1" aria-label="Abschnitt {{ a.name }} entfernen"></td>
+      </tr>
+      {% endif %}
+      {% else %}
+      <tr class="leer-zeile"><td colspan="5" class="hint">Keine eigenen Abschnitte – die Segmente (Reiter „Verlauf“) sind schon Abschnitte.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    <div class="btn-reihe"><button type="button" class="btn btn-secondary btn-sm" id="abschnitt-neu">Abschnitt hinzufügen</button></div>
+  </section>
+
+  <div class="aktionsleiste" id="aktionsleiste">
+    <button type="submit" class="btn btn-primary" id="alles-speichern" {{ 'disabled' if gesperrt }}>Alles speichern</button>
+    <button type="button" class="btn btn-secondary" id="aenderungen-verwerfen">Abbrechen</button>
+    <a class="btn btn-quiet" href="{{ liste_url }}" id="zurueck-strecken">{{ "Zurück zum Assistenten" if rueck.startswith("/admin/einrichtung/") else ("Zurück" if rueck else "Zurück zu Strecken") }}</a>
+    <span class="hint" id="ungespeichert" hidden>Ungespeicherte Änderungen</span>
+  </div>
+</form>
+
+<div class="danger-zone" id="strecke-entfernen" data-reiter-inhalt="grunddaten">
+  <div class="dz-kopf"><h2>Strecke entfernen</h2></div>
+  <div class="dz-row"><div><strong>Strecke „{{ s.name }}“ entfernen</strong>{% set sperre = "es gibt bereits Zeiten" if strecken_eingefroren else ("die letzte Strecke einer Veranstaltung bleibt – jede Klasse braucht eine Strecke" if not andere else "") %}
+    <div class="hint" id="entfernen-hinweis">{% if sperre %}Gesperrt: {{ sperre }}.{% elif klassen_hier %}Die Strecke hat {{ klassen_hier|length }} Klasse{{ "n" if klassen_hier|length != 1 }} – beim Entfernen wählst du, welche Strecke sie übernimmt.{% else %}Die Strecke hat keine Klassen.{% endif %}</div></div>
+    <form method="post" action="/admin/v/{{ v.id }}/strecken/{{ s.id }}/entfernen" id="entfernen-form"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="zurueck" value="{{ rueck }}">
+      {% if klassen_hier and not sperre %}
+      <button type="button" class="btn btn-danger btn-sm" id="entfernen-oeffnen" {{ 'disabled' if gesperrt }}>Strecke entfernen</button>
+      <dialog class="dialog" id="entfernen-dialog" aria-labelledby="entfernen-titel">
+        <h2 id="entfernen-titel">Strecke „{{ s.name }}“ entfernen</h2>
+        <p>Klassen: {{ klassen_hier|join(", ") }}</p>
+        <div class="field"><label for="klassen-an">Die Klassen von ‚{{ s.name }}‘ übernimmt:</label>
+          <select name="klassen_an" id="klassen-an" required><option value="">– Strecke wählen –</option>{% for x in andere %}<option value="{{ x.id }}">{{ x.name }}</option>{% endfor %}</select></div>
+        <div class="btn-reihe"><button type="submit" class="btn btn-danger" id="entfernen-ok">Klassen übertragen und entfernen</button>
+          <button type="button" class="btn btn-secondary" id="entfernen-abbrechen">Abbrechen</button></div>
+      </dialog>
+      {% else %}
+      <button type="submit" class="btn btn-danger btn-sm" id="entfernen-ok" {{ 'disabled' if sperre or gesperrt }}>Strecke entfernen</button>
+      {% endif %}</form></div>
+</div>
+{% endblock %}

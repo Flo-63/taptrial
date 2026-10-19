@@ -1,0 +1,23 @@
+name: Wunsch
+description: Idee für eine neue Funktion oder Verbesserung.
+labels: ["Wunsch"]
+body:
+  - type: markdown
+    attributes:
+      value: Vielleicht steht es schon in der ROADMAP.md – dann gern dort darauf verweisen.
+  - type: textarea
+    id: anliegen
+    attributes:
+      label: Worum geht es?
+      description: Welches Problem habt ihr am Renntag oder bei der Vorbereitung?
+    validations:
+      required: true
+  - type: textarea
+    id: vorschlag
+    attributes:
+      label: Vorschlag
+  - type: input
+    id: veranstaltung
+    attributes:
+      label: Art der Veranstaltung
+      placeholder: "z. B. Vereinszeitfahren, ca. 40 Fahrer"

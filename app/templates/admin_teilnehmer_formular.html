@@ -1,0 +1,24 @@
+{% from "_admin.html" import abbrechen %}
+<form method="post" action="/admin/v/{{ v.id }}/teilnehmer" class="formular" id="{{ 'bearbeiten' if t else 'neuer-teilnehmer' }}">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="hidden" name="tid" value="{{ t.id if t else '' }}">
+  {% if ziel %}<input type="hidden" name="ziel" value="{{ ziel }}">{% endif %}
+  <div class="feld-reihe">
+    <div class="field"><label for="f-nr">Startnummer</label><input id="f-nr" name="startnummer" inputmode="numeric" required value="{{ t.startnummer if t else '' }}"></div>
+    <div class="field"><label for="f-geschlecht">Geschlecht</label><select id="f-geschlecht" name="geschlecht">
+      {% for g, text in [("m", "männlich"), ("w", "weiblich"), ("d", "divers")] %}
+      <option value="{{ g }}" {{ 'selected' if t and t.geschlecht == g }}>{{ text }}</option>{% endfor %}
+    </select></div>
+  </div>
+  <div class="feld-reihe">
+    <div class="field"><label for="f-vorname">Vorname</label><input id="f-vorname" name="vorname" required value="{{ t.vorname if t else '' }}"></div>
+    <div class="field"><label for="f-nachname">Nachname</label><input id="f-nachname" name="nachname" required value="{{ t.nachname if t else '' }}"></div>
+  </div>
+  <div class="feld-reihe">
+    <div class="field"><label for="f-jahr">Geburtsjahr</label><input id="f-jahr" name="geburtsjahr" inputmode="numeric" required value="{{ t.geburtsjahr if t else '' }}"></div>
+    <div class="field"><label for="f-verein">Verein</label><input id="f-verein" name="verein" value="{{ (t.verein or '') if t else '' }}"></div>
+  </div>
+  {% if wertung_an %}<label class="check"><input type="checkbox" name="abzeichen" value="1" {{ 'checked' if t and t.abzeichen }}> möchte das Abzeichen erwerben</label>{% endif %}
+  <label class="check"><input type="checkbox" name="ausser_konkurrenz" value="1" {{ 'checked' if t and t.ausser_konkurrenz }}> außer Konkurrenz (Zeit ohne Rang)</label>
+  <div><button type="submit" class="btn btn-primary" {{ 'disabled' if not v.laufend }}>Speichern</button> {{ abbrechen(abbruch_ziel(request, ("/admin/v/" ~ v.id ~ "/teilnehmer/" ~ t.id) if t else (ziel or "/admin/v/" ~ v.id ~ "/teilnehmer"))) }}</div>
+</form>

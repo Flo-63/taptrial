@@ -1,0 +1,187 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf, abbrechen, zuklappen %}
+{% block titel %}Nr. {{ t.startnummer }} {{ t.vorname }} {{ t.nachname }}{% endblock %}
+{% block kopf %}
+<div><a class="btn btn-quiet btn-sm" href="/admin/v/{{ v.id }}/teilnehmer" id="zurueck-teilnehmer">Zurück zu Teilnehmer</a></div>
+<div class="page-head">
+  <div><h1>Nr. {{ t.startnummer }} · {{ t.vorname }} {{ t.nachname }}</h1>
+    <div class="btn-reihe kopf-badges" id="fahrer-badges">
+      {% if z %}{% set st = stand_von(z) %}
+      {% if erg.mehrere_strecken %}<span class="strecke-marke strecke-farbe-{{ z.strecke % 6 }}">{{ erg.strecken[z.strecke].name }}</span>{% endif %}
+      <span class="badge">{{ z.klasse or "keine Klasse" }}</span>
+      <span class="badge {{ st[2] }}" id="fahrer-stand">{{ st[1] }}</span>
+      {% if z.korrigiert %}<span class="badge b-warn">Zeit korrigiert {{ korrektur_text(z.korrektur_ms) }}</span>{% endif %}
+      {% if z.manuell %}<span class="badge b-warn">manuelle Zeit</span>{% endif %}
+      {% if z.status.value in ("KONFLIKT", "UNVOLLSTAENDIG", "OFFEN") %}<span class="badge b-warn">{{ status_text(z) }}</span>{% endif %}
+      {% endif %}
+    </div></div>
+  <div class="btn-reihe">
+    {% if z and urkunde_moeglich(z) %}<a class="btn btn-secondary" href="/admin/v/{{ v.id }}/urkunden?nr={{ t.startnummer }}&amp;zurueck={{ hier }}" id="fahrer-urkunde">Urkunde</a>{% endif %}
+    <a class="btn btn-secondary" href="/admin/v/{{ v.id }}/teilnehmer/{{ t.id }}/bearbeiten" id="daten-bearbeiten" {{ 'aria-disabled=true' if not v.laufend }}>Daten bearbeiten</a>
+  </div>
+</div>
+{% endblock %}
+{% block inhalt %}
+{% macro kopf_formular(aktion) %}<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="aktion" value="{{ aktion }}"><input type="hidden" name="zurueck" value="{{ hier }}">{% endmacro %}
+{% set gesperrt = not v.laufend %}
+{% if z and z.dsq_vorlaeufig %}
+<section class="card stapel-eng a-warn-karte" id="fahrer-dsq">
+  <div><span class="badge b-warn">Vorläufige DSQ</span><h2 class="zwischentitel">Grund der Rennleitung: {{ z.dsq_vorlaeufig }}</h2></div>
+  <form method="post" action="/admin/v/{{ v.id }}/dsq" class="filterleiste dsq-form" data-nr="{{ t.startnummer }}">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="startnummer" value="{{ t.startnummer }}"><input type="hidden" name="zurueck" value="{{ hier }}">
+    <div class="field feld-breit"><label for="dsq-notiz">Notiz (Pflicht)</label><input id="dsq-notiz" name="notiz" required></div>
+    <div class="btn-reihe"><button type="submit" name="entscheidung" value="verwerfen" class="btn btn-secondary" {{ 'disabled' if gesperrt }}>Verwerfen</button>
+      <button type="submit" name="entscheidung" value="bestaetigen" class="btn btn-danger" {{ 'disabled' if gesperrt }}>DSQ bestätigen</button></div>
+  </form>
+</section>
+{% endif %}
+<div class="spalten">
+  <section class="card breit stapel-eng" id="zeiten">
+    <h2>Zeiten</h2>
+    <div class="tbl-box tbl-box-kurz"><table class="tbl">
+      <thead><tr><th></th><th>Uhrzeit</th><th>Gerät</th><th>Hinweis</th></tr></thead>
+      <tbody>
+      {% for s in stempel %}
+      <tr data-uuid="{{ s.uuid }}"><td><strong>{{ {"START": "Start", "ZIEL": "Ziel", "MANUELLE_ZEIT": "Manuell"}[s.art] }}</strong></td>
+        <td class="zeit">{{ s.uhrzeit }}</td><td class="mono">{{ s.geraet }}</td>
+        <td>{% if s.korrektur_ms %}<span class="badge b-warn">korrigiert {{ korrektur_text(s.korrektur_ms) }}</span>{% endif %}
+          {% if s.art == "MANUELLE_ZEIT" %}<span class="badge">manuell</span>{% endif %}</td></tr>
+      {% else %}
+      <tr><td colspan="4" class="hint">Noch keine Zeiten.</td></tr>
+      {% endfor %}
+      {% if z and z.fahrzeit_ms is not none %}
+      <tr id="fahrzeit"><td><strong>Fahrzeit</strong></td><td class="zeit"><strong>{{ z.fahrzeit_text }}</strong></td><td></td>
+        <td>{% if z.rang_klasse %}Rang {{ z.rang_klasse }} in der Klasse{% elif z.ausser_konkurrenz %}außer Konkurrenz{% endif %}
+          {% if erg.wertung and z.stufe %} · Abzeichen {{ stufe_text(z) }}{% endif %}</td></tr>
+      {% endif %}
+      </tbody>
+    </table></div>
+    <p class="hint">Jede Korrektur verlangt eine Notiz und steht im Protokoll.</p>
+    <div class="aktionen-liste">
+      <details class="aktion" id="aktion-manuell"><summary class="btn btn-secondary btn-sm">Manuelle Zeit eintragen</summary>
+        <form method="post" action="/admin/v/{{ v.id }}/korrektur" class="formular">
+          {{ kopf_formular('manuell') }}<input type="hidden" name="startnummer" value="{{ t.startnummer }}">
+          <div class="feld-reihe">
+            <div class="field"><label for="m-art">Art</label><select id="m-art" name="art"><option value="ZIEL">Zielzeit</option><option value="START">Startzeit</option></select></div>
+            <div class="field"><label for="m-uhrzeit">Uhrzeit</label><input id="m-uhrzeit" name="uhrzeit" placeholder="hh:mm:ss,z" class="mono"></div>
+            <div class="field"><label for="m-fahrzeit">oder Fahrzeit (nur Ziel)</label><input id="m-fahrzeit" name="fahrzeit" placeholder="mm:ss,z" class="mono"></div>
+          </div>
+          <div class="field"><label for="m-notiz">Notiz (Pflicht, z. B. Quelle)</label><input id="m-notiz" name="notiz" required></div>
+          <div><button type="submit" class="btn btn-primary" {{ 'disabled' if gesperrt }}>Eintragen</button> {{ zuklappen() }}</div>
+        </form></details>
+      {% set eigene_stempel = stempel|rejectattr("art", "equalto", "MANUELLE_ZEIT")|list %}
+      <details class="aktion" id="aktion-umbuchen"><summary class="btn btn-secondary btn-sm">Stempel umbuchen</summary>
+        <form method="post" action="/admin/v/{{ v.id }}/korrektur" class="formular">
+          {{ kopf_formular('umbuchen') }}
+          <div class="field"><label for="u-stempel">Zeitstempel</label><select id="u-stempel" name="stempel" required>
+            {% for s in eigene_stempel %}<option value="{{ s.uuid }}">{{ s.beschriftung }}</option>{% endfor %}</select></div>
+          <div class="field"><label for="u-nr">Neue Startnummer</label><input id="u-nr" name="startnummer" inputmode="numeric" placeholder="leer = Zuordnung aufheben"></div>
+          <div class="field"><label for="u-notiz">Notiz (Pflicht)</label><input id="u-notiz" name="notiz" required></div>
+          <div><button type="submit" class="btn btn-primary" {{ 'disabled' if gesperrt or not eigene_stempel }}>Umbuchen</button> {{ zuklappen() }}</div>
+        </form></details>
+      <details class="aktion" id="aktion-stornieren"><summary class="btn btn-quiet btn-sm btn-danger-text">Stempel stornieren</summary>
+        <form method="post" action="/admin/v/{{ v.id }}/korrektur" class="formular">
+          {{ kopf_formular('stornieren') }}
+          <div class="field"><label for="s-stempel">Zeitstempel</label><select id="s-stempel" name="stempel" required>
+            {% for s in stempel %}<option value="{{ s.uuid }}">{{ s.beschriftung }}</option>{% endfor %}</select></div>
+          <div class="field"><label for="s-notiz">Notiz (Pflicht)</label><input id="s-notiz" name="notiz" required></div>
+          <div><button type="submit" class="btn btn-danger" {{ 'disabled' if gesperrt or not stempel }}>Stornieren</button> {{ zuklappen() }}</div>
+        </form></details>
+    </div>
+  </section>
+  <section class="card schmal stapel-eng" id="status-merkmale">
+    <h2>Status &amp; Merkmale</h2>
+    <dl class="fakten">
+      <dt>Jahrgang</dt><dd>{{ t.geburtsjahr or '–' }}</dd>
+      <dt>Geschlecht</dt><dd>{{ {"m": "männlich", "w": "weiblich", "d": "divers"}.get(t.geschlecht, t.geschlecht) }}</dd>
+      <dt>Verein</dt><dd>{{ t.verein or '–' }}</dd>
+      <dt>Status</dt><dd id="fahrer-status">{{ (z and status_text(z)) or 'OK' }}</dd>
+    </dl>
+    {% set merkmale = [("ausser_konkurrenz", "Außer Konkurrenz", t.ausser_konkurrenz)] %}
+    {% if wertung_an %}{% set merkmale = [("abzeichen", "Abzeichen", t.abzeichen)] + merkmale %}{% endif %}
+    {% for merkmal, text, aktiv in merkmale %}
+    <form method="post" action="/admin/v/{{ v.id }}/teilnehmer/{{ t.id }}/merkmal" class="merkmal-zeile" data-merkmal="{{ merkmal }}">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="merkmal" value="{{ merkmal }}">
+      <input type="hidden" name="wert" value="{{ 'nein' if aktiv else 'ja' }}"><input type="hidden" name="zurueck" value="{{ hier }}">
+      <span>{{ text }}: <strong>{{ 'ja' if aktiv else 'nein' }}</strong></span>
+      <button type="submit" class="btn btn-quiet btn-sm" {{ 'disabled' if gesperrt }}>{{ 'auf „nein“' if aktiv else 'auf „ja“' }}</button>
+    </form>
+    {% endfor %}
+    {% if not wertung_an %}<p class="hint" id="wertung-aus">Wertung aus: Abzeichen spielt keine Rolle.</p>{% endif %}
+    <details class="aktion" id="aktion-status"><summary class="btn btn-secondary btn-sm">Status setzen</summary>
+      <form method="post" action="/admin/v/{{ v.id }}/korrektur" class="formular">
+        {{ kopf_formular('status') }}<input type="hidden" name="startnummer" value="{{ t.startnummer }}">
+        <div class="field"><label for="st-wert">Status</label><select id="st-wert" name="wert">
+          <option value="DNS">DNS – nicht gestartet</option><option value="DNF">DNF – aufgegeben</option>
+          <option value="DSQ">DSQ – disqualifiziert (endgültig)</option><option value="OK">OK – Status aufheben</option></select></div>
+        <div class="field"><label for="st-notiz">Notiz (Pflicht)</label><input id="st-notiz" name="notiz" required></div>
+        <div><button type="submit" class="btn btn-primary" {{ 'disabled' if gesperrt }}>Setzen</button> {{ zuklappen() }}</div>
+      </form></details>
+  </section>
+</div>
+{% if z and z.segmentzeiten %}
+<section class="card stapel-eng" id="zwischenzeiten">
+  <h2>Segmente</h2>
+  <h3 class="zwischentitel">Durchfahrten</h3>
+  <div class="tbl-box tbl-box-kurz"><table class="tbl" id="durchfahrten">
+    <thead><tr><th>Abfolge</th><th>Messpunkt</th><th>Uhrzeit</th><th>seit Start</th><th>Gerät</th><th>Hinweis</th><th></th></tr></thead>
+    <tbody>
+    {% for d in durchfahrten %}
+    <tr data-uuid="{{ d.uuid or '' }}" class="{{ 'fehlt' if not d.uuid }}{{ ' nicht-gezaehlt' if d.grund }}">
+      <td>{% if d.zuordnung %}<strong>{{ d.position }}. · {{ d.zuordnung }}</strong>{% else %}–{% endif %}</td>
+      <td>{{ d.messpunkt }}</td>
+      <td class="zeit">{{ d.zeit_ms|uhrzeit if d.zeit_ms else '' }}</td>
+      <td class="zeit">{{ d.seit_start|fahrzeit if d.seit_start is not none else '' }}</td>
+      <td class="mono">{{ d.geraet }}</td>
+      <td>{% if not d.uuid %}<span class="hint">nicht erfasst – ohne Folgen für die Wertung</span>
+        {% elif d.grund %}<span class="badge b-warn">nicht gezählt: {{ d.grund }}</span>
+        {% elif d.korrektur_ms %}<span class="badge b-warn">korrigiert {{ korrektur_text(d.korrektur_ms) }}</span>{% endif %}</td>
+      <td>{% if d.uuid %}<div class="btn-reihe">
+        {% if d.grund == "Doppeltipp" %}<details class="aktion doppeltipp-werten"><summary class="btn btn-quiet btn-sm">Doch werten</summary>
+          <form method="post" action="/admin/v/{{ v.id }}/korrektur" class="formular">
+            {{ kopf_formular('doppeltipp_werten') }}<input type="hidden" name="stempel" value="{{ d.uuid }}">
+            <div class="field"><label for="dw-{{ d.uuid }}">Notiz (Pflicht)</label><input id="dw-{{ d.uuid }}" name="notiz" required></div>
+            <div><button type="submit" class="btn btn-primary btn-sm" {{ 'disabled' if gesperrt }}>Werten</button> {{ zuklappen() }}</div>
+          </form></details>{% endif %}
+        <details class="aktion"><summary class="btn btn-quiet btn-sm btn-danger-text">Stornieren</summary>
+          <form method="post" action="/admin/v/{{ v.id }}/korrektur" class="formular durchfahrt-storno">
+            {{ kopf_formular('stornieren') }}<input type="hidden" name="stempel" value="{{ d.uuid }}">
+            <div class="field"><label for="ds-{{ d.uuid }}">Notiz (Pflicht)</label><input id="ds-{{ d.uuid }}" name="notiz" required></div>
+            <div><button type="submit" class="btn btn-danger btn-sm" {{ 'disabled' if gesperrt }}>Stornieren</button> {{ zuklappen() }}</div>
+          </form></details></div>{% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <h3 class="zwischentitel">Abschnittszeiten</h3>
+  <div class="tbl-box tbl-box-kurz"><table class="tbl" id="segmentzeiten">
+    <thead><tr><th>Abschnitt</th><th>Zeit</th><th>Vergleich mit vorheriger Durchfahrt</th></tr></thead>
+    <tbody>
+    {% for x in z.abschnittszeiten %}
+    <tr data-abschnitt="{{ x.schluessel }}"><td>{{ x.label }}</td><td class="zeit">{{ x.zeit_ms|fahrzeit if x.zeit_ms is not none else '–' }}</td>
+      <td>{% if x.vergleich_ms is not none %}{{ "▼ schneller" if x.vergleich_ms < 0 else ("▲ langsamer" if x.vergleich_ms > 0 else "gleich") }} {{ korrektur_text(x.vergleich_ms) if x.vergleich_ms else "" }}{% endif %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <p class="hint">Segment- und Abschnittszeiten zählen nicht für Gesamtzeit und Rang. Messungen nach der ersten fehlenden Durchfahrt zählen nicht (Start und Ziel immer); Doppeltipps und Tipps um die Zielzeit zählen nicht.</p>
+</section>
+{% endif %}
+<section class="card stapel-eng" id="verlauf">
+  <h2>Verlauf</h2>
+  <div class="tbl-box tbl-box-kurz"><table class="tbl">
+    <thead><tr><th>Erfasst</th><th>Art</th><th>Zeit</th><th>Wert</th><th>Gerät</th><th>Notiz</th></tr></thead>
+    <tbody>
+    {% for e in ereignisse %}
+    <tr class="{{ '' if e.uuid in gueltig else 'storniert' }}" data-art="{{ e.art }}">
+      <td class="zeit">{{ e.erstellt_ms|uhrzeit }}</td><td>{{ ART_TEXT.get(e.art, e.art) }}</td>
+      <td class="zeit">{{ e.zeit_ms|uhrzeit if e.zeit_ms else '' }}</td>
+      <td>{% if e.art == 'ZEITKORREKTUR' and e.delta_ms %}{{ korrektur_text(e.delta_ms) }}{% else %}{{ e.wert or '' }}{% endif %}</td>
+      <td class="mono">{{ e.geraet }}</td><td class="notiz">{{ e.notiz or '' }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="hint">Noch keine Einträge.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endblock %}

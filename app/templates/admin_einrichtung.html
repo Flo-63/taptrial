@@ -1,0 +1,135 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf, geraetekarte, abbrechen, zuklappen %}
+{% block titel %}Neue Veranstaltung einrichten{% endblock %}
+{% block kopf %}{{ seitenkopf("Neue Veranstaltung einrichten", "Vier Schritte; jeder Schritt wird sofort gespeichert und lässt sich später fortsetzen.") }}{% endblock %}
+{% block inhalt %}
+<ol class="schritte" id="fortschritt">
+  {% for titel in schritte %}{% set n = loop.index %}
+  <li class="{{ 'aktuell' if n == schritt else ('erledigt' if n < erreicht else '') }}" data-schritt="{{ n }}">
+    {% if v and n <= erreicht and n != schritt %}<a class="schritt-link" href="/admin/einrichtung/{{ v.id }}/{{ n }}">{{ n }}. {{ titel }}</a>{% else %}{{ n }}. {{ titel }}{% endif %}
+  </li>
+  {% endfor %}
+</ol>
+
+{% if schritt == 1 %}
+<section class="card stapel-eng">
+  <h2>1. Name und Datum</h2>
+  <form method="post" action="{{ '/admin/einrichtung/' ~ v.id ~ '/1' if v else '/admin/einrichtung/neu' }}" class="formular" id="schritt">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="field"><label for="s-name">Name</label><input id="s-name" name="name" required maxlength="200" value="{{ v.name if v else '' }}" autofocus></div>
+    <div class="field"><label for="s-datum">Datum</label><input id="s-datum" type="date" name="datum" required value="{{ v.datum.isoformat() if v else heute }}"></div>
+    <p class="hint" id="hinweis-genehmigung">{{ HINWEIS_GENEHMIGUNG }}</p>
+    <div class="btn-reihe"><a class="btn btn-quiet abbrechen" href="/admin">Abbrechen</a><button type="submit" class="btn btn-primary" id="weiter">Weiter</button></div>
+  </form>
+</section>
+
+{% elif schritt == 2 %}
+<form method="post" action="/admin/einrichtung/{{ v.id }}/2" class="stapel" id="schritt">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <section class="card stapel-eng">
+    <h2>2. Klassen &amp; Wertung</h2>
+    <div class="feld-reihe formular-breit">
+      <div class="field"><label for="wahl-klassensatz">Klassensatz (Pflicht)</label><select name="klassensatz_id" id="wahl-klassensatz" {{ 'class=auto-senden' if plaetze is defined }}>
+        {% for ks in klassensaetze %}<option value="{{ ks.id }}" {{ 'selected' if ks.id == v.klassensatz_id }}>{{ ks.name }}</option>{% endfor %}
+      </select></div>
+      <div class="field"><label for="wahl-wertungssatz">Wertungssatz</label><select name="wertungssatz_id" id="wahl-wertungssatz" {{ 'class=auto-senden' if plaetze is defined }}>
+        <option value="">keine Wertung</option>
+        {% for ws in wertungssaetze %}<option value="{{ ws.id }}" data-klassensatz="{{ ws.klassensatz_id }}" {{ 'selected' if ws.id == v.wertungssatz_id }} {{ 'hidden disabled' if ws.klassensatz_id != v.klassensatz_id }}>{{ ws.name }}</option>{% endfor %}
+      </select></div>
+    </div>
+    {% if plaetze is defined %}<p class="hint" id="satz-sofort">Eine Änderung hier wird sofort gespeichert; danach stehen unten die passenden Plätze.</p>{% endif %}
+    <p class="alert a-warn" id="wertung-zurueckgesetzt" hidden>Die gewählte Wertung gehört nicht zum neuen Klassensatz und wurde zurückgesetzt.</p>
+  </section>
+  {% if plaetze is defined %}
+  <section class="card stapel-eng" id="plaetze">
+    <h2>Strecken je Länge</h2>
+    <p class="hint">Der Assistent legt keine Strecken von selbst an. Für jeden Platz: <strong>Aus Datei laden</strong> (eine gespeicherte Streckendatei; sie übernimmt die Klassen des Platzes, ihre Länge gilt) oder <strong>Platzhalter-Strecke anlegen</strong> (Name und Länge vorbelegt; Verlauf später auf der Seite der Strecke).</p>
+    {% macro wahl(p) %}<div class="stapel-eng platz-wahl">
+        <button type="submit" name="platz_laden" value="{{ p.schluessel }}" class="btn btn-secondary btn-sm platz-laden" formnovalidate>Aus Datei laden</button>
+        <div class="btn-reihe"><input name="platz_name:{{ p.schluessel }}" value="{{ p.name }}" maxlength="100" class="eingabe eingabe-schmal" aria-label="Name der Platzhalter-Strecke für {{ p.name }}">
+          <input name="platz_laenge:{{ p.schluessel }}" value="{{ km_text(p.laenge_km) }}" inputmode="decimal" placeholder="Länge km" class="eingabe eingabe-schmal mono" aria-label="Länge der Platzhalter-Strecke für {{ p.name }}">
+          <button type="submit" name="platz_anlegen" value="{{ p.schluessel }}" class="btn btn-secondary btn-sm platz-anlegen" formnovalidate>Platzhalter-Strecke anlegen</button></div>
+      </div>{% endmacro %}
+    {% for p in plaetze %}
+    <div class="aufgabe platz" data-platz="{{ p.schluessel }}">
+      <div><strong>Strecke für {{ p.name if p.laenge_km else "alle Klassen" }}</strong>
+        <div class="hint">Klassen {{ p.klassen|join(", ") }}</div>
+        {% if not p.offen %}<div class="platz-entschieden"><span class="badge b-ok">gewählt</span>
+          {% for st, kl in p.gruppen %}<span class="strecke-marke">{{ st.name }}</span>{% if st.laenge_km %} <span class="mono">{{ km_text(st.laenge_km) }} km</span>{% endif %}{% if st.teile_json %} · aus Datei{% endif %}{% if p.gruppen|length > 1 %} <span class="hint">({{ kl|join(", ") }})</span>{% endif %}{{ " · " if not loop.last }}{% endfor %}</div>
+          {% if p.hinweis %}<div class="hint platz-hinweis">{{ p.hinweis }}</div>{% endif %}{% endif %}</div>
+      {% if p.offen %}{{ wahl(p) }}
+      {% elif strecken_eingefroren %}<span class="hint">Ändern gesperrt: es gibt bereits Zeiten.</span>
+      {% else %}<details class="platz-aendern"><summary class="btn btn-quiet btn-sm">Ändern</summary>{{ wahl(p) }}</details>{% endif %}
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+  {% if plaetze is not defined or not plaetze_offen %}
+  <section class="card stapel-eng">
+    <h2>Strecken &amp; Zuordnung</h2>
+    {% include "_strecken.html" %}
+  </section>
+  {% endif %}
+  {% if plaetze is defined and plaetze_offen %}<p class="hint" id="weiter-gesperrt">„Weiter“ geht, sobald für jeden Platz entschieden ist (offen: {{ plaetze_offen|map(attribute="name")|join(", ") }}).</p>{% endif %}
+  <div class="btn-reihe"><a class="btn btn-quiet" href="/admin/einrichtung/{{ v.id }}/1" id="zurueck">Zurück</a><button type="submit" class="btn btn-primary" id="weiter" {{ 'disabled' if plaetze is defined and plaetze_offen }}>Weiter</button> {{ abbrechen("/admin") }}</div>
+</form>
+
+{% elif schritt == 3 %}
+<div class="raster-karten">
+<section class="card stapel-eng">
+  <h2>3. Teilnehmer: CSV importieren</h2>
+  <p>Bisher <strong id="anzahl-teilnehmer">{{ teilnehmer|length }}</strong> Teilnehmer.</p>
+  {% if entwurf %}<div class="alert a-warn"><span>Offener Import-Entwurf.</span><a class="btn btn-secondary btn-sm" href="/admin/v/{{ v.id }}/import/vorschau?assistent=1">Vorschau fortsetzen</a></div>{% endif %}
+  <form method="post" action="/admin/v/{{ v.id }}/import" enctype="multipart/form-data" id="import" class="formular">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="assistent" value="1">
+    <div class="field"><label for="s-datei">CSV-Datei</label><input id="s-datei" type="file" name="datei" accept=".csv,text/csv" required>
+      <span class="hint">Nach dem Hochladen folgt eine Vorschau zum Korrigieren.</span></div>
+    <div class="btn-reihe"><button type="submit" class="btn btn-secondary">Hochladen und prüfen</button>
+      <a class="btn btn-quiet btn-sm" href="/admin/beispiel-teilnehmer.csv">Beispiel-CSV</a></div>
+  </form>
+</section>
+<section class="card stapel-eng">
+  <h2>… oder einzeln anlegen</h2>
+  {% set t = None %}{% set ziel = "/admin/einrichtung/" ~ v.id ~ "/3" %}
+  {% include "admin_teilnehmer_formular.html" %}
+</section>
+</div>
+<form method="post" action="/admin/einrichtung/{{ v.id }}/3" class="btn-reihe" id="schritt">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <a class="btn btn-quiet" href="/admin/einrichtung/{{ v.id }}/2" id="zurueck">Zurück</a>
+  <button type="submit" class="btn btn-primary" id="weiter">Weiter</button> {{ abbrechen("/admin") }}
+</form>
+
+{% elif schritt == 4 %}
+<section class="stapel-eng" id="zielmonitor">
+  <div class="page-head"><h2 class="abschnitt">4. Zielmonitor</h2>
+    <a class="btn btn-secondary btn-sm" href="/monitor?veranstaltung={{ v.id }}" target="_blank" rel="noopener" id="monitor-vorschau">Vorschau</a></div>
+  <p class="hint" id="zielmonitor-vorgabe">Vorgeschlagen: Ergebnisseite mit Live-Bereich, je Abschnitt ein Feld, „mit Pfeil und Differenz“ bei Abschnitten mit mehreren Durchfahrten. Passt es, einfach „Weiter“ – später änderbar unter Einstellungen → „Zielmonitor und Ergebnisse“.</p>
+  {% set assistent = true %}{% include "_zielmonitor_form.html" %}
+</section>
+
+{% else %}
+<section class="card stapel-eng" id="zusammenfassung">
+  <h2>5. Zusammenfassung</h2>
+  <ul class="fakten-liste">
+    <li>Name: <strong>{{ v.name }}</strong></li>
+    <li>Datum: <span class="mono">{{ v.datum.strftime('%d.%m.%Y') }}</span></li>
+    <li>Klassensatz: {{ regeln.klassensatz }}</li>
+    <li>Wertung: {{ regeln.wertungssatz or "keine" }}</li>
+    <li>Strecken: {% for s in strecken %}<span class="strecke-marke strecke-farbe-{{ loop.index0 % FARBEN }}">{{ s.name }}</span>{% if s.laenge_km %} {{ km_text(s.laenge_km) }} km{% endif %}{{ " · " if not loop.last }}{% endfor %}</li>
+    <li>Teilnehmer: {{ teilnehmer|length }}{% if teilnehmer %} (Abzeichen: {{ teilnehmer|selectattr("abzeichen")|list|length }}, a. K.: {{ teilnehmer|selectattr("ausser_konkurrenz")|list|length }}){% endif %}</li>
+  </ul>
+  <form method="post" action="/admin/einrichtung/{{ v.id }}/5" class="formular" id="schritt">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="check"><input type="checkbox" name="aktivieren" value="1" checked> als aktive Veranstaltung setzen (erscheint auf Startseite, Ergebnissen, Monitor)</label>
+    <div class="btn-reihe"><a class="btn btn-quiet" href="/admin/einrichtung/{{ v.id }}/4" id="zurueck">Zurück</a><button type="submit" class="btn btn-primary" id="fertig">Einrichtung abschließen</button> {{ abbrechen("/admin") }}</div>
+  </form>
+</section>
+<h2 class="abschnitt">Gerätelinks</h2>
+<div class="raster-karten" id="links">
+  {% for l in links %}
+  {{ geraetekarte(l) }}
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf, abbrechen, zuklappen %}
+{% block titel %}Einstellungen – {{ REITER[tab][0] }}{% endblock %}
+{% block kopf %}{{ seitenkopf("Einstellungen", "Alles, was vor dem ersten Start feststehen muss – nach Bereichen.") }}
+<nav class="reiterleiste" id="einstellungen-reiter" aria-label="Bereiche der Einstellungen">
+  {% for key, (text, pfad, _) in REITER.items() %}<a class="reiter-link" href="/admin/v/{{ v.id }}/einstellungen{{ pfad }}" data-reiter="{{ key }}" {{ 'aria-current=page' if tab == key }}>{{ text }}</a>{% endfor %}
+</nav>{% endblock %}
+{% block inhalt %}
+{% set gesperrt = v.zustand == 'anonymisiert' %}
+{% if tab == "allgemein" %}
+<section class="card stapel-eng" id="allgemein">
+  <h2>Allgemein</h2>
+  <form method="post" action="/admin/v/{{ v.id }}/stammdaten" class="formular" id="stammdaten">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="field"><label for="e-name">Name</label><input id="e-name" name="name" value="{{ v.name }}" maxlength="200" required></div>
+    <div class="feld-reihe">
+      <div class="field"><label for="e-datum">Datum</label><input id="e-datum" type="date" name="datum" value="{{ v.datum.isoformat() }}" required></div>
+      <div class="field"><label for="e-anon">Anonymisieren ab</label><input id="e-anon" type="date" name="anonymisieren_ab" value="{{ v.anonymisieren_ab.isoformat() }}" required>
+        <span class="hint">Standard: 6 Monate nach dem Datum. Es wird nie automatisch anonymisiert.</span></div>
+    </div>
+    <div><button type="submit" class="btn btn-primary" {{ 'disabled' if gesperrt }}>Speichern</button> {{ abbrechen(abbruch_ziel(request, "/admin/v/" ~ v.id)) }}</div>
+    {% if gesperrt %}<p class="hint">Gesperrt: Die Veranstaltung ist anonymisiert.</p>{% endif %}
+  </form>
+</section>
+
+{% elif tab == "klassen" %}
+<form method="post" action="/admin/v/{{ v.id }}/regeln" class="stapel" id="wertung">
+  <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="ziel" value="/admin/v/{{ v.id }}/einstellungen/klassen">
+  <section class="card stapel-eng" id="regeln">
+    <div><h2>Klassen &amp; Wertung</h2>
+      {% if regeln.eingefroren_ms %}
+      <p class="sub" id="eingefroren">Eingefroren seit {{ datum_text(regeln.eingefroren_ms) }}, {{ (regeln.eingefroren_ms|uhrzeit)[:5] }} Uhr – es gibt bereits Zeiten.
+        Es gilt eine Kopie von Klassensatz „{{ regeln.klassensatz }}“{% if regeln.wertungssatz %} und Wertungssatz „{{ regeln.wertungssatz }}“{% endif %};
+        spätere Änderungen an den Vorlagen wirken nicht mehr auf diese Veranstaltung.</p>
+      {% else %}<p class="sub">Es stehen nur Wertungssätze zur Wahl, die zum Klassensatz gehören. Bearbeiten unter „Vorlagen“.</p>{% endif %}
+    </div>
+    <div class="feld-reihe formular-breit">
+      <div class="field"><label for="wahl-klassensatz">Klassensatz (Pflicht)</label>
+        <select name="klassensatz_id" id="wahl-klassensatz" {{ 'disabled' if regeln.eingefroren_ms }}>
+          {% for ks in klassensaetze %}<option value="{{ ks.id }}" {{ 'selected' if ks.id == v.klassensatz_id }}>{{ ks.name }}</option>{% endfor %}
+        </select>
+        {% if regeln.eingefroren_ms %}<input type="hidden" name="klassensatz_id" value="{{ v.klassensatz_id }}"><span class="hint">Gesperrt: es gibt bereits Zeiten.</span>{% endif %}</div>
+      <div class="field"><label for="wahl-wertungssatz">Wertungssatz</label>
+        <select name="wertungssatz_id" id="wahl-wertungssatz">
+          <option value="">keine Wertung</option>
+          {% for ws in wertungssaetze %}<option value="{{ ws.id }}" data-klassensatz="{{ ws.klassensatz_id }}" {{ 'selected' if ws.id == v.wertungssatz_id }} {{ 'hidden disabled' if ws.klassensatz_id != v.klassensatz_id }}>{{ ws.name }}</option>{% endfor %}
+        </select></div>
+    </div>
+    <p class="alert a-warn" id="wertung-zurueckgesetzt" hidden>Die gewählte Wertung gehört nicht zum neuen Klassensatz und wurde zurückgesetzt.</p>
+    {% if not regeln.eingefroren_ms %}
+    <p class="hint" id="strecken-neu-info">Ändert sich Klassen- oder Wertungssatz, legt das keine Strecken an: Die Strecken bleiben. Klassen, die es nicht mehr gibt, fallen aus der Zuordnung, neue gehen an die Strecke passender Länge – danach unter „Strecken“ prüfen.</p>
+    {% endif %}
+    <div><button type="submit" class="btn btn-primary" {{ 'disabled' if gesperrt }}>Speichern</button> {{ abbrechen(abbruch_ziel(request, "/admin/v/" ~ v.id)) }}</div>
+  </section>
+</form>
+
+{% else %}
+<p class="alert a-info" id="oeffentlich-hinweis">Ergebnisse und Zielmonitor sind <strong>öffentlich</strong> (ohne Anmeldung). Ranglisten-Seiten des Monitors veröffentlichen Abschnittszeiten, auch wenn „Zwischenzeiten öffentlich“ aus ist.</p>
+<section class="stapel-eng" id="zielmonitor">
+  <div class="page-head"><h2 class="abschnitt">Zielmonitor</h2>
+    <a class="btn btn-secondary btn-sm" href="/monitor?veranstaltung={{ v.id }}" target="_blank" rel="noopener" id="monitor-vorschau">Vorschau</a></div>
+  {% include "_zielmonitor_form.html" %}
+</section>
+<section class="card stapel-eng" id="oeffentlichkeit">
+  <h2>Zwischenzeiten öffentlich</h2>
+  <form method="post" action="/admin/v/{{ v.id }}/oeffentlichkeit" class="formular">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="check"><input type="checkbox" name="zwischenzeiten_oeffentlich" value="1" id="zwischenzeiten-oeffentlich" {{ 'checked' if v.zwischenzeiten_oeffentlich }}> Segment- und Abschnittszeiten (Spalten und Ranglisten) in den öffentlichen Ergebnissen, im Druck und in der öffentlichen CSV zeigen</label>
+    <div><button type="submit" class="btn btn-primary" id="oeffentlichkeit-speichern">Speichern</button> {{ abbrechen(abbruch_ziel(request, "/admin/v/" ~ v.id)) }}</div>
+  </form>
+</section>
+{% if spalten %}<section class="card stapel-eng" id="spalten">
+  <h2>Ergebnistabelle (Seite, Druck, CSV)</h2>
+  <p class="hint">Welche Abschnitte (Segmente, Rundenblöcke, eigene) als Spalte in Ergebnis, Druck und CSV erscheinen. Der Wechsel der Strecke verwirft nichts; „Speichern“ sichert alle Strecken.</p>
+  <form method="post" action="/admin/v/{{ v.id }}/spalten" class="stapel-eng" id="spalten-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    {% if spalten|length > 1 %}<div class="field formular-breit"><label for="spalten-strecke">Strecke</label>
+      <select id="spalten-strecke" class="eingabe">{% for s in spalten %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}</select></div>{% endif %}
+    {% for s in spalten %}<input type="hidden" name="spalten_strecke" value="{{ s.id }}">
+    <div class="tbl-box tbl-box-kurz spalten-strecke" data-strecke="{{ s.id }}"><table class="tbl">
+      <thead><tr><th>Abschnitt</th><th>Art</th><th>anzeigen</th></tr></thead>
+      <tbody>{% for a in s.zeilen %}<tr data-abschnitt="{{ a.id }}"><td>{{ a.name }}</td><td class="hint">{{ a.art }}</td>
+        <td><input type="checkbox" name="anzeigen" value="{{ s.id }}:{{ a.id }}" aria-label="{{ s.name }}: {{ a.name }} anzeigen" {{ 'checked' if a.anzeigen }}></td></tr>{% endfor %}</tbody>
+    </table></div>{% endfor %}
+    <div><button type="submit" class="btn btn-primary" id="spalten-speichern">Speichern</button> {{ abbrechen(abbruch_ziel(request, "/admin/v/" ~ v.id)) }}</div>
+  </form>
+</section>{% endif %}
+{% endif %}
+{% endblock %}

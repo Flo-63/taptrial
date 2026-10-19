@@ -1,0 +1,60 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf %}
+{% block titel %}Status & Datenschutz{% endblock %}
+{% block kopf %}{{ seitenkopf("Status & Datenschutz", "Lebenszyklus der Veranstaltung. Schritte nach „Abschließen“ sind nicht umkehrbar.") }}{% endblock %}
+{% block inhalt %}
+{% set stufe = 4 if v.zustand == 'anonymisiert' else (3 if v.zustand == 'abgeschlossen' else (1 if v.einrichtung_schritt else 2)) %}
+<ol class="schritte" id="lebenszyklus-schritte">
+  {% for titel in ["Eingerichtet", "Läuft", "Abgeschlossen", "Anonymisiert"] %}
+  <li class="{{ 'aktuell' if loop.index == stufe else ('erledigt' if loop.index < stufe else '') }}" data-schritt="{{ loop.index }}">{{ loop.index }} · {{ titel }}</li>
+  {% endfor %}
+</ol>
+<section class="card card-kopf" id="aktiv">
+  <div><h2>Aktive Veranstaltung</h2>
+    <p class="sub">{% if v.aktiv %}Diese Veranstaltung ist aktiv und erscheint auf Startseite, Monitor und Ergebnissen.{% else %}Es ist immer genau eine Veranstaltung aktiv; sie erscheint auf Startseite, Monitor und Ergebnissen.{% endif %}</p></div>
+  {% if v.aktiv %}<div class="btn-reihe"><button type="button" class="btn btn-secondary" disabled>Ist aktiv</button>
+    {% if v.laufend and startzeiten %}<button type="button" class="btn btn-quiet" id="deaktivieren" disabled>Nicht mehr aktiv setzen …</button>
+    <span class="hint" id="deaktivieren-grund">Gesperrt: Es gibt bereits Startzeiten.</span>
+    {% elif v.laufend %}<form method="post" action="/admin/v/{{ v.id }}/deaktivieren" data-bestaetigen="„{{ v.name }}“ nicht mehr aktiv setzen? Sie erscheint dann nicht mehr öffentlich, und die Geräte sind wieder gesperrt („Zeitnahme noch nicht freigegeben“), bis du sie wieder aktiv setzt." data-bestaetigen-knopf="Nicht mehr aktiv setzen">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button type="submit" class="btn btn-quiet" id="deaktivieren">Nicht mehr aktiv setzen …</button>
+    </form>{% endif %}</div>
+  {% elif v.einrichtung_schritt %}<div class="btn-reihe"><button type="button" class="btn btn-secondary" id="aktivieren" disabled>Als aktive Veranstaltung setzen …</button>
+    <span class="hint" id="aktivieren-grund">Gesperrt: {{ aktiv_sperrgrund }}</span>
+    <a class="btn btn-quiet btn-sm" href="/admin/einrichtung/{{ v.id }}/{{ v.einrichtung_schritt }}">Einrichtung fortsetzen</a></div>
+  {% elif laufende %}<div class="btn-reihe"><button type="button" class="btn btn-secondary" id="aktivieren" disabled>Als aktive Veranstaltung setzen …</button>
+    <span class="hint" id="aktivieren-grund">Gesperrt: {{ verdraengen_text(laufende) }}</span>
+    <a class="btn btn-quiet btn-sm" href="/admin/v/{{ laufende.id }}/status" id="zur-laufenden">Zu „{{ laufende.name }}“</a></div>
+  {% else %}
+  <form method="post" action="/admin/v/{{ v.id }}/aktivieren" data-bestaetigen="„{{ v.name }}“ zur aktiven Veranstaltung machen? Die bisher aktive erscheint dann nicht mehr öffentlich." data-bestaetigen-knopf="Aktiv setzen">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <button type="submit" class="btn btn-secondary" id="aktivieren">Als aktive Veranstaltung setzen …</button>
+  </form>
+  {% endif %}
+</section>
+<p class="hint">Anonymisieren ab <span class="mono">{{ v.anonymisieren_ab.strftime('%d.%m.%Y') }}</span>{% if v.anonymisieren_ab <= heute and v.zustand != 'anonymisiert' %} <span class="badge b-warn">fällig</span>{% endif %} (änderbar unter „Einstellungen“).</p>
+
+{% macro gefahr(kennung, aktion, titel, text, knopf, moeglich, grund) %}
+<div class="dz-row" id="{{ kennung }}-zeile">
+  <div><strong>{{ titel }}</strong><div class="hint">{{ text }}</div>{% if not moeglich %}<div class="hint">Gesperrt: {{ grund }}</div>{% endif %}
+    {{ caller() if caller is defined else '' }}</div>
+  <details class="aktion gefahr-aktion">
+    <summary class="btn btn-danger" {{ 'aria-disabled=true' if not moeglich }}>{{ knopf }} …</summary>
+    <form method="post" action="/admin/v/{{ v.id }}/{{ aktion }}" class="formular" id="{{ kennung }}">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="bestaetigung" value="1">
+      <div class="field"><label for="{{ kennung }}-name">Zur Bestätigung den Namen der Veranstaltung eintippen</label>
+        <input id="{{ kennung }}-name" name="name" required autocomplete="off" placeholder="{{ v.name }}"></div>
+      <div><button type="submit" class="btn btn-danger" {{ 'disabled' if not moeglich }}>{{ knopf }}</button></div>
+    </form>
+  </details>
+</div>
+{% endmacro %}
+<div class="danger-zone" id="lebenszyklus">
+  <div class="dz-kopf"><h2>Gefahrenzone</h2><p class="sub">Nicht umkehrbar. Jede Aktion fragt zur Bestätigung nach dem Namen der Veranstaltung.</p></div>
+  {{ gefahr("abschliessen", "abschliessen", "Abschließen", "Danach schreibgeschützt: keine Zeiten und Korrekturen mehr, Gerätelinks ungültig, die Handys löschen ihre Daten. Ergebnisse und Protokoll bleiben lesbar. Vorher Backup ziehen.", "Abschließen", v.laufend, "Die Veranstaltung ist bereits " ~ ZUSTAND_TEXT[v.zustand] ~ ".") }}
+  {{ gefahr("anonymisieren", "anonymisieren", "Anonymisieren", "Entfernt Vorname, Nachname, Verein und Jahrgang. Startnummer, Geschlecht, Klasse, Zeiten, Status und Ränge bleiben; Notizen im Protokoll bleiben unverändert.", "Anonymisieren", v.zustand == 'abgeschlossen', "erst nach dem Abschließen möglich." if v.laufend else "bereits anonymisiert.") }}
+  {% call gefahr("loeschen", "loeschen", "Komplett löschen", "Löscht Veranstaltung, Teilnehmer, Strecken, Messpunkte, alle Ereignisse und Gerätemeldungen restlos. Vorher Backup und Exporte ziehen. Vorher angelegte Sicherungen enthalten die Veranstaltung weiterhin.", "Komplett löschen", true, "") %}
+    {% if v.aktiv or v.laufend %}<div class="hint" id="loeschen-hinweis"><strong>Achtung: {% if v.aktiv %}Dies ist die aktive Veranstaltung – danach ist keine Veranstaltung aktiv, bis du eine andere aktivierst. {% endif %}{% if v.laufend %}Sie läuft noch und wird beendet: Geräte mit ihren Links melden „Veranstaltung gelöscht“ und löschen ihre Daten (nicht übertragene Einträge bleiben zum Export).{% endif %}</strong></div>{% endif %}
+  {% endcall %}
+</div>
+{% endblock %}

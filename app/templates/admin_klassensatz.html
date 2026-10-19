@@ -1,0 +1,36 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf, abbrechen, zuklappen %}
+{% block titel %}Klassensatz{% endblock %}
+{% block kopf %}{% call seitenkopf("Klassensatz „" ~ satz.name ~ "“" if satz else "Neuer Klassensatz", "Verwendet von: " ~ benutzt|join(", ") ~ ". Veranstaltungen mit Zeiten nutzen eine eingefrorene Kopie." if benutzt else "") %}
+  {% if satz %}<a class="btn btn-quiet" href="/admin/saetze/klassen/{{ satz.id }}/export.toml">Export TOML</a>
+  <a class="btn btn-quiet" href="/admin/saetze/klassen/{{ satz.id }}/export.csv">Export CSV</a>{% endif %}
+  <a class="btn btn-quiet" href="/admin/saetze/klassen">Zurück zu den Vorlagen</a>
+{% endcall %}{% endblock %}
+{% block inhalt %}
+<form method="post" action="/admin/saetze/klassen/{{ satz.id if satz else 'neu' }}" id="klassensatz" class="stapel">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="hidden" name="anzahl" value="{{ zeilen|length }}">
+  <section class="card stapel-eng">
+    <div class="field"><label for="k-name">Name</label><input id="k-name" name="name" value="{{ name }}" required maxlength="100"></div>
+    <p class="hint">Alter = Wettkampfjahr − Geburtsjahr, Grenzen inklusive. Altersspannen dürfen sich je Geschlecht nicht überschneiden; Lücken sind erlaubt (Hinweis). Leere Zeilen werden ignoriert.</p>
+    <div class="tbl-box"><table class="tbl satz-tabelle" id="klassen">
+      <thead><tr><th>Name der Klasse</th><th>Geschlecht</th><th>Alter von</th><th>Alter bis</th><th>Entfernen</th></tr></thead>
+      <tbody>
+      {% for z in zeilen %}
+      <tr>
+        <td><input name="name_{{ loop.index0 }}" value="{{ z.name }}" class="eingabe" aria-label="Name Zeile {{ loop.index }}"></td>
+        <td><select name="geschlecht_{{ loop.index0 }}" class="eingabe eingabe-schmal" aria-label="Geschlecht Zeile {{ loop.index }}">
+          <option value=""></option>
+          {% for g in ["m", "w", "d"] %}<option value="{{ g }}" {{ 'selected' if (z.geschlecht|string|lower) == g }}>{{ g }}</option>{% endfor %}
+        </select></td>
+        <td><input name="alter_von_{{ loop.index0 }}" value="{{ z.alter_von }}" class="eingabe eingabe-schmal mono" inputmode="numeric" aria-label="Alter von Zeile {{ loop.index }}"></td>
+        <td><input name="alter_bis_{{ loop.index0 }}" value="{{ z.alter_bis }}" class="eingabe eingabe-schmal mono" inputmode="numeric" aria-label="Alter bis Zeile {{ loop.index }}"></td>
+        <td><input type="checkbox" name="entfernen_{{ loop.index0 }}" value="1" aria-label="Zeile {{ loop.index }} entfernen"></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    <div><button type="submit" class="btn btn-primary">Speichern</button> {{ abbrechen(abbruch_ziel(request, "/admin/saetze/klassen")) }}</div>
+  </section>
+</form>
+{% endblock %}

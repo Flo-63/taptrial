@@ -1,0 +1,57 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf %}
+{% block titel %}{{ "Klassensätze" if art == "klassen" else "Wertungssätze" }}{% endblock %}
+{% block kopf %}{% call seitenkopf("Klassensätze" if art == "klassen" else "Wertungssätze",
+    "Altersklassen (Alter = Wettkampfjahr − Geburtsjahr)." if art == "klassen" else "Leistungswertung, z. B. Deutsches Radsportabzeichen; gehört fest zu einem Klassensatz.") %}
+  <a class="btn btn-secondary" href="/admin/saetze/import" id="saetze-importieren">Importieren</a>
+  {% if art == "klassen" %}<a class="btn btn-primary" href="/admin/saetze/klassen/neu" id="neuer-klassensatz">Neuer Klassensatz</a>
+  {% else %}<a class="btn btn-primary" href="/admin/saetze/wertung/neu" id="neuer-wertungssatz">Neuer Wertungssatz</a>{% endif %}
+{% endcall %}{% endblock %}
+{% block inhalt %}
+<p class="hint">Jede Veranstaltung nutzt einen Klassensatz und optional einen Wertungssatz (unter „Einstellungen“ der Veranstaltung).
+  Sobald eine Veranstaltung Zeiten hat, gilt für sie eine eingefrorene Kopie – Änderungen hier wirken dann nur noch auf neue Veranstaltungen.
+  {% if eingefroren %}Derzeit eingefroren: {{ eingefroren }} Veranstaltung(en).{% endif %}</p>
+{% macro aktionen(satz, art, b) %}
+  <div class="btn-reihe nowrap">
+    <a class="btn btn-quiet btn-sm" href="/admin/saetze/{{ art }}/{{ satz.id }}">Bearbeiten</a>
+    <form method="post" action="/admin/saetze/{{ art }}/{{ satz.id }}/kopieren"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit" class="btn btn-quiet btn-sm">Kopieren</button></form>
+    <a class="btn btn-quiet btn-sm" href="/admin/saetze/{{ art }}/{{ satz.id }}/export.toml" title="Export als TOML">TOML</a>
+    <a class="btn btn-quiet btn-sm" href="/admin/saetze/{{ art }}/{{ satz.id }}/export.csv" title="Export als CSV">CSV</a>
+    {% if not b %}<form method="post" action="/admin/saetze/{{ art }}/{{ satz.id }}/loeschen" data-bestaetigen="„{{ satz.name }}“ löschen? Der Satz wird von keiner Veranstaltung verwendet." data-bestaetigen-knopf="Löschen"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit" class="btn btn-quiet btn-sm btn-danger-text">Löschen</button></form>{% endif %}
+  </div>
+{% endmacro %}
+{% if art == "klassen" %}
+<section class="card card-flach" id="klassensaetze">
+  <div class="tbl-box tbl-box-kurz"><table class="tbl">
+    <thead><tr><th>Name</th><th>Klassen</th><th>Verwendet von</th><th class="aktionen">Aktionen</th></tr></thead>
+    <tbody>
+    {% for satz in klassensaetze %}{% set b = benutzt(satz) %}
+    <tr class="row" data-satz="{{ satz.name }}" data-href="/admin/saetze/klassen/{{ satz.id }}">
+      <td><a class="tbl-link" href="/admin/saetze/klassen/{{ satz.id }}">{{ satz.name }}</a></td>
+      <td>{{ satz.klassen|length }}</td>
+      <td class="hint">{{ b|join(", ") if b else "–" }}</td>
+      <td class="aktionen">{{ aktionen(satz, "klassen", b) }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% else %}
+<section class="card card-flach" id="wertungssaetze">
+  <div class="tbl-box tbl-box-kurz"><table class="tbl">
+    <thead><tr><th>Name</th><th>Art</th><th>Klassensatz</th><th>Verwendet von</th><th class="aktionen">Aktionen</th></tr></thead>
+    <tbody>
+    {% for satz in wertungssaetze %}{% set b = benutzt(satz) %}
+    <tr class="row" data-satz="{{ satz.name }}" data-href="/admin/saetze/wertung/{{ satz.id }}">
+      <td><a class="tbl-link" href="/admin/saetze/wertung/{{ satz.id }}">{{ satz.name }}</a></td>
+      <td>{{ "Gesamtzeit" if satz.art == "gesamtzeit" else "Zeit pro km" }}</td>
+      <td class="hint">{% for ks in klassensaetze if ks.id == satz.klassensatz_id %}{{ ks.name }}{% endfor %}</td>
+      <td class="hint">{{ b|join(", ") if b else "–" }}</td>
+      <td class="aktionen">{{ aktionen(satz, "wertung", b) }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endif %}
+{% endblock %}

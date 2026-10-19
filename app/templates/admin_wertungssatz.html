@@ -1,0 +1,58 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf, abbrechen, zuklappen %}
+{% block titel %}Wertungssatz{% endblock %}
+{% block kopf %}{% call seitenkopf("Wertungssatz „" ~ satz.name ~ "“" if satz else "Neuer Wertungssatz", "Verwendet von: " ~ benutzt|join(", ") ~ ". Veranstaltungen mit Zeiten nutzen eine eingefrorene Kopie." if benutzt else "") %}
+  {% if satz %}<a class="btn btn-quiet" href="/admin/saetze/wertung/{{ satz.id }}/export.toml">Export TOML</a>
+  <a class="btn btn-quiet" href="/admin/saetze/wertung/{{ satz.id }}/export.csv">Export CSV</a>{% endif %}
+  <a class="btn btn-quiet" href="/admin/saetze/wertung">Zurück zu den Vorlagen</a>
+{% endcall %}{% endblock %}
+{% block inhalt %}
+<form method="post" action="/admin/saetze/wertung/{{ satz.id if satz else 'neu' }}" id="wertungssatz" class="stapel">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="hidden" name="anzahl" value="{{ zeilen|length }}">
+  <section class="card stapel-eng">
+    <h2>Allgemein</h2>
+    <div class="feld-reihe formular-breit">
+      <div class="field"><label for="w-name">Name</label><input id="w-name" name="name" value="{{ werte.name }}" required maxlength="100"></div>
+      <div class="field"><label for="stufen-klassensatz">Klassensatz</label><select name="klassensatz_id" id="stufen-klassensatz">{% for ks in klassensaetze %}<option value="{{ ks.id }}" {{ 'selected' if ks.id|string == werte.klassensatz_id|string }}>{{ ks.name }}</option>{% endfor %}</select></div>
+    </div>
+    <div class="field"><label for="w-beschreibung">Bezeichnung in Ergebnissen</label><input id="w-beschreibung" name="beschreibung" value="{{ werte.beschreibung }}" placeholder="z. B. Deutsches Radsportabzeichen A.1 …"></div>
+    <div class="feld-reihe formular-breit">
+      <div class="field"><label for="w-art">Art</label><select id="w-art" name="art">
+        <option value="gesamtzeit" {{ 'selected' if werte.art == 'gesamtzeit' }}>Gesamtzeit (H:MM:SS, je Klasse Streckenlänge)</option>
+        <option value="pro_km" {{ 'selected' if werte.art == 'pro_km' }}>Zeit pro km (M:SS, Strecke min–max)</option>
+      </select></div>
+      <div class="field"><label for="w-min">Strecke min km</label><input id="w-min" name="strecke_km_min" value="{{ werte.strecke_km_min }}" class="mono"><span class="hint">nur Zeit pro km</span></div>
+      <div class="field"><label for="w-max">Strecke max km</label><input id="w-max" name="strecke_km_max" value="{{ werte.strecke_km_max }}" class="mono"><span class="hint">nur Zeit pro km</span></div>
+    </div>
+  </section>
+  <section class="card stapel-eng">
+    <h2>Stufen je Klasse</h2>
+    <p class="hint">Je Klasse: Gold &lt; Silber &lt; Bronze. Jede Klasse des gewählten Klassensatzes kann genau einen Eintrag haben; Zeilen ohne Klasse werden ignoriert.</p>
+    <script type="application/json" id="klassen-je-satz">{{ klassen_je_satz|tojson }}</script>
+    <div class="tbl-box"><table class="tbl satz-tabelle" id="stufen">
+      <thead><tr><th>Klasse</th><th>Strecke km (Gesamtzeit)</th><th>Gold</th><th>Silber</th><th>Bronze</th><th>Entfernen</th></tr></thead>
+      <tbody>
+      {% for z in zeilen %}
+      <tr>
+        <td><select name="klasse_{{ loop.index0 }}" class="klassenwahl eingabe" data-wert="{{ z.klasse }}" aria-label="Klasse Zeile {{ loop.index }}" {{ 'disabled' if not z.optionen }}>
+          <option value="">– Klasse wählen –</option>
+          {% for k in z.optionen %}<option value="{{ k }}" {{ 'selected' if k|lower == z.klasse|string|trim|lower }}>{{ k }}</option>{% endfor %}
+        </select></td>
+        <td><input name="strecke_km_{{ loop.index0 }}" value="{{ z.strecke_km }}" class="eingabe eingabe-schmal mono" inputmode="decimal" aria-label="Strecke Zeile {{ loop.index }}"></td>
+        <td><input name="gold_{{ loop.index0 }}" value="{{ z.gold }}" class="eingabe eingabe-schmal mono" aria-label="Gold Zeile {{ loop.index }}"></td>
+        <td><input name="silber_{{ loop.index0 }}" value="{{ z.silber }}" class="eingabe eingabe-schmal mono" aria-label="Silber Zeile {{ loop.index }}"></td>
+        <td><input name="bronze_{{ loop.index0 }}" value="{{ z.bronze }}" class="eingabe eingabe-schmal mono" aria-label="Bronze Zeile {{ loop.index }}"></td>
+        <td><input type="checkbox" name="entfernen_{{ loop.index0 }}" value="1" class="entfernen" aria-label="Zeile {{ loop.index }} entfernen"></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    <div class="btn-reihe">
+      <button type="button" class="btn btn-secondary btn-sm" id="zeile-neu" {{ 'disabled' if alle_benutzt }}>Zeile hinzufügen</button>
+      <span class="hint" id="alle-klassen" {{ '' if alle_benutzt else 'hidden' }}>Alle Klassen haben einen Eintrag.</span>
+    </div>
+    <div><button type="submit" class="btn btn-primary">Speichern</button> {{ abbrechen(abbruch_ziel(request, "/admin/saetze/wertung")) }}</div>
+  </section>
+</form>
+{% endblock %}

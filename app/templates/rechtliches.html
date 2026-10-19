@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ titel }} – {{ APP_NAME }}</title>
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/basis.css">
+  <link rel="stylesheet" href="/static/css/oeffentlich.css">
+</head>
+<body class="ergebnisse rechtliches">
+  <div class="werkzeuge"><a href="/">Startseite</a> · <a href="/ergebnisse">Ergebnisse</a></div>
+  <main id="inhalt">
+    <h1>{{ titel }}</h1>
+    {% for absatz in absaetze %}<p>{% for zeile in absatz %}{{ zeile }}{% if not loop.last %}<br>{% endif %}{% endfor %}</p>{% endfor %}
+  </main>
+  {% include "_oeffentlich_fuss.html" %}
+</body>
+</html>

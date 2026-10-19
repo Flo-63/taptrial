@@ -1,0 +1,52 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf, abbrechen, zuklappen %}
+{% block titel %}Import-Vorschau{% endblock %}
+{% block kopf %}{% call seitenkopf("Import-Vorschau" ~ (": " ~ entwurf.dateiname if entwurf.dateiname else ""), "Zellen direkt bearbeiten – jede Änderung wird sofort geprüft und als Entwurf gespeichert.") %}
+  <a class="btn btn-quiet" href="/admin/v/{{ v.id }}/import/entwurf.csv" id="entwurf-csv">Korrigierte Daten als CSV</a>
+{% endcall %}{% endblock %}
+{% block inhalt %}
+<section class="card stapel-eng" id="import-vorschau">
+  <p class="hint">
+    <strong class="zaehler {{ 'mit-fehlern' if pruefung.anzahl_fehler }}" id="zaehler">{{ pruefung.anzahl_fehler }} Fehler, {{ pruefung.anzahl_warnungen }} Warnungen</strong>
+    · <span id="anzahl-zeilen">{{ zeilen|length }}</span> Zeilen
+    · <label class="check inline-check"><input type="checkbox" id="nur-fehler"> nur fehlerhafte Zeilen</label></p>
+  <div class="tbl-box">
+  <table class="tbl import-tabelle" id="import-tabelle">
+    <thead><tr><th>#</th>{% for sp in spalten %}<th>{{ sp.name }}{% if sp.pflicht %} *{% endif %}</th>{% endfor %}<th></th></tr></thead>
+    <tbody>
+    {% for z in zeilen %}{% set i = loop.index0 %}
+    <tr data-index="{{ i }}">
+      <td class="nr mono">{{ i + 1 }}</td>
+      {% for sp in spalten %}{% set m = meldungen.get((i, sp.name), []) %}
+      <td class="zelle {{ 'zelle-fehler' if m|selectattr(0, 'equalto', 'fehler')|list }} {{ 'zelle-warnung' if m|selectattr(0, 'equalto', 'warnungen')|list }}" data-feld="{{ sp.name }}">
+        <input value="{{ z[sp.name] }}" data-feld="{{ sp.name }}" aria-label="{{ sp.name }} Zeile {{ i + 1 }}">
+        <span class="zellmeldung">{% for art, text in m %}{{ text }}{{ "; " if not loop.last }}{% endfor %}</span>
+      </td>
+      {% endfor %}
+      <td><button type="button" class="btn btn-quiet btn-sm btn-danger-text zeile-loeschen" title="Zeile löschen" aria-label="Zeile löschen">×</button></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <div><button type="button" class="btn btn-secondary btn-sm" id="zeile-hinzufuegen">Zeile hinzufügen</button></div>
+</section>
+<section class="card stapel-eng">
+  <h2>Importieren</h2>
+  <form method="post" action="/admin/v/{{ v.id }}/import/uebernehmen" class="formular" id="uebernehmen">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    {% if assistent %}<input type="hidden" name="assistent" value="1">{% endif %}
+    <label class="check"><input type="radio" name="modus" value="ergaenzen" {{ 'checked' if modus == 'ergaenzen' }}> ergänzen (zu den vorhandenen {{ vorhandene }} Teilnehmern)</label>
+    <label class="check"><input type="radio" name="modus" value="ersetzen" {{ 'checked' if modus == 'ersetzen' }}> ersetzen</label>
+    {% if vorhandene %}<div class="alert a-warn stapel-eng" id="ersetzen-warnung" {{ 'hidden' if modus != 'ersetzen' }}><span>Ersetzen löscht die vorhandenen {{ vorhandene }} Teilnehmer.{% if geaendert %} <strong id="seit-import-geaendert">{{ geaendert }} davon wurden seit dem letzten Import im Admin angelegt oder geändert – diese Änderungen gehen verloren.</strong>{% endif %}</span>
+      <label class="check"><input type="checkbox" name="bestaetigung" value="1"> Ja, vorhandene Teilnehmer ersetzen</label></div>{% endif %}
+    <div><button type="submit" class="btn btn-primary" id="importieren" {{ 'disabled' if pruefung.anzahl_fehler or not zeilen }}>Importieren</button> {{ abbrechen(abbruch_ziel(request, "/admin/v/" ~ v.id ~ "/teilnehmer")) }}</div>
+  </form>
+  <form method="post" action="/admin/v/{{ v.id }}/import/verwerfen" id="verwerfen">
+    <input type="hidden" name="csrf" value="{{ csrf }}">{% if assistent %}<input type="hidden" name="assistent" value="1">{% endif %}
+    <button type="submit" class="btn btn-quiet btn-danger-text">Entwurf verwerfen</button>
+  </form>
+</section>
+<script id="import-daten" type="application/json">{{ {"url": "/admin/v/" ~ v.id ~ "/import/entwurf", "csrf": csrf, "spalten": spalten|map(attribute="name")|list}|tojson }}</script>
+<script src="/static/js/admin_import.js"></script>
+{% endblock %}

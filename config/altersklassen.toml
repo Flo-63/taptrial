@@ -1,0 +1,122 @@
+# Altersklassen nach dem Deutschen Radsportabzeichen (ENTSCHEIDUNGEN E2, FRAGEN A4/A5).
+# Alter = Wettkampfjahr - Geburtsjahr (E5). Grenzen inklusive.
+
+[[klasse]]
+name = "Jungen 8-11"
+geschlecht = "m"
+alter_von = 8
+alter_bis = 11
+
+[[klasse]]
+name = "Jungen 12-14"
+geschlecht = "m"
+alter_von = 12
+alter_bis = 14
+
+[[klasse]]
+name = "Jugend männlich"
+geschlecht = "m"
+alter_von = 15
+alter_bis = 17
+
+[[klasse]]
+name = "Herren bis 30"
+geschlecht = "m"
+alter_von = 18
+alter_bis = 30
+
+[[klasse]]
+name = "Herren 31-40"
+geschlecht = "m"
+alter_von = 31
+alter_bis = 40
+
+[[klasse]]
+name = "Herren 41-50"
+geschlecht = "m"
+alter_von = 41
+alter_bis = 50
+
+[[klasse]]
+name = "Herren 51-60"
+geschlecht = "m"
+alter_von = 51
+alter_bis = 60
+
+[[klasse]]
+name = "Herren 61-70"
+geschlecht = "m"
+alter_von = 61
+alter_bis = 70
+
+[[klasse]]
+name = "Herren 71-75"
+geschlecht = "m"
+alter_von = 71
+alter_bis = 75
+
+[[klasse]]
+name = "Herren ü 75"
+geschlecht = "m"
+alter_von = 76
+alter_bis = 110
+
+[[klasse]]
+name = "Mädchen 8-11"
+geschlecht = "w"
+alter_von = 8
+alter_bis = 11
+
+[[klasse]]
+name = "Mädchen 12-14"
+geschlecht = "w"
+alter_von = 12
+alter_bis = 14
+
+[[klasse]]
+name = "Jugend weiblich"
+geschlecht = "w"
+alter_von = 15
+alter_bis = 17
+
+[[klasse]]
+name = "Damen bis 30"
+geschlecht = "w"
+alter_von = 18
+alter_bis = 30
+
+[[klasse]]
+name = "Damen 31-40"
+geschlecht = "w"
+alter_von = 31
+alter_bis = 40
+
+[[klasse]]
+name = "Damen 41-50"
+geschlecht = "w"
+alter_von = 41
+alter_bis = 50
+
+[[klasse]]
+name = "Damen 51-60"
+geschlecht = "w"
+alter_von = 51
+alter_bis = 60
+
+[[klasse]]
+name = "Damen 61-70"
+geschlecht = "w"
+alter_von = 61
+alter_bis = 70
+
+[[klasse]]
+name = "Damen 71-75"
+geschlecht = "w"
+alter_von = 71
+alter_bis = 75
+
+[[klasse]]
+name = "Damen ü 75"
+geschlecht = "w"
+alter_von = 76
+alter_bis = 110

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Start- und Zielprotokoll – {{ v.name }}</title>
+  <link rel="stylesheet" href="/static/css/basis.css">
+  <link rel="stylesheet" href="/static/css/druck.css">
+  <style>
+    @page { size: A4 portrait; margin: 12mm 10mm 14mm;
+            @bottom-right { content: "Seite " counter(page) " von " counter(pages); font: 9pt system-ui, sans-serif; } }
+    body { margin: 0; font-size: 10pt; }
+    main.blatt { padding: 0 2mm; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    thead { display: table-header-group; }  /* Kopf auf jeder Seite wiederholen */
+    caption { text-align: left; padding-bottom: 3mm; }
+    caption strong { font-size: 13pt; }
+    th, td { border: 1px solid var(--druck-text); padding: 0 2mm; height: 8.5mm; text-align: left; overflow: hidden; white-space: nowrap; }
+    th { background: var(--druck-kopf-bg); height: 7mm; font-size: 9pt; }
+    col.nr { width: 11mm; } col.klasse { width: 30mm; } col.strecke { width: 18mm; }
+    col.zeit { width: 32mm; } col.bemerkung { width: 30mm; }
+    tr { break-inside: avoid; }
+    .hinweis { margin-top: 3mm; font-size: 9pt; }
+  </style>
+</head>
+<body class="druckansicht">
+  {% include "_druckleiste.html" %}
+  <main class="blatt">
+  <table>
+    <caption><strong>Start- und Zielprotokoll</strong> · {{ v.name }} · {{ v.datum.strftime('%d.%m.%Y') }}<br>
+      <span class="hinweis">Uhrzeiten von Hand eintragen (hh:mm:ss,z). Nachtragen im Admin als manuelle Zeit.</span></caption>
+    <colgroup><col class="nr"><col class="name"><col class="klasse"><col class="strecke"><col class="zeit"><col class="zeit"><col class="bemerkung"></colgroup>
+    <thead><tr><th>Nr.</th><th>Name</th><th>Klasse</th><th>Strecke</th><th>Uhrzeit Start</th><th>Uhrzeit Ziel</th><th>Bemerkung</th></tr></thead>
+    <tbody>
+    {% for z in zeilen %}
+    <tr class="fahrer" data-nr="{{ z.startnummer }}"><td>{{ z.startnummer }}</td><td>{{ z.vorname }} {{ z.nachname }}</td>
+      <td>{{ z.klasse or "" }}</td><td>{{ strecken[z.strecke].name }}</td><td></td><td></td><td></td></tr>
+    {% endfor %}
+    {% for _ in leer %}<tr class="leer"><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>{% endfor %}
+    </tbody>
+  </table>
+  <p class="hinweis">Nachtragen im Admin als manuelle Zeit (Fahrer öffnen → „Manuelle Zeit eintragen“). Nachmeldungen vorher im Admin anlegen.</p>
+  </main>
+  {% include "_druckfuss.html" %}
+</body>
+</html>

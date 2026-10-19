@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Urkunden – {{ v.name }}</title>
+  <link rel="stylesheet" href="/static/css/basis.css">
+  <link rel="stylesheet" href="/static/css/druck.css">
+  <style>
+    /* eine Urkunde je Seite, A4 quer (AUSBAU B6) */
+    @page { size: A4 landscape; margin: 0; }
+    body { margin: 0; }
+    .urkunde { font-family: Georgia, "Times New Roman", serif; color: var(--urkunde-text); }
+    .urkunde { position: relative; box-sizing: border-box; width: 297mm; height: 210mm; padding: 18mm 24mm;
+               display: flex; flex-direction: column; align-items: center; text-align: center;
+               break-after: page; overflow: hidden; border: 3mm double var(--urkunde-rahmen); background: var(--papier); }
+    .urkunde:last-of-type { break-after: auto; }
+    .urkunde-fuss { position: absolute; right: 8mm; bottom: 5mm; margin: 0; font: 7pt var(--font); }
+    .logo { width: 40mm; height: 22mm; border: 1px dashed var(--urkunde-logo); color: var(--urkunde-logo); font: 9pt var(--font);
+            display: flex; align-items: center; justify-content: center; margin-bottom: 4mm; }
+    h1 { font-size: 38pt; letter-spacing: 0.08em; margin: 0 0 2mm; }
+    .veranstaltung { font-size: 15pt; margin: 0 0 8mm; }
+    .name { font-size: 30pt; font-weight: bold; margin: 0 0 6mm; }
+    .angaben { font-size: 15pt; line-height: 1.6; margin: 0; }
+    .zeit { font-size: 22pt; font-weight: bold; margin: 4mm 0; font-family: var(--mono); }
+    .stufe { display: inline-block; margin-top: 3mm; padding: 1mm 6mm; border-radius: 3mm; font-size: 16pt; font-weight: bold; }
+    .stufe-GOLD { background: var(--urkunde-gold); } .stufe-SILBER { background: var(--urkunde-silber); } .stufe-BRONZE { background: var(--urkunde-bronze); color: var(--papier); }
+    .unterschrift { margin-top: auto; align-self: flex-end; width: 80mm; border-top: 1px solid var(--druck-text); padding-top: 2mm; font-size: 11pt; }
+    .wasserzeichen { position: absolute; top: 45%; left: 0; right: 0; transform: rotate(-20deg); font-size: 90pt;
+                     color: var(--wasserzeichen); font-family: var(--font); font-weight: 800; pointer-events: none; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  </style>
+</head>
+<body class="druckansicht">
+  {% set leiste_hinweis = zeilen|length ~ " Urkunde(n)" ~ ("" if offiziell else " – Ergebnis noch vorläufig (Wasserzeichen)") %}
+  {% include "_druckleiste.html" %}
+  {% for z in zeilen %}{% set s = strecken[z.strecke] %}
+  <section class="urkunde" data-nr="{{ z.startnummer }}">
+    {% if not offiziell %}<div class="wasserzeichen">vorläufig</div>{% endif %}
+    <div class="logo">Logo</div>
+    <h1>Urkunde</h1>
+    <p class="veranstaltung">{{ v.name }} · {{ v.datum.strftime('%d.%m.%Y') }}</p>
+    <p class="name">{{ z.vorname }} {{ z.nachname }}</p>
+    <p class="angaben">
+      Strecke: {{ s.name }}{% if s.zehntel_km %} ({{ km_text(s.zehntel_km / 10) }} km){% endif %} · Klasse: {{ z.klasse }}<br>
+      {% if z.ausser_konkurrenz %}außer Konkurrenz{% elif z.rang_klasse %}{{ z.rang_klasse }}. Platz in der Klasse{% endif %}
+    </p>
+    <p class="zeit">{{ z.fahrzeit_text }}</p>
+    {% if wertung and z.abzeichen and z.stufe %}<p class="stufe stufe-{{ z.stufe }}">{{ STUFE_TEXT[z.stufe] }}</p>{% endif %}
+    <div class="unterschrift">Veranstalter</div>
+    <p class="druck-fuss urkunde-fuss">erstellt mit {{ APP_NAME }}</p>
+  </section>
+  {% endfor %}
+</body>
+</html>

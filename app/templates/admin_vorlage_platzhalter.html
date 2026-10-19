@@ -1,0 +1,10 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf %}
+{% block titel %}{{ titel }}{% endblock %}
+{% block kopf %}{{ seitenkopf(titel, text) }}{% endblock %}
+{% block inhalt %}
+<section class="card leer-zustand" id="platzhalter">
+  <p><strong>Kommt mit dem Branding (AUSBAU D1).</strong></p>
+  <p class="hint">Diese Seite hat noch keine Funktion.</p>
+</section>
+{% endblock %}

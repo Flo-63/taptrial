@@ -1,0 +1,26 @@
+{# Bausteine der Admin-Seiten (ADMIN-REVIEW 2.3) #}
+{# „Abbrechen“ (Segmente 21): ohne Speichern zurück zur aufrufenden Seite bzw. Aufklapp-Formular schließen #}
+{% macro abbrechen(url) -%}<a class="btn btn-quiet abbrechen" href="{{ url }}">Abbrechen</a>{%- endmacro %}
+{% macro zuklappen() -%}<button type="button" class="btn btn-quiet btn-sm abbrechen" data-zuklappen>Abbrechen</button>{%- endmacro %}
+{% macro seitenkopf(titel, sub="") -%}
+<div class="page-head">
+  <div><h1>{{ titel }}</h1>{% if sub %}<p class="sub">{{ sub }}</p>{% endif %}</div>
+  {% if caller is defined %}<div class="btn-reihe">{{ caller() }}</div>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro geraetekarte(l, hinweis="") -%}
+{# Geräte-Karte: Titel, QR-Code, Buttons auf gleicher Höhe, darunter der Link gekürzt (Test 08.10., Punkt 11) #}
+<section class="card geraet" data-titel="{{ l.titel }}">
+  <h2>{{ l.titel }}</h2>
+  <div class="qr" role="img" aria-label="QR-Code {{ l.titel }}">{{ l.qr|safe }}</div>
+  <div class="btn-reihe geraet-knoepfe">
+    <button type="button" class="btn btn-secondary btn-sm kopieren" data-text="{{ l.url }}">Link kopieren</button>
+    <a class="btn btn-quiet btn-sm link" href="{{ l.url }}" target="_blank" rel="noopener">Öffnen</a>
+  </div>
+  <code class="url" title="{{ l.url }}">{{ l.url }}</code>
+  {% if "verbunden_ms" in l %}<p class="geraet-status">{% if l.verbunden_ms %}<span class="badge b-ok">verbunden</span> <span class="hint">zuletzt {{ (l.verbunden_ms|uhrzeit)[:8] }} Uhr</span>{% else %}<span class="badge">nicht verbunden</span>{% endif %}</p>{% endif %}
+  {% if hinweis %}<p class="hint">{{ hinweis }}</p>{% endif %}
+  {{ caller() if caller is defined else "" }}
+</section>
+{%- endmacro %}

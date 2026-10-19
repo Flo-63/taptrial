@@ -1,0 +1,66 @@
+{% if not d %}
+<p class="leer">Derzeit keine Ergebnisse.</p>
+{% elif d.keine_ergebnisse %}
+<header class="ergebnis-kopf"><h1>{{ d.veranstaltung.name }} <span class="datum">{{ d.veranstaltung.datum }}</span></h1></header>
+<p class="leer" id="keine-ergebnisse">{{ d.keine_ergebnisse }}</p>
+{% else %}
+<header class="ergebnis-kopf">
+  <h1>{{ d.veranstaltung.name }} <span class="datum">{{ d.veranstaltung.datum }}</span></h1>
+  <p class="ergebnisstatus {{ 'offiziell' if d.offiziell else 'vorlaeufig' }}" id="ergebnisstatus">{{ d.kopf }}</p>
+  {% if d.wertung %}<p class="wertung">Leistungswertung: {{ d.wertung }}</p>{% endif %}
+  <p class="zaehlung" id="zaehlung">{{ d.zaehlung.gestartet }} gestartet · {{ d.zaehlung.unterwegs }} auf der Strecke ·
+    {{ d.zaehlung.im_ziel }} im Ziel{% if d.zaehlung.dns %} · {{ d.zaehlung.dns }} DNS{% endif %}{% if d.zaehlung.dnf %} · {{ d.zaehlung.dnf }} DNF{% endif %}{% if d.zaehlung.dsq %} · {{ d.zaehlung.dsq }} DSQ{% endif %}</p>
+</header>
+{% if d.ranglisten %}
+<nav class="sprung ranglisten-nav" id="ranglisten-nav">Ranglisten Abschnitte:
+  {% for x in d.ranglisten %}{{ " · " if not loop.first }}<a href="?rangliste={{ x.schluessel|urlencode }}{{ '&veranstaltung=' ~ veranstaltung if veranstaltung }}" {{ 'aria-current=true' if rl and rl.schluessel == x.schluessel }}>{{ x.titel }}</a>{% endfor %}
+  {% if rl %} · <a href="?{{ 'veranstaltung=' ~ veranstaltung if veranstaltung }}">ausblenden</a>{% endif %}
+</nav>
+{% endif %}
+{% if rl %}
+<section id="rangliste" class="liste">
+  <h2>Rangliste {{ rl.titel }}</h2>
+  <p class="hint">Je Strecke nach der schnellsten Durchfahrt; a. K. ohne Rang, DSQ nicht gewertet.</p>
+  {% include "_rangliste.html" %}
+</section>
+{% endif %}
+{% if not d.mehrere_strecken %}
+{% set st = d.strecken[0] %}
+<nav class="sprung">
+  <a href="#gesamt">Gesamt</a>{% for kl in st.klassen %} · <a href="#klasse-{{ loop.index }}">{{ kl.name }}</a>{% endfor %}
+</nav>
+<section id="gesamt" class="liste">
+  <h2>Gesamt</h2>
+  {% set zeilen = st.gesamt %}{% set mit_klasse = true %}{% set segmente = st.segmente %}
+  {% include "_ergebnis_tabelle.html" %}
+</section>
+{% for kl in st.klassen %}
+<section id="klasse-{{ loop.index }}" class="liste klasse" data-klasse="{{ kl.name }}">
+  <h2>{{ kl.name }}</h2>
+  {% set zeilen = kl.zeilen %}{% set mit_klasse = false %}{% set segmente = kl.segmente %}
+  {% include "_ergebnis_tabelle.html" %}
+</section>
+{% endfor %}
+{% else %}
+<nav class="sprung">
+  {% for st in d.strecken %}{% set i = loop.index %}{{ " · " if not loop.first }}<a href="#strecke-{{ i }}"><span class="strecke-marke strecke-farbe-{{ st.farbe }}">{{ st.name }}</span></a>{% for kl in st.klassen %} <a href="#strecke-{{ i }}-klasse-{{ loop.index }}">{{ kl.name }}</a>{% endfor %}{% endfor %}
+</nav>
+{% for st in d.strecken %}{% set i = loop.index %}
+<section id="strecke-{{ i }}" class="strecke" data-strecke="{{ st.name }}">
+  <h2 class="strecke-titel"><span class="strecke-marke strecke-farbe-{{ st.farbe }}">{{ st.name }}</span>{% if st.laenge %} <span class="strecke-laenge">{{ st.laenge }}</span>{% endif %}</h2>
+  <section id="strecke-{{ i }}-gesamt" class="liste">
+    <h3>Gesamt {{ st.name }}</h3>
+    {% set zeilen = st.gesamt %}{% set mit_klasse = true %}{% set segmente = st.segmente %}
+    {% include "_ergebnis_tabelle.html" %}
+  </section>
+  {% for kl in st.klassen %}
+  <section id="strecke-{{ i }}-klasse-{{ loop.index }}" class="liste klasse" data-klasse="{{ kl.name }}">
+    <h3>{{ kl.name }}</h3>
+    {% set zeilen = kl.zeilen %}{% set mit_klasse = false %}{% set segmente = kl.segmente %}
+    {% include "_ergebnis_tabelle.html" %}
+  </section>
+  {% endfor %}
+</section>
+{% endfor %}
+{% endif %}
+{% endif %}

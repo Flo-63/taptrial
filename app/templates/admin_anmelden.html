@@ -1,0 +1,12 @@
+{% extends "admin_basis.html" %}
+{% block titel %}Anmelden{% endblock %}
+{% block inhalt %}
+<section class="card stapel-eng anmelde-karte">
+  <h1>Admin anmelden</h1>
+  <form method="post" action="/admin/anmelden" id="anmelden" class="formular">
+    <div class="field"><label for="a-token">Admin-Token</label><input id="a-token" type="password" name="token" autocomplete="current-password" autofocus required></div>
+    <div><button type="submit" class="btn btn-primary">Anmelden</button></div>
+  </form>
+  <div class="aufgabe"><span class="hint">Teilnehmer und Zuschauer:</span><a class="btn btn-quiet btn-sm" href="/ergebnisse" id="link-ergebnisse">Zu den Ergebnissen</a></div>
+</section>
+{% endblock %}
