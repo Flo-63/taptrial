@@ -56,7 +56,9 @@ def test_aktuelle_actions_und_fester_runner():
             for schritt in job["steps"]:
                 if "uses" in schritt:
                     action, _, version = schritt["uses"].partition("@")
-                    assert re.fullmatch(r"v\d+(\.\d+){0,2}", version), schritt["uses"]  # Hauptversion
+                    assert re.fullmatch(r"v\d+(\.\d+){0,2}", version), schritt[
+                        "uses"
+                    ]  # Hauptversion
                     genutzt[action] = int(version[1:].split(".")[0])
     assert set(genutzt) == set(MINDESTENS)
     for action, version in genutzt.items():
