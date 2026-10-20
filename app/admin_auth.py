@@ -2,7 +2,7 @@
 
 Keine zusätzliche Abhängigkeit: Cookie = Rolle + Ablaufzeit + HMAC-SHA256 (Schlüssel: Admin-Token).
 Ändert sich der Token, werden alle Sitzungen ungültig. Die Rolle steckt schon heute in der Sitzung,
-damit später Benutzer mit Rollen (Super-Admin, Race-Admin) andocken können (KONZEPT „Ausblick“).
+damit später Benutzer mit Rollen (Super-Admin, Race-Admin) andocken können.
 Formulare tragen ein CSRF-Token. Nach 5 Fehlversuchen ist die IP 15 Minuten gesperrt
 (Client-IP hinter dem Proxy siehe app/proxy.py).
 """

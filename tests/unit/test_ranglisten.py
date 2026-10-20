@@ -1,4 +1,4 @@
-"""Segmente 15: Ranglisten je Abschnitt (schnellste Durchfahrt, Gleichstand, a. K., DSQ, DNF)."""
+"""Ranglisten je Abschnitt (schnellste Durchfahrt, Gleichstand, a. K., DSQ, DNF)."""
 
 from app import ranglisten as rl
 from app import segmente as sg

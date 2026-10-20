@@ -34,7 +34,7 @@ def ergebnis_kopf(v: Veranstaltung, erg: Ergebnis) -> str:
 
 
 def segment_spalten(erg: Ergebnis) -> list[tuple[int, int, str]]:
-    """Spalten je sichtbarem Auswertungsabschnitt und Durchfahrt (Segmente 13; Segmente sind
+    """Spalten je sichtbarem Auswertungsabschnitt und Durchfahrt (Segmente sind
     automatisch Abschnitte): (Strecke, Index in abschnittszeiten, Überschrift). Nutzen mehrere
     Strecken Segmente, steht der Streckenname davor."""
     from app.segmente import abschnitt_labels
@@ -87,8 +87,8 @@ def stufe_text(z: ErgebnisZeile) -> str:
 
 
 def ergebnis_csv(v: Veranstaltung, erg: Ergebnis, oeffentlich: bool = False) -> bytes:
-    """Ergebnisliste. Öffentlich (E6) ohne Geschlecht, nur Fahrer mit Ergebnis oder Status."""
-    mehrere = erg.mehrere_strecken  # Phase 13: Spalte „Strecke“, Ränge je Strecke
+    """Ergebnisliste. Öffentlich ohne Geschlecht, nur Fahrer mit Ergebnis oder Status."""
+    mehrere = erg.mehrere_strecken  # Spalte „Strecke“, Ränge je Strecke
     vorne = ["Strecke"] if mehrere else []
     if oeffentlich:
         kopf = vorne + ["Rang gesamt", "Rang Klasse", "Startnummer", "Name", "Verein", "Klasse",
@@ -148,7 +148,7 @@ def ergebnis_csv(v: Veranstaltung, erg: Ergebnis, oeffentlich: bool = False) -> 
 
 
 def rangliste_csv(v: Veranstaltung, erg: Ergebnis, r) -> bytes:
-    """Rangliste eines Abschnitts als CSV (Segmente 15)."""
+    """Rangliste eines Abschnitts als CSV."""
     titel = [f"{v.name} – {v.datum:%d.%m.%Y}", ergebnis_kopf(v, erg), f"Rangliste {r.titel}"]
     kopf = ["Rang", "Startnummer", "Name", "Verein", "Klasse", "Zeit", "Durchfahrt", "Bemerkung"]
     zeilen = [titel, [], kopf]

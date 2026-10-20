@@ -1,4 +1,4 @@
-"""Admin: Exportdatei eines Geräts mit nicht übertragenen Einträgen einlesen (AUSBAU C2).
+"""Admin: Exportdatei eines Geräts mit nicht übertragenen Einträgen einlesen.
 
 Hochladen zeigt eine Vorschau (Anzahl, schon vorhanden, neu, ungültig, Warnung bei anderer
 Veranstaltung). „Übernehmen“ legt nur neue Einträge an – idempotent wie beim Sync (gleiche UUID
@@ -43,7 +43,7 @@ class Pruefung:
     neu: list[EreignisEin] = field(default_factory=list)
     ungueltig: int = 0
     andere_veranstaltung: bool = False
-    ort_id: int | None = None  # Segmente 43: Start/Ziel des Geräts (weiterer Messpunkt), sonst None
+    ort_id: int | None = None  # Start/Ziel des Geräts (weiterer Messpunkt), sonst None
     ort_art: str = ""
 
 
@@ -63,7 +63,7 @@ def pruefen(session, v: Veranstaltung, daten: dict) -> Pruefung:
     datei_v = daten.get("veranstaltung")
     if isinstance(datei_v, dict) and datei_v.get("id") not in (None, v.id):
         p.andere_veranstaltung = True
-    ort = daten.get("ort")  # Segmente 43: Messpunkt des Geräts (ab dieser Version in der Datei)
+    ort = daten.get("ort")  # Messpunkt des Geräts (ab dieser Version in der Datei)
     if isinstance(ort, dict):
         m = next((m for m in strecken.orte_von(session, v) if m.id == ort.get("id")), None)
         if m is not None and not m.standard and m.art in ("start", "ziel"):
@@ -142,7 +142,7 @@ def uebernehmen(
     v = _veranstaltung(session, vid)
     if not v.laufend:
         return _zurueck(_ziel(v), fehler=f"Veranstaltung ist {v.zustand} und schreibgeschützt.")
-    if v.freigabe_fehlt:  # Segmente 46
+    if v.freigabe_fehlt:
         return _zurueck(_ziel(v), fehler=freigabe_text(v))
     try:
         p = pruefen(session, v, lesen(inhalt))

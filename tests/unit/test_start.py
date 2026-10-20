@@ -5,6 +5,8 @@ import time
 import urllib.request
 from pathlib import Path
 
+import pytest
+
 
 def _freier_port() -> int:
     with socket.socket() as s:
@@ -12,12 +14,13 @@ def _freier_port() -> int:
         return s.getsockname()[1]
 
 
-def test_uvicorn_startet(tmp_path):
+@pytest.mark.parametrize("praefix", ["TAPTRIAL_", "RCB_"])  # alter Name: bestehender Betrieb
+def test_uvicorn_startet(tmp_path, praefix):
     port = _freier_port()
     env = {
-        "RCB_DB_PFAD": str(tmp_path / "x.sqlite3"),
+        f"{praefix}DB_PFAD": str(tmp_path / "x.sqlite3"),
         "PATH": "/usr/bin:/bin",
-        "RCB_TOKEN_ADMIN": "a",
+        f"{praefix}TOKEN_ADMIN": "a",
     }
     proc = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "app.main:app", "--port", str(port)],
@@ -43,7 +46,7 @@ def test_uvicorn_startet(tmp_path):
 def test_uvicorn_startet_nicht_ohne_tokens(tmp_path):
     proc = subprocess.run(
         [sys.executable, "-m", "uvicorn", "app.main:app", "--port", str(_freier_port())],
-        env={"RCB_DB_PFAD": str(tmp_path / "x.sqlite3"), "PATH": "/usr/bin:/bin"},
+        env={"TAPTRIAL_DB_PFAD": str(tmp_path / "x.sqlite3"), "PATH": "/usr/bin:/bin"},
         cwd=Path(__file__).resolve().parents[2],
         capture_output=True,
         text=True,
@@ -51,5 +54,5 @@ def test_uvicorn_startet_nicht_ohne_tokens(tmp_path):
         check=False,
     )
     assert proc.returncode != 0
-    assert "RCB_TOKEN_ADMIN" in proc.stderr and "App startet nicht" in proc.stderr
-    assert "Admin-Passphrase" in proc.stderr and ".env.example" in proc.stderr  # Release 5
+    assert "TAPTRIAL_TOKEN_ADMIN" in proc.stderr and "App startet nicht" in proc.stderr
+    assert "Admin-Passphrase" in proc.stderr and ".env.example" in proc.stderr

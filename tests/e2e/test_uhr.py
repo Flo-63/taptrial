@@ -1,4 +1,4 @@
-"""E2E: Uhrabweichung messen und warnen (AUSBAU A2), ohne Korrektur der Zeiten."""
+"""E2E: Uhrabweichung messen und warnen, ohne Korrektur der Zeiten."""
 
 import re
 

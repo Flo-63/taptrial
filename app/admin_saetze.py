@@ -1,5 +1,5 @@
 """Admin: Klassen- und Wertungssätze anlegen, als Tabelle bearbeiten, kopieren, löschen,
-Import/Export als TOML und CSV (Phase 12). Fachlogik in app/saetze.py."""
+Import/Export als TOML und CSV. Fachlogik in app/saetze.py."""
 
 from typing import Annotated
 
@@ -61,7 +61,7 @@ def _eingefroren(session) -> int:
 
 
 def vorlagen_leiste(session) -> dict:
-    """Seitenleiste der Vorlagen im gleichen Aufbau wie in einer Veranstaltung (Test 08.10., 13)."""
+    """Seitenleiste der Vorlagen im gleichen Aufbau wie in einer Veranstaltung (13)."""
     return {"titel": "Vorlagen", "gruppen": [
         ("Wertung", [("klassen", "Klassensätze", "/admin/saetze/klassen", len(sz.klassensaetze(session))),
                      ("wertung", "Wertungssätze", "/admin/saetze/wertung", len(sz.wertungssaetze(session)))]),
@@ -102,9 +102,9 @@ def wertungssaetze(request: Request, session: SessionDep, _a: AdminDep):
 
 @router.get("/branding", response_class=HTMLResponse)
 def branding(request: Request, session: SessionDep, _a: AdminDep):
-    """Release 1: Vereinsname der Installation (global); Logo und Farben folgen (Roadmap)."""
+    """Vereinsname der Installation (global); Logo und Farben folgen (Roadmap)."""
     return _vorlagen_seite(request, session, "admin_branding.html", "branding",
-                           werte=installation.lesen(session))  # fmt: skip
+                           werte=installation.lesen(session), hilfe="branding")  # fmt: skip
 
 
 @router.post("/branding")
@@ -126,7 +126,7 @@ def _rechtliches_seite(request, session, werte=None, fehler=None, status_code=20
 
 @router.get("/rechtliches", response_class=HTMLResponse)
 def rechtliches(request: Request, session: SessionDep, _a: AdminDep):
-    """Release 3: Impressum und Datenschutz der Installation (Link oder Text)."""
+    """Impressum und Datenschutz der Installation (Link oder Text)."""
     return _rechtliches_seite(request, session)
 
 

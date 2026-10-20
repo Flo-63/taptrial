@@ -13,7 +13,7 @@
   <section class="geraete-gruppe stapel-eng" data-gruppe="{{ gruppe }}">
     <h2 class="zwischentitel">{{ gruppe }}</h2>
     <div class="raster-karten">{% for l in karten %}{% if l.ziel_ort %}{% call geraetekarte(l, l.hinweis) %}{% set z = l.ziel_ort %}
-      {# Segmente 51: „Ziel und Rennleitung getrennt“ je Ziel auf seiner Karte (Verhalten wie A98) #}
+      {# „Ziel und Rennleitung getrennt“ je Ziel auf seiner Karte; Umschalten mit Ereignissen nur nach Bestätigung #}
       <form method="post" action="/admin/v/{{ v.id }}/rennleitung" class="stapel-eng rennleitung-modus" data-zielort="{{ z.name }}">
         <input type="hidden" name="csrf" value="{{ csrf }}">{% if not z.standard %}<input type="hidden" name="ort" value="{{ z.id }}">{% endif %}
         <label class="check"><input type="checkbox" name="zusammen" value="1" {{ 'checked' if not z.getrennt }}> Ziel und Rennleitung auf einem Gerät umschaltbar</label>

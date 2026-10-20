@@ -1,4 +1,4 @@
-"""Leistungswertung Deutsches Radsportabzeichen (KONZEPT 7a).
+"""Leistungswertung Deutsches Radsportabzeichen.
 
 Dateien in config/wertungen/*.toml werden beim Start geladen und geprüft; ungültig → kein Start.
 Streckenlängen werden intern in Zehntel-Kilometern (int) geführt, damit alle Vergleiche exakt sind.
@@ -120,13 +120,13 @@ def lade_wertungen(verzeichnis: str, klassen: list[Klasse]) -> dict[str, Wertung
 def stufe_berechnen(
     wertung: Wertung, klasse: str | None, fahrzeit_ms: int, strecke_zehntel_km: int
 ) -> str | None:
-    """Beste erreichte Stufe oder None. Es zählt die auf Zehntel abgeschnittene Fahrzeit (A33)."""
+    """Beste erreichte Stufe oder None. Es zählt die auf Zehntel abgeschnittene Fahrzeit."""
     stufe = wertung.stufen.get(klasse) if klasse else None
     if stufe is None or fahrzeit_ms is None or not strecke_zehntel_km:
         return None
     zeit = fahrzeit_ms // 100 * 100
     if wertung.art == "gesamtzeit":
-        if strecke_zehntel_km < stufe.strecke_zehntel_km:  # A34: mindestens die Stufenlänge
+        if strecke_zehntel_km < stufe.strecke_zehntel_km:  # Mindestens die Stufenlänge
             return None
         erreicht = {x: zeit <= getattr(stufe, f"{x.lower()}_ms") for x in STUFEN}
     else:

@@ -1,4 +1,4 @@
-"""Zentrales Stylesheet (ADMIN-REVIEW Schritt 1): Tokens, Bausteine, lokale Schrift."""
+"""Zentrales Stylesheet: Tokens, Bausteine, lokale Schrift."""
 
 import re
 from pathlib import Path
@@ -52,5 +52,5 @@ def test_keine_farben_ausserhalb_der_tokens(datei):
                                      "monitor.html", "startseite.html", "hilfe.html"])  # fmt: skip
 def test_seiten_laden_basis_zuerst(vorlage):
     text = (APP / "templates" / vorlage).read_text(encoding="utf-8")
-    links = re.findall(r'href="/static/css/([a-z]+)\.css(?:\?v=[^"]*)?"', text)  # Segmente 62: ?v=
+    links = re.findall(r'href="/static/css/([a-z]+)\.css(?:\?v=[^"]*)?"', text)  # ?v=
     assert links[0] == "basis" and 2 <= len(links) <= 3, links

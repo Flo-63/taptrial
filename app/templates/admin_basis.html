@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
-  <title>{% block titel %}Admin{% endblock %} – {{ APP_NAME }}</title>
+  <title>{% block titel %}Admin{% endblock %} – {{ titel_zusatz(request) }}</title>
   <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/css/basis.css">
   <link rel="stylesheet" href="/static/css/admin.css">
@@ -13,7 +13,8 @@
 {% set mit_seitenleiste = csrf and ((v and not schritte) or leiste) %}
 <header class="topbar" id="topbar">
   {% if mit_seitenleiste %}<button type="button" class="top-btn top-btn-rand menue-knopf" id="menue-knopf" aria-expanded="false" aria-controls="seitenleiste">Menü</button>{% endif %}
-  <a class="marke" href="/admin"><span class="marke-zeichen" aria-hidden="true">TT</span><span>{{ APP_NAME }}</span></a>
+  {% set verein = vereinsname(request) %}
+  <a class="marke" href="/admin" id="marke"><span class="marke-zeichen" aria-hidden="true">{{ kuerzel(verein) if verein else 'TT' }}</span>{% if verein %}<span class="marke-text"><span id="marke-verein">{{ verein }}</span><small class="marke-app">{{ APP_NAME }}</small></span>{% else %}<span>{{ APP_NAME }}</span>{% endif %}</a>
   {% if csrf %}
   <nav class="top-nav" aria-label="Hauptbereiche">
     <a class="top-btn {{ 'top-on' if bereich != 'vorlagen' }}" href="/admin" id="nav-veranstaltungen">Veranstaltungen</a>
@@ -71,6 +72,8 @@
       {% endfor %}
       {% endfor %}
     </nav>
+    {# v0.1.1: Version klein und gedämpft unter dem letzten Punkt (Handy: unten im aufgeklappten Menü) #}
+    <p class="sl-version app-version" id="admin-version">{{ APP_NAME }} {{ APP_RELEASE }}</p>
   </aside>
   {% endif %}
   <main class="inhalt">
@@ -80,7 +83,6 @@
     {% if v and not v.laufend %}<p class="alert a-info hinweis">Diese Veranstaltung ist {{ ZUSTAND_TEXT[v.zustand] }} und schreibgeschützt.</p>{% endif %}
     {% block kopf %}{% endblock %}
     {% block inhalt %}{% endblock %}
-    <footer class="admin-fuss" id="admin-fuss"><span class="app-version">{{ APP_NAME }} {{ APP_RELEASE }}</span></footer>
   </main>
 </div>
 <dialog class="dialog" id="bestaetigung-dialog" aria-labelledby="bestaetigung-titel">

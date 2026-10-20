@@ -1,13 +1,14 @@
-"""Einstellungen aus Umgebungsvariablen (Präfix RCB_).
+"""Einstellungen aus Umgebungsvariablen (Präfix TAPTRIAL_, alte Namen RCB_ als Rückfall).
 
-Start- und Ziel-Tokens liegen seit Phase 6 je Veranstaltung in der Datenbank;
+Start- und Ziel-Tokens liegen je Veranstaltung in der Datenbank;
 aus der Umgebung kommt nur noch der Admin-Token (Pflicht). Eine PIN gibt es nicht mehr.
 """
 
-import os
 import secrets
 from dataclasses import dataclass
 from pathlib import Path
+
+from app import umgebung
 
 PROJEKT_DIR = Path(__file__).resolve().parent.parent
 STANDARD_KLASSEN_DATEI = str(PROJEKT_DIR / "config" / "altersklassen.toml")
@@ -29,18 +30,19 @@ class Einstellungen:
 
     @classmethod
     def aus_umgebung(cls) -> "Einstellungen":
-        """Liest RCB_*-Variablen. Der Admin-Token ist Pflicht, es gibt keinen Standardwert."""
+        """Liest TAPTRIAL_*- (bzw. alte RCB_*-)Variablen. Der Admin-Token ist Pflicht, es gibt
+        keinen Standardwert."""
         werte: dict[str, str] = {}
         for feld in (*PFLICHT, "db_pfad", "klassen_datei", "wertungen_verzeichnis",
                      "vertraute_proxys"):  # fmt: skip
-            wert = os.environ.get(f"RCB_{feld.upper()}", "").strip()
+            wert = umgebung.wert(feld)
             if wert:
                 werte[feld] = wert
-        fehlend = [f"RCB_{f.upper()}" for f in PFLICHT if f not in werte]
+        fehlend = [umgebung.name(f) for f in PFLICHT if f not in werte]
         if fehlend:
             raise EinstellungsFehler(
                 f"Pflicht-Umgebungsvariablen fehlen: {', '.join(fehlend)}. App startet nicht. "
-                "RCB_TOKEN_ADMIN ist die Admin-Passphrase (lange, zufällige Zeichenfolge, z. B. "
+                "TAPTRIAL_TOKEN_ADMIN ist die Admin-Passphrase (lange, zufällige Zeichenfolge, z. B. "
                 "„openssl rand -base64 32“) – in .env eintragen (Vorlage .env.example)."
             )
         return cls(**werte)

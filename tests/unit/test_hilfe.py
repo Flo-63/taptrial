@@ -1,4 +1,4 @@
-"""Markdown-Umsetzer und Handbuch-Dateien (Feedback Handbücher)."""
+"""Markdown-Umsetzer und Handbuch-Dateien."""
 
 import pytest
 

@@ -1,4 +1,4 @@
-"""Aufräumen nach der Neuordnung (ADMIN-REVIEW Schritt 9): ein Baukasten, keine Reste."""
+"""Aufräumen nach der Neuordnung: ein Baukasten, keine Reste."""
 
 import re
 from pathlib import Path
@@ -65,7 +65,7 @@ OHNE_ABBRECHEN = {"admin_anmelden.html", "admin_aufgaben.html", "admin_ergebnis.
 @pytest.mark.parametrize("vorlage", sorted(p.name for p in VORLAGEN.glob("*.html")
                                            if p.name.startswith(("admin", "_strecken", "_zielmonitor"))))  # fmt: skip
 def test_formulare_haben_abbrechen(vorlage):
-    """Segmente 21: Jedes Formular zum Anlegen oder Bearbeiten hat „Abbrechen“ (ohne Speichern zurück)."""
+    """Jedes Formular zum Anlegen oder Bearbeiten hat „Abbrechen“ (ohne Speichern zurück)."""
     if vorlage in OHNE_ABBRECHEN:
         return
     text = (VORLAGEN / vorlage).read_text(encoding="utf-8")

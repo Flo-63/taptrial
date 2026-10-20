@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ APP_NAME }} – {{ APP_UNTERTITEL }}</title>
+  {% set inst = installation(request) %}
+  <title>{{ titel_zusatz(request) if inst.vereinsname else APP_NAME ~ ' – ' ~ APP_UNTERTITEL }}</title>
   <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/static/icons/icon-180.png" sizes="180x180">
   <link rel="stylesheet" href="/static/css/basis.css">
@@ -11,8 +12,7 @@
 </head>
 <body class="startseite">
   <header class="start-kopf">
-    {% set inst = installation(request) %}
-    <p class="start-verein" id="start-verein">{{ inst.vereinsname or APP_NAME }}</p>
+    <p class="start-verein{{ ' mit-verein' if inst.vereinsname }}" id="start-verein">{{ inst.vereinsname or APP_NAME }}</p>
     {% if v %}
     <h1 id="veranstaltung">{{ v.name }}</h1>
     <p class="start-datum" id="datum">{{ v.datum.strftime('%d.%m.%Y') }}</p>

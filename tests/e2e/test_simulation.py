@@ -1,7 +1,7 @@
-"""Simulation gemäß KONZEPT 9 (Phase 8).
+"""Simulation eines ganzen Rennens.
 
 50 Fahrer, zufällige Startabstände, 3 Überholungen, 2 fast gleichzeitige Zieleinläufe,
-2 Offline-Phasen (Start und Ziel, jeweils mit Neuladen der Seite), 1 DNS, 1 DNF.
+2 Offline-Abschnitte (Start und Ziel, jeweils mit Neuladen der Seite), 1 DNS, 1 DNF.
 Bedient werden die echten Geräteseiten (Start und Ziel in getrennten Browser-Kontexten).
 Die Geräteuhr wird vor jedem Tipp auf den geplanten Zeitpunkt gesetzt (`clock.set_fixed_time`),
 so läuft das Rennen in Sekunden ab und die Sollzeiten sind exakt bekannt.
@@ -31,7 +31,7 @@ def teilnehmer_liste(plan):
 
 @pytest.fixture
 def zwei_strecken():
-    return True  # Jugend 5 km, Erwachsene 20 km (DRA A.1, Phase 13)
+    return True  # Jugend 5 km, Erwachsene 20 km (DRA A.1)
 
 
 def uhr(page, ms: int) -> None:
@@ -151,7 +151,7 @@ def test_simulation_50_fahrer(plan, server, neues_geraet):
 @pytest.mark.parametrize("rundkurs", ["nord"])
 @pytest.mark.parametrize("plan", [2026], indirect=True, ids=["seed2026"])
 def test_simulation_zwei_startorte(plan, server, neues_geraet, rundkurs):
-    """Segmente 41: Jugend (5 km) startet am Startort „Nord“, Erwachsene (20 km) am Standard-Start,
+    """Jugend (5 km) startet am Startort „Nord“, Erwachsene (20 km) am Standard-Start,
     beide enden am gemeinsamen Ziel. Die zwei Startgeräte sind abwechselnd offline (mit Neuladen).
     Erwartet: keine Doppelstarts, Ergebnis wie ohne Störungen (Sollwerte)."""
     klassen = lade_klassen(STANDARD_KLASSEN_DATEI)

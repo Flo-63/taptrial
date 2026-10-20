@@ -1,4 +1,4 @@
-"""Segmente 46: Rennfunktionen erst nach Freigabe (Einrichtung abgeschlossen und aktiv)."""
+"""Rennfunktionen erst nach Freigabe (Einrichtung abgeschlossen und aktiv)."""
 
 import json
 import re
@@ -161,7 +161,7 @@ def test_oeffentlich_ohne_freigabe_und_ohne_zeiten(admin, v):
 
 
 def test_laufende_veranstaltung_nicht_verdraengen(admin, v):
-    """Segmente 55: Hat die aktive Veranstaltung Startzeiten und ist sie nicht abgeschlossen, lässt
+    """Hat die aktive Veranstaltung Startzeiten und ist sie nicht abgeschlossen, lässt
     sich keine andere aktiv setzen – Admin, Assistent und Neuanlage; ohne Startzeiten wie bisher."""
     from datetime import date
 

@@ -1,4 +1,4 @@
-"""Admin: geführte Einrichtung, neue Reiterstruktur, Kopplung Klassen-/Wertungssatz (Feedback)."""
+"""Admin: geführte Einrichtung, neue Reiterstruktur, Kopplung Klassen-/Wertungssatz."""
 
 import pytest
 from sqlalchemy import select
@@ -20,7 +20,7 @@ def admin(client):
 
 
 def platz(admin, v, ks, ws, schluessel, name, laenge=""):
-    """Segmente 49: „Platzhalter-Strecke anlegen“ für einen Längen-Platz im Assistenten."""
+    """„Platzhalter-Strecke anlegen“ für einen Längen-Platz im Assistenten."""
     return post(admin, f"/admin/einrichtung/{v.id}/2", klassensatz_id=str(ks), wertungssatz_id=str(ws or ""),
                 platz_anlegen=schluessel, **{f"platz_name:{schluessel}": name, f"platz_laenge:{schluessel}": laenge})  # fmt: skip
 
@@ -59,7 +59,7 @@ def test_assistent_komplett(admin):
     platz(admin, v, ks, a2, "Strecke 1", "Strecke 1")
     r = post(admin, f"/admin/einrichtung/{v.id}/2", klassensatz_id=str(ks), wertungssatz_id=str(a2))
     assert "Streckenlänge Pflicht" in r.text and veranstaltung(admin).einrichtung_schritt == 2
-    # Segmente 49/59: A.1 legt keine Strecken an; die Plätze zeigen die tatsächliche Zuordnung –
+    # A.1 legt keine Strecken an; die Plätze zeigen die tatsächliche Zuordnung –
     # hier noch alles an der gewählten „Strecke 1“, je Platz „Ändern“
     r = post(admin, f"/admin/einrichtung/{v.id}/2", klassensatz_id=str(ks), wertungssatz_id=str(ws))
     assert 'data-platz="5 km"' in r.text and 'data-platz="20 km"' in r.text
@@ -95,7 +95,7 @@ def test_assistent_komplett(admin):
     assert 'id="anzahl-teilnehmer">3<' in r.text
 
     r = post(admin, f"/admin/einrichtung/{v.id}/3")
-    assert 'id="zielmonitor"' in r.text and 'id="monitor-vorschau"' in r.text  # Segmente 66
+    assert 'id="zielmonitor"' in r.text and 'id="monitor-vorschau"' in r.text
     r = post(admin, f"/admin/v/{v.id}/zielmonitor", weiter="1", seite_an_0="1", seite_dauer_0="10",
              seite_live_0="1", ziel=f"/admin/einrichtung/{v.id}/4")  # fmt: skip
     assert 'id="zusammenfassung"' in r.text and "Kottenforst 2026" in r.text
@@ -129,7 +129,7 @@ def v(admin):
 
 
 def test_rahmen_mit_seitenleiste(admin, v):
-    """ADMIN-REVIEW Schritt 2: Kopfzeile, Seitenleiste mit Gruppen, alle Punkte immer sichtbar."""
+    """Kopfzeile, Seitenleiste mit Gruppen, alle Punkte immer sichtbar."""
     html = admin.get(f"/admin/v/{v.id}").text
     for gruppe in ("Veranstaltung", "Zeitnahme", "Auswertung", "Verwaltung"):
         assert f'<div class="nav-group">{gruppe}</div>' in html, gruppe
@@ -185,7 +185,7 @@ def test_wertung_folgt_klassensatz(admin, v):
 
 
 def test_assistent_fragt_strecken_einfach_ab(admin, v):
-    """Segmente 19: Schritt 2 fragt Strecken einfach ab (Name, Länge, Klassen); Segmente danach auf der Strecken-Seite."""
+    """Schritt 2 fragt Strecken einfach ab (Name, Länge, Klassen); Segmente danach auf der Strecken-Seite."""
     html = admin.get(f"/admin/einrichtung/{v.id}/2").text
     assert 'id="strecken-tabelle"' in html and 'id="zuordnung"' in html
     assert 'id="segmente-hinweis"' in html and "Seite der Strecke" in html
@@ -194,7 +194,7 @@ def test_assistent_fragt_strecken_einfach_ab(admin, v):
 
 
 def test_assistent_strecke_mit_messpunkten_und_zurueck(admin):
-    """Segmente 23: je Strecke „einfach“ oder „mit Messpunkten“; „Messpunkte einrichten“ speichert den Schritt,
+    """Je Strecke „einfach“ oder „mit Messpunkten“; „Messpunkte einrichten“ speichert den Schritt,
     öffnet die Strecken-Seite und führt von dort zurück in den Assistenten."""
     from app import segmente as sg
 
@@ -202,7 +202,7 @@ def test_assistent_strecke_mit_messpunkten_und_zurueck(admin):
     v = veranstaltung(admin)
     html = platz(admin, v, v.klassensatz_id, None, "Strecke 1", "Strecke 1").text
     assert 'name="strecke_art_0" value="einfach" checked' in html and 'id="strecke-laden"' in html
-    assert 'name="laden" value="neu"' in html  # Segmente 50: speichert erst den Schritt
+    assert 'name="laden" value="neu"' in html  # Speichert erst den Schritt
     with admin.app.state.sessionmaker() as s:
         sid = strecken.strecken_von(s, s.get(Veranstaltung, v.id))[0].id
     daten = {"klassensatz_id": str(v.klassensatz_id), "wertungssatz_id": "", "strecken_anzahl": "1",
@@ -224,7 +224,7 @@ def test_assistent_strecke_mit_messpunkten_und_zurueck(admin):
     html = admin.get(f"/admin/einrichtung/{v.id}/2").text
     assert 'name="strecke_art_0" value="messpunkte" checked' in html
     assert "data-mit-segmenten=1" in html and 'name="strecke_art_bestaetigt_0"' in html
-    # „einfach“ ohne Bestätigung (Segmente 30): Verlauf bleibt, Hinweis
+    # „einfach“ ohne Bestätigung: Verlauf bleibt, Hinweis
     r = post(
         admin,
         f"/admin/einrichtung/{v.id}/2",
@@ -257,7 +257,7 @@ def test_assistent_einfach_wie_bisher(admin):
 
 
 def test_assistent_schritt_zielmonitor_mit_vorgaben(admin):
-    """Segmente 66: Schritt 4 „Zielmonitor“ vor der Zusammenfassung – gleiche Bausteine wie der
+    """Schritt 4 „Zielmonitor“ vor der Zusammenfassung – gleiche Bausteine wie der
     Reiter, Vorgaben nur bestätigen: Ergebnisseite an, Live an, je sichtbarem Abschnitt ein Feld,
     „mit Pfeil und Differenz“ nur bei Abschnitten mit mehreren Durchfahrten."""
     import json

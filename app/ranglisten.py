@@ -1,4 +1,4 @@
-"""Ranglisten je Auswertungsabschnitt (Segmente 15).
+"""Ranglisten je Auswertungsabschnitt.
 
 Je Strecke nach der schnellsten Durchfahrt des Abschnitts (in Zehnteln); gleiche Zeit = gleicher
 Rang; außer Konkurrenz ohne Rang (nach Zeit einsortiert); DSQ ausgeschlossen; DNF gewertet (die

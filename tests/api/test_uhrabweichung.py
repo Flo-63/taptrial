@@ -1,4 +1,4 @@
-"""Uhrabweichung messen und warnen (AUSBAU A2): Serverzeit in der Sync-Antwort, Meldung je Gerät."""
+"""Uhrabweichung messen und warnen: Serverzeit in der Sync-Antwort, Meldung je Gerät."""
 
 from sqlalchemy import select
 

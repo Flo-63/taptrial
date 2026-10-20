@@ -14,9 +14,9 @@ const letzterTipp = new Map();
 let bestaetigen = null;
 let bestaetigungsTimer = null;
 let korrekturHinweis = null;
-// Segmente 53: „Durchfahrten anzeigen“ (Standard an), gemerkt bis „Gerät zurücksetzen“
+// „Durchfahrten anzeigen“ (Standard an), gemerkt bis „Gerät zurücksetzen“
 const DURCHFAHRTEN = g.schluessel("anzeige_durchfahrten");
-// Segmente 56: „Alle Fahrer“ – auch Fahrer, die hier als vorbei gelten (z. B. nach einem Fehlklick
+// „Alle Fahrer“ – auch Fahrer, die hier als vorbei gelten (z. B. nach einem Fehlklick
 // an einem anderen Posten), bleiben antippbar; ein solcher Klick zählt normal
 const ALLE = g.schluessel("anzeige_alle");
 function alleAn() {
@@ -43,7 +43,7 @@ function zustand() {
   const mp = s.messpunkt || null;
   const startBekannt = !!g.stand;
   const gestartet = new Set(s.gestartet || []);
-  // gemeinsamer Messpunkt (Segmente 12): nur Fahrer der Strecken, die hier vorbeiführen
+  // gemeinsamer Messpunkt: nur Fahrer der Strecken, die hier vorbeiführen
   const alle = (s.teilnehmer || []).filter((t) => !mp || (mp.strecken || []).includes(t.strecke));
   const nachNr = new Map(alle.map((t) => [t.startnummer, t]));
 

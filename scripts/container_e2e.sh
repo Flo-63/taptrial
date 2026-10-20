@@ -4,4 +4,4 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 docker build -t rcb-zeitfahren:e2e .
-RCB_E2E_IMAGE=rcb-zeitfahren:e2e uv run pytest -q tests/e2e "$@"
+TAPTRIAL_E2E_IMAGE=rcb-zeitfahren:e2e uv run pytest -q tests/e2e "$@"

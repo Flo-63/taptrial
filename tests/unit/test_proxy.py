@@ -1,4 +1,4 @@
-"""Client-IP und Schema hinter dem Proxy (Feedback: Sperre nach Fehlversuchen)."""
+"""Client-IP und Schema hinter dem Proxy."""
 
 from types import SimpleNamespace
 
@@ -53,5 +53,5 @@ def test_https_nur_vom_vertrauten_proxy():
 
 
 def test_netze_aus_text_ungueltig():
-    with pytest.raises(ValueError, match="RCB_VERTRAUTE_PROXYS"):
+    with pytest.raises(ValueError, match="TAPTRIAL_VERTRAUTE_PROXYS"):
         Netze.aus_text("127.0.0.1, kein-netz")

@@ -1,4 +1,4 @@
-"""Gerätedatei im Admin einlesen (AUSBAU C2): Vorschau, Übernehmen, Protokoll."""
+"""Gerätedatei im Admin einlesen: Vorschau, Übernehmen, Protokoll."""
 
 import json
 import uuid

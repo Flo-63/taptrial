@@ -25,7 +25,7 @@
   {% include "_druckleiste.html" %}
   <div class="blatt">
     <h1>Gerätelinks</h1>
-    <p class="unterzeile">{{ v.name }} · {{ v.datum.strftime('%d.%m.%Y') }}</p>
+    <p class="unterzeile">{% if vereinsname(request) %}<span class="druck-verein">{{ vereinsname(request) }}</span> · {% endif %}{{ v.name }} · {{ v.datum.strftime('%d.%m.%Y') }}</p>
     <div class="raster">
       {% for l in links %}
       <section class="feld" data-titel="{{ l.titel }}">

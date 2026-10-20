@@ -1,5 +1,5 @@
-{# Bausteine der Admin-Seiten (ADMIN-REVIEW 2.3) #}
-{# „Abbrechen“ (Segmente 21): ohne Speichern zurück zur aufrufenden Seite bzw. Aufklapp-Formular schließen #}
+{# Bausteine der Admin-Seiten #}
+{# „Abbrechen“: ohne Speichern zurück zur aufrufenden Seite bzw. Aufklapp-Formular schließen #}
 {% macro abbrechen(url) -%}<a class="btn btn-quiet abbrechen" href="{{ url }}">Abbrechen</a>{%- endmacro %}
 {% macro zuklappen() -%}<button type="button" class="btn btn-quiet btn-sm abbrechen" data-zuklappen>Abbrechen</button>{%- endmacro %}
 {% macro seitenkopf(titel, sub="") -%}
@@ -10,7 +10,7 @@
 {%- endmacro %}
 
 {% macro geraetekarte(l, hinweis="") -%}
-{# Geräte-Karte: Titel, QR-Code, Buttons auf gleicher Höhe, darunter der Link gekürzt (Test 08.10., Punkt 11) #}
+{# Geräte-Karte: Titel, QR-Code, Buttons auf gleicher Höhe, darunter der Link gekürzt #}
 <section class="card geraet" data-titel="{{ l.titel }}">
   <h2>{{ l.titel }}</h2>
   <div class="qr" role="img" aria-label="QR-Code {{ l.titel }}">{{ l.qr|safe }}</div>

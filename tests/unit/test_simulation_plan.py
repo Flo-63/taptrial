@@ -1,4 +1,4 @@
-"""Der Rennplan selbst erfüllt die Vorgaben aus KONZEPT 9."""
+"""Der Rennplan selbst erfüllt die Vorgaben der Simulation (Fahrer, Sonderfälle, Funklöcher)."""
 
 from itertools import pairwise
 
@@ -46,7 +46,7 @@ def test_sollergebnis():
 
 
 def test_zwei_strecken():
-    """Fünf Jugendliche auf 5 km; Ränge beginnen auf jeder Strecke bei 1 (Phase 13)."""
+    """Fünf Jugendliche auf 5 km; Ränge beginnen auf jeder Strecke bei 1."""
     plan = rennplan()
     klassen = lade_klassen(STANDARD_KLASSEN_DATEI)
     soll = sollergebnis(plan, klassen, strecken_dra_a1(klassen))

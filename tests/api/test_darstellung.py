@@ -1,4 +1,4 @@
-"""Segmente 52: „Anzeigen“ und „Vergleich“ raus aus der Strecke – Spalten unter „Öffentlichkeit &
+"""„Anzeigen“ und „Vergleich“ raus aus der Strecke – Spalten unter „Öffentlichkeit &
 Zielmonitor“, Vergleich je Zielmonitor-Feld; Ergebnisse, Druck, CSV und Monitor wirken wie vorher."""
 
 import json
@@ -40,7 +40,7 @@ def test_vorher_gleich_nachher_und_vergleich_je_feld(client, v):
         x = s.get(Veranstaltung, v.id)
         strecke = st.strecken_von(s, x)[0]
         sid = strecke.id
-        # Stand vor Segmente 52: „Kreisel→Ziel“ ausgeblendet; Vergleich an der Strecke (Rundenblock
+        # Älterer Stand: „Kreisel→Ziel“ ausgeblendet; Vergleich an der Strecke (Rundenblock
         # „Runde“ standardmäßig an); Live-Felder ohne „live_vergleich“
         strecke.abschnitte_json = json.dumps({"segmente": {"2.0": {"aus": True}}})
         x.zwischenzeiten_oeffentlich = True

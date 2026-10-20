@@ -1,10 +1,10 @@
 /* Druckansichten (Ergebnisliste, Urkunden, Papierprotokoll, Aushang, Gerätelinks): Leiste oben,
-   beim Drucken ausgeblendet (ADMIN-REVIEW Abschnitt 4). Layout je Ansicht in der Vorlage. */
+   beim Drucken ausgeblendet. Layout je Ansicht in der Vorlage. */
 body.druckansicht { background: var(--papier); color: var(--druck-text); }
 .druckleiste { position: sticky; top: 0; z-index: 5; display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center;
   padding: 10px 16px; background: var(--kopf); color: var(--kopf-text); font: 14px var(--font); }
 .druckleiste .hint { color: var(--kopf-text); margin-left: var(--s2); }
 .druckleiste .btn-secondary { background: transparent; color: var(--brand-ink); border-color: var(--kopf-linie); }
 @media print { .druckleiste, .nicht-drucken { display: none !important; } body.druckansicht { background: var(--papier); } }
-/* Segmentzeiten je Spalte (Segmente 10): schmal, damit A4 hochkant reicht */
+/* Segmentzeiten je Spalte: schmal, damit A4 hochkant reicht */
 th.segment-kopf, td.segment { font-size: 7.5pt; padding-left: 2px; padding-right: 2px; }

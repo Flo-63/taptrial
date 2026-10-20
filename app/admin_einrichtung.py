@@ -1,6 +1,6 @@
-"""Admin: geführte Einrichtung einer neuen Veranstaltung (Assistent, Feedback phase-12).
+"""Admin: geführte Einrichtung einer neuen Veranstaltung (Assistent).
 
-1 Name/Datum · 2 Klassen & Wertung · 3 Teilnehmer · 4 Zielmonitor (Segmente 66) · 5 Zusammenfassung,
+1 Name/Datum · 2 Klassen & Wertung · 3 Teilnehmer · 4 Zielmonitor · 5 Zusammenfassung,
 Aktivieren, Gerätelinks.
 Jeder Schritt speichert sofort (Zwischenstand); `einrichtung_schritt` merkt den nächsten offenen
 Schritt, bis die Einrichtung abgeschlossen ist.
@@ -57,12 +57,10 @@ def _seite_schritt(request, session, v, schritt: int, **mehr) -> HTMLResponse:
     if v is not None and schritt == 2:
         kontext.update(regeln=saetze.regeln(session, v), klassensaetze=saetze.klassensaetze(session),
                        wertungssaetze=saetze.wertungssaetze(session), **strecken_kontext(session, v))  # fmt: skip
-        if v.einrichtung_schritt is not None:  # Segmente 49: je Längen-Platz entscheiden
+        if v.einrichtung_schritt is not None:  # Je Längen-Platz entscheiden
             plaetze = strecken.plaetze(session, v)
             kontext.update(plaetze=plaetze, plaetze_offen=[p for p in plaetze if p.offen])
-    if (
-        v is not None and schritt == 4
-    ):  # Segmente 66: gleiche Bausteine wie der Reiter, mit Vorgaben
+    if v is not None and schritt == 4:  # Gleiche Bausteine wie der Reiter, mit Vorgaben
         from app import monitor_konfig as mk
 
         liste = strecken.strecken_von(session, v)
@@ -94,7 +92,7 @@ def neu_anlegen(request: Request, session: SessionDep, _a: AdminDep, csrf: Annot
     except k.KorrekturFehler as e:
         return _zurueck("/admin/einrichtung/neu", fehler=str(e))
     v.einrichtung_schritt = 2
-    # Segmente 49/59: Strecken entstehen erst durch die Wahl je Platz; die vorläufige wird gemerkt
+    # Strecken entstehen erst durch die Wahl je Platz; die vorläufige wird gemerkt
     vorlaeufig = strecken.strecken_von(session, v)[0].id
     v.einrichtung_json = json.dumps({"plaetze": {}, "vorlaeufig": vorlaeufig})
     session.commit()
@@ -135,9 +133,7 @@ async def schritt2(request: Request, vid: int, session: SessionDep, _a: AdminDep
         return _zurueck(f"/admin/einrichtung/{vid}/2", fehler=str(e))
     feld = lambda name: str(form.get(name) or "")
     ziel2 = f"/admin/einrichtung/{vid}/2"
-    if feld(
-        "platz_anlegen"
-    ):  # Segmente 49: „Platzhalter-Strecke anlegen“ (Schritt ist gespeichert)
+    if feld("platz_anlegen"):  # „Platzhalter-Strecke anlegen“ (Schritt ist gespeichert)
         schluessel = feld("platz_anlegen")
         try:
             s, mehr = strecken.platzhalter_anlegen(session, v, schluessel, feld(f"platz_name:{schluessel}"),
@@ -152,14 +148,12 @@ async def schritt2(request: Request, vid: int, session: SessionDep, _a: AdminDep
             ok=f"Platzhalter-Strecke „{s.name}“ angelegt.",
             warnung="; ".join(hinweise) or None,
         )
-    if feld(
-        "platz_laden"
-    ):  # „Aus Datei laden“: erst speichern, dann laden, danach zurück (Segmente 50)
+    if feld("platz_laden"):  # „Aus Datei laden“: erst speichern, dann laden, danach zurück
         session.commit()
         return _zurueck(
             f"/admin/v/{vid}/strecken/laden?platz={quote(feld('platz_laden'))}&zurueck={ziel2}"
         )
-    # Segmente 23: „einfach“ gewählt → Segmente dieser Strecke entfernen; „Messpunkte einrichten“ → Strecken-Seite
+    # „einfach“ gewählt → Segmente dieser Strecke entfernen; „Messpunkte einrichten“ → Strecken-Seite
     feld = lambda name: str(form.get(name) or "")
     for i in range(int(feld("strecken_anzahl") or 0)):
         s = next(
@@ -172,7 +166,7 @@ async def schritt2(request: Request, vid: int, session: SessionDep, _a: AdminDep
             and s.teile_json
             and not v.regeln_json
         ):
-            if not feld(f"strecke_art_bestaetigt_{i}"):  # Segmente 30: nur nach Bestätigungsdialog
+            if not feld(f"strecke_art_bestaetigt_{i}"):  # Nur nach Bestätigungsdialog
                 hinweise.append(f"Strecke „{s.name}“ behält Verlauf und Abschnitte – Wechsel auf "
                                 "„einfach“ nicht bestätigt.")  # fmt: skip
                 continue
@@ -181,7 +175,7 @@ async def schritt2(request: Request, vid: int, session: SessionDep, _a: AdminDep
                 f"Strecke „{s.name}“: einfach (nur Start und Ziel) – Segmente entfernt."
             )
     session.commit()
-    if feld("laden"):  # Segmente 50: „aus Datei laden“ – Schritt ist gespeichert, danach zurück
+    if feld("laden"):  # „aus Datei laden“ – Schritt ist gespeichert, danach zurück
         ersetzen = f"&ersetzen={feld('laden')}" if feld("laden").isdigit() else ""
         return _zurueck(f"/admin/v/{vid}/strecken/laden?zurueck=/admin/einrichtung/{vid}/2{ersetzen}",
                         ok="Schritt 2 gespeichert – jetzt die Streckendatei wählen.")  # fmt: skip
@@ -197,12 +191,12 @@ async def schritt2(request: Request, vid: int, session: SessionDep, _a: AdminDep
         return antwort
     offen = strecken.plaetze_offen(session, v) if v.einrichtung_schritt is not None else []
     if not offen and not vorgeschlagen and v.einrichtung_schritt is not None:
-        try:  # Segmente 59: Längen erst beim Weitergehen prüfen (Wechsel der Wertung bleibt möglich)
+        try:  # Längen erst beim Weitergehen prüfen (Wechsel der Wertung bleibt möglich)
             strecken.wertung_laengen_pruefen(session, v, weiter=True)
         except saetze.SatzFehler as e:
             return _zurueck(f"/admin/einrichtung/{vid}/2", fehler=str(e))
     if vorgeschlagen or offen:
-        # Segmente 49: ohne Entscheidung für jeden Längen-Platz kein „Weiter“
+        # Ohne Entscheidung für jeden Längen-Platz kein „Weiter“
         bitte = "Bitte für jeden Platz „Aus Datei laden“ oder „Platzhalter-Strecke anlegen“ wählen"
         return _zurueck(f"/admin/einrichtung/{vid}/2", warnung="; ".join(
             hinweise + ([f"{bitte}: noch offen {', '.join(p.name for p in offen)}."] if offen else
@@ -236,7 +230,7 @@ def abschliessen(request: Request, vid: int, session: SessionDep, _a: AdminDep,
     if aktivieren:
         try:
             k.aktiv_setzen(session, v)
-        except k.KorrekturFehler as e:  # Segmente 55: laufende Veranstaltung nicht verdrängen
+        except k.KorrekturFehler as e:  # Laufende Veranstaltung nicht verdrängen
             return _zurueck(f"/admin/v/{vid}", ok=f"Einrichtung abgeschlossen: „{v.name}“ ist eingerichtet.",
                             warnung=f"Nicht aktiv gesetzt: {e}")  # fmt: skip
     text = (

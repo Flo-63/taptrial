@@ -1,4 +1,4 @@
-"""Token-Prüfung je Rolle (KONZEPT 8).
+"""Token-Prüfung je Rolle.
 
 Admin-Token aus der Umgebung; Start- und Ziel-Token gehören zu genau einer Veranstaltung
 (DB) und gelten nur, solange diese läuft (nicht abgeschlossen/anonymisiert).
@@ -46,8 +46,8 @@ class VeranstaltungBeendet(HTTPException):
 class Zugang:
     rolle: str
     veranstaltung: Veranstaltung | None  # bei Geräten die Veranstaltung des Tokens
-    messpunkt: Any = None  # Rolle „posten“: der Messpunkt des Tokens (Phase 14)
-    ort: Any = None  # Start/Ziel/Rennleitung eines weiteren Orts (Segmente 38); None = Standardort
+    messpunkt: Any = None  # Rolle „posten“: der Messpunkt des Tokens
+    ort: Any = None  # Start/Ziel/Rennleitung eines weiteren Orts; None = Standardort
 
 
 def gleich(a: str, b: str | None) -> bool:
@@ -71,7 +71,7 @@ def zugang_fuer_token(request: Request, session: Session, token: str | None) -> 
 
 def geraet_zugang(session: Session, token: str) -> Zugang | None:
     """Zugang eines Gerätetokens (Start, Ziel, Rennleitung, Posten, weitere Orte) – auch ohne
-    Anfrage nutzbar, z. B. für die Demo-Veranstaltung (Segmente 68)."""
+    Anfrage nutzbar, z. B. für die Demo-Veranstaltung."""
     # wenige Veranstaltungen: in Python vergleichen (zeitkonstant), statt per SQL zu suchen
     for v in session.scalars(select(Veranstaltung)):
         for rolle in GERAETEROLLEN:
@@ -81,7 +81,7 @@ def geraet_zugang(session: Session, token: str) -> Zugang | None:
                 if not v.laufend:
                     raise VeranstaltungBeendet()
                 return Zugang(rolle, v)
-    from app.strecken import messpunkt_fuer_token  # Posten: Token je Messpunkt (Phase 14)
+    from app.strecken import messpunkt_fuer_token  # Posten: Token je Messpunkt
 
     treffer = messpunkt_fuer_token(session, token)
     if treffer is not None:

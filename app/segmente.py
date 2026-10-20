@@ -1,4 +1,4 @@
-"""Segment-Modell (AUSBAU C1, Feedback 10/2026): Messpunkte, Segmente, Rundenblöcke.
+"""Segment-Modell: Messpunkte, Segmente, Rundenblöcke.
 
 Reine Funktionen ohne Datenbank.
 
@@ -152,7 +152,7 @@ def pruefen(teile, messpunkte: dict[str, str], alle_genutzt: bool = True) -> lis
     return fehler
 
 
-# --- Verlauf als Punktfolge (Segmente 28) -----------------------------------------------------
+# --- Verlauf als Punktfolge -----------------------------------------------------
 
 
 @dataclass(frozen=True)
@@ -323,7 +323,7 @@ def zuordnen(teile, fahrt: Fahrt, median: dict[str, float] | None = None) -> Zuo
     es seit der letzten Messung länger als 1,5 × die erwartete Zeit bis zu dieser Position, fehlt
     dazwischen eine Durchfahrt (wichtig bei Rundenblöcken mit nur einem Messpunkt, wo die Reihenfolge
     nichts verrät); der Tipp geht dann an die Position, deren erwartete Zeit am besten passt. Die
-    erwartete Zeit wird mit dem Tempo des Fahrers skaliert (FRAGEN A119).
+    erwartete Zeit wird mit dem Tempo des Fahrers skaliert.
     """
     folge = abfolge(teile)
     innen = innere_punkte(teile)
@@ -420,7 +420,7 @@ def segmentzeiten(teile, fahrt: Fahrt, z: Zuordnung, zeit: dict[str, int]) -> li
     return liste
 
 
-# --- Auswertungsabschnitte (Segmente 13) ----------------------------------------------------
+# --- Auswertungsabschnitte ----------------------------------------------------
 
 EINMALIG = "einmalig"
 WIEDERKEHREND = "wiederkehrend"
@@ -445,7 +445,7 @@ class AbschnittDef:
     vergleich: bool = False
     aus: bool = False
     segment: str = ""  # Segment-Schlüssel bei automatischen Abschnitten
-    block: str = ""  # Teil-Index bei automatischen Rundenblock-Abschnitten (Segmente 32)
+    block: str = ""  # Teil-Index bei automatischen Rundenblock-Abschnitten
 
     @property
     def automatisch(self) -> bool:
@@ -461,7 +461,7 @@ def block_paare(teile, i: int) -> list[tuple[int, int]]:
 
 
 def _block_abschnitte(teile, e: dict, eigene: list[AbschnittDef]) -> tuple[list, list[str]]:
-    """Je Rundenblock mit mehreren Segmenten ein automatischer Abschnitt (Segmente 32): Name des
+    """Je Rundenblock mit mehreren Segmenten ein automatischer Abschnitt: Name des
     Blocks, „jede Durchfahrt“, Vergleich an. Wertet ein eigener Abschnitt schon genau dasselbe aus,
     gibt es statt eines Duplikats einen Hinweis. Ein Block mit nur einem Segment ist schon als
     Segment ein Abschnitt."""
@@ -484,7 +484,7 @@ def _block_abschnitte(teile, e: dict, eigene: list[AbschnittDef]) -> tuple[list,
 
 
 def abschnitt_hinweise(teile, einstellungen: dict | None = None) -> list[str]:
-    """Hinweise zu Rundenblöcken, die ein eigener Abschnitt schon abdeckt (Segmente 32)."""
+    """Hinweise zu Rundenblöcken, die ein eigener Abschnitt schon abdeckt."""
     e = einstellungen or {}
     return _block_abschnitte(teile, e, _eigene(e))[1]
 
@@ -502,7 +502,7 @@ def abschnitte(teile, einstellungen: dict | None = None) -> list[AbschnittDef]:
     einstellungen (JSON-Spalte strecke.abschnitte_json): {"segmente": {Schlüssel: {"aus", "vergleich"}},
     "bloecke": {Teil-Index: {"aus", "vergleich"}},
     "eigene": [{"id", "name", "von", "nach", "art", "von_nr", "nach_nr", "vergleich", "aus"}]}.
-    Ohne Einstellung gilt „Vergleich“ aus der Segment-Definition (Segmente 7–12), bei Rundenblöcken an.
+    Ohne Einstellung gilt „Vergleich“ aus der Segment-Definition, bei Rundenblöcken an.
     """
     e = einstellungen or {}
     seg = e.get("segmente") or {}
@@ -576,7 +576,7 @@ def abschnitt_pruefen(a: AbschnittDef, teile, namen: dict[str, str]) -> list[str
 
 
 def durchfahrt_optionen(teile, namen: dict[str, str]) -> list[tuple[str, int, str]]:
-    """Auswahl für Anfang und Ende „einer bestimmten Durchfahrt“ (Segmente 33): je Punkt der Abfolge
+    """Auswahl für Anfang und Ende „einer bestimmten Durchfahrt“: je Punkt der Abfolge
     (Punkt-ID, Nummer der Durchfahrt, Text), z. B. „P1 · 2. Durchfahrt (nach Runde 1)“. Endet dort
     ein Teil, steht dahinter, wonach: Name des Segments bzw. Rundenblock mit Wiederholung."""
     alle = {START: "Start", ZIEL: "Ziel", **namen}
@@ -602,11 +602,11 @@ def punkt_optionen(teile, namen: dict[str, str]) -> list[tuple[str, str]]:
     return [(p, alle.get(p, p)) for p in dict.fromkeys(punkte(teile))]
 
 
-ART_TEXT = {WIEDERKEHREND: "jede Durchfahrt", EINMALIG: "eine bestimmte Durchfahrt"}  # Segmente 29
+ART_TEXT = {WIEDERKEHREND: "jede Durchfahrt", EINMALIG: "eine bestimmte Durchfahrt"}
 
 
 def abschnitt_text(a: AbschnittDef, teile, namen: dict[str, str]) -> str:
-    """Vorschau in Worten, z. B. „Runde: Kreisel → Berg → Kreisel, 2-mal“ (Segmente 52: ohne
+    """Vorschau in Worten, z. B. „Runde: Kreisel → Berg → Kreisel, 2-mal“ (ohne
     „mit Vergleich“ – der Vergleich gehört zum Zielmonitor-Feld)."""
     alle = {START: "Start", ZIEL: "Ziel", **namen}
     p, liste = punkte(teile), paare(a, teile)

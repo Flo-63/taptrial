@@ -41,7 +41,7 @@ def test_manifest(client):
     assert m["display"] == "standalone"
     assert client.get("/start.webmanifest?token=falsch").json()["start_url"] == "/start"
     assert client.get("/admin.webmanifest").status_code == 404
-    # Segmente 44: Messpunkt und Rennleitungs-Sicht bleiben im Startbildschirm-Link (eigenes Profil)
+    # Messpunkt und Rennleitungs-Sicht bleiben im Startbildschirm-Link (eigenes Profil)
     m = client.get("/ziel.webmanifest?token=tok-ziel&ort=7x&sicht=rennleitung").json()
     assert m["start_url"] == "/ziel?token=tok-ziel&ort=7&sicht=rennleitung"
     seite = client.get("/ziel?token=tok-ziel&ort=7&sicht=rennleitung").text

@@ -1,4 +1,4 @@
-"""Feedback phase-12 im Browser: CSV-Import mit Vorschau/Bearbeitung, Admin-Layout auf dem Handy."""
+"""Im Browser: CSV-Import mit Vorschau/Bearbeitung, Admin-Layout auf dem Handy."""
 
 import re
 from pathlib import Path

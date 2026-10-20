@@ -1,4 +1,4 @@
-"""Segment-Modell (Segmente 7): Streckendefinition, Abfolge, Prüfung, Migration, Zuordnung."""
+"""Segment-Modell: Streckendefinition, Abfolge, Prüfung, Migration, Zuordnung."""
 
 import pytest
 
@@ -109,7 +109,7 @@ def test_fehlende_durchfahrt_an_der_reihenfolge_keine_weiteren_segmentzeiten():
     assert sg.zuordnen(t, f).fehlend_ab == 4
 
 
-# --- Segmente 8: Abstandsregel ---------------------------------------------------------------
+# --- Abstandsregel ---------------------------------------------------------------
 
 
 def einzelrunde(wdh=4):
@@ -156,7 +156,7 @@ def test_mediane_ueber_alle_fahrer():
     assert sg.mediane(t, fahrten) == {"0.0": 130, "1.0": 575, "2.0": 60}
 
 
-# --- Segmente 8: Doppeltipp, Ziel-Toleranz, keine Fälle (Auswertung) -------------------------
+# --- Doppeltipp, Ziel-Toleranz, keine Fälle (Auswertung) -------------------------
 
 
 def _auswerten(ereignisse, abschnitte=()):
@@ -243,11 +243,11 @@ def test_vergleich_mit_vorheriger_durchfahrt():
     z = _auswerten(ev).zeile(1)
     zweite = next(x for x in z.segmentzeiten if x.label == "P1→P2 (2)")
     assert zweite.zeit_ms == 4 * MIN and zweite.vergleich_ms == -MIN
-    # Segmente 52: die Differenz gibt es bei jeder Wiederholung; ob sie erscheint, entscheidet das Monitor-Feld
+    # Die Differenz gibt es bei jeder Wiederholung; ob sie erscheint, entscheidet das Monitor-Feld
     assert all(x.vergleich_ms is None for x in z.segmentzeiten if x.k == 1)
 
 
-# --- Segmente 13: Auswertungsabschnitte ------------------------------------------------------
+# --- Auswertungsabschnitte ------------------------------------------------------
 
 RUNDE = sg.AbschnittDef("a1", "Runde", "1", "1", sg.WIEDERKEHREND, vergleich=True)
 
@@ -311,7 +311,7 @@ def test_abschnittszeiten_in_der_auswertung():
     assert replace(runde[0], zeit_ms=0).k == 1
 
 
-# --- Verlauf als Punktfolge (Segmente 28) -----------------------------------------------------
+# --- Verlauf als Punktfolge -----------------------------------------------------
 
 
 def test_punktfolge_beispiel_abfolge():
@@ -373,7 +373,7 @@ def test_punktfolge_pruefung():
 
 
 def test_abschnitt_vorschau_in_worten():
-    """Segmente 29: „Runde: P1 → P2 → P1, 2-mal, mit Vergleich“."""
+    """„Runde: P1 → P2 → P1, 2-mal, mit Vergleich“."""
     teile = sg.teile_aus_verlauf(["1", sg.VerlaufBlock("Runde", 2, ("2", "1"))])
     namen = {"1": "P1", "2": "P2"}
     runde = sg.AbschnittDef("a1", "Runde", "1", "1", sg.WIEDERKEHREND, vergleich=True)
@@ -393,7 +393,7 @@ def test_abschnitt_vorschau_in_worten():
     }
 
 
-# --- Segmente 32: Rundenblock automatisch als Auswertungsabschnitt ---------------------------
+# --- Rundenblock automatisch als Auswertungsabschnitt ---------------------------
 
 
 def test_rundenblock_ist_automatischer_abschnitt():

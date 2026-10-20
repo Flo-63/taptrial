@@ -1,4 +1,4 @@
-"""Einstellungen: Allgemein, Klassen & Wertung, Strecken, Ziel/Rennleitung (ADMIN-REVIEW Schritt 4)."""
+"""Einstellungen: Allgemein, Klassen & Wertung, Strecken, Ziel/Rennleitung."""
 
 from tests.api import test_admin
 from tests.api.test_admin import T0, geraet, post
@@ -7,7 +7,7 @@ admin, v, keine_sperre = test_admin.admin, test_admin.v, test_admin.keine_sperre
 
 
 def test_reiter_mit_eigener_adresse_formular_und_hilfe(admin, v):
-    """Segmente 17: Einstellungen mit Reitern – je Reiter eigene Adresse, Speichern und Hilfe-Anker."""
+    """Einstellungen mit Reitern – je Reiter eigene Adresse, Speichern und Hilfe-Anker."""
     import re
 
     reiter = {"": ("allgemein", ["allgemein"], ["stammdaten"], "einstellungen"),
@@ -17,7 +17,7 @@ def test_reiter_mit_eigener_adresse_formular_und_hilfe(admin, v):
     for pfad, (key, bereiche, formulare, anker) in reiter.items():
         html = admin.get(f"/admin/v/{v.id}/einstellungen{pfad}").text
         assert 'id="einstellungen-reiter"' in html and html.count('class="reiter-link"') == 3
-        assert 'data-reiter="strecken"' not in html  # Segmente 25: eigene Seite
+        assert 'data-reiter="strecken"' not in html  # Eigene Seite
         assert re.search(rf'data-reiter="{key}" aria-current=page', html), key
         for bereich in bereiche:
             assert f'id="{bereich}"' in html, (key, bereich)
@@ -26,13 +26,11 @@ def test_reiter_mit_eigener_adresse_formular_und_hilfe(admin, v):
         assert f'#{anker}"' in html  # Hilfe-Button springt zum Abschnitt
         assert html.count('class="btn btn-primary"') >= 1
     assert admin.get(f"/admin/v/{v.id}/einstellungen/unbekannt").status_code == 404
-    assert (
-        "rennleitung-modus" not in admin.get(f"/admin/v/{v.id}/einstellungen").text
-    )  # Segmente 51
+    assert "rennleitung-modus" not in admin.get(f"/admin/v/{v.id}/einstellungen").text
 
 
 def test_strecken_und_messpunkte_eigene_seiten(admin, v):
-    """Segmente 25/37/42: Seitenleiste „Strecken“ und „Messpunkte“ zwischen Einstellungen und
+    """Seitenleiste „Strecken“ und „Messpunkte“ zwischen Einstellungen und
     Teilnehmer; die alten Adressen (auch „/orte“) leiten weiter."""
     import re
 
@@ -60,20 +58,18 @@ def test_strecken_und_messpunkte_eigene_seiten(admin, v):
         ("start", "Start"),
         ("punkt", "Zwischenzeit"),
         ("ziel", "Ziel"),
-    ):  # Segmente 42
+    ):
         assert re.search(rf'<option value="{wert}"[^>]*>{art}</option>', mp), art
     assert "Startort" not in mp and "Zielort" not in mp
     r = admin.get(f"/admin/v/{v.id}/einstellungen/strecken", follow_redirects=False)
     assert r.status_code == 307 and r.headers["location"] == f"/admin/v/{v.id}/strecken"
-    assert (
-        'class="stapel-eng rennleitung-modus"' in admin.get(f"/admin/v/{v.id}/geraete").text
-    )  # Segmente 51
+    assert 'class="stapel-eng rennleitung-modus"' in admin.get(f"/admin/v/{v.id}/geraete").text
     oe = admin.get(f"/admin/v/{v.id}/einstellungen/zielmonitor").text
     assert 'id="oeffentlich-hinweis"' in oe and "öffentlich" in oe and 'id="monitor-vorschau"' in oe
 
 
 def test_option_ziel_rennleitung_mit_warnung_nach_erster_zeit(admin, v):
-    """Segmente 51: die Option steht auf der Karte des Ziels unter „Geräte“ (Verhalten wie A98)."""
+    """Die Option steht auf der Karte des Ziels unter „Geräte“."""
     import re
 
     html = admin.get(f"/admin/v/{v.id}/geraete").text

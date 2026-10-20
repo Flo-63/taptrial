@@ -1,4 +1,4 @@
-"""Release 7: Dateien für Außenstehende – README, LICENSE (PolyForm Noncommercial 1.0.0 im
+"""Dateien für Außenstehende – README, LICENSE (PolyForm Noncommercial 1.0.0 im
 Originaltext), THIRD_PARTY_LICENSES (alle Laufzeit-Abhängigkeiten aus uv.lock), SECURITY,
 CONTRIBUTING, Issue-Vorlagen, ROADMAP mit „Lauf, Wellen- und Massenstart“."""
 
@@ -29,7 +29,7 @@ def test_readme_inhalt():
                       "ohne Gewähr", "keine Supportzusage", "Pull Requests nehmen wir derzeit nicht an"):  # fmt: skip
         assert abschnitt in r, abschnitt
     assert "Ohne HTTPS gibt es keinen Offline-Betrieb" in r
-    for name in ("RCB_TOKEN_ADMIN", "TAPTRIAL_DOMAIN", "RCB_VERTRAUTE_PROXYS"):
+    for name in ("TAPTRIAL_TOKEN_ADMIN", "TAPTRIAL_DOMAIN", "TAPTRIAL_VERTRAUTE_PROXYS"):
         assert f"`{name}`" in r
 
 

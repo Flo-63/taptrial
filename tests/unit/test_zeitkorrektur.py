@@ -1,4 +1,4 @@
-"""Schnellkorrektur am Ziel: ZEITKORREKTUR-Ereignisse (Phase 14a)."""
+"""Schnellkorrektur am Ziel: ZEITKORREKTUR-Ereignisse."""
 
 from datetime import date
 

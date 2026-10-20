@@ -21,7 +21,7 @@ def test_loeschen_ohne_reste_und_410_fuer_alte_geraete(admin, v):
     admin.post(f"/admin/v/{v.id}/import", data={"csrf": admin.csrf},  # offener Import-Entwurf
                files={"datei": ("t.csv", b"startnummer;vorname;nachname;geschlecht;geburtsjahr\n9;A;B;m;1990\n")})  # fmt: skip
     alt_start = v.token_start
-    post(admin, f"/admin/v/{v.id}/token", rolle="start")  # erneuerter Token: bleibt 401 (A51)
+    post(admin, f"/admin/v/{v.id}/token", rolle="start")  # erneuerter Token: bleibt 401
     with admin.app.state.sessionmaker() as s:
         x = s.get(Veranstaltung, v.id)
         token_start, token_ziel, token_rl = x.token_start, x.token_ziel, x.token_rennleitung
@@ -68,7 +68,7 @@ def test_loeschen_ohne_reste_und_410_fuer_alte_geraete(admin, v):
     # nichts mehr aktiv: öffentliche Seiten
     assert "Derzeit keine Veranstaltung" in admin.get("/").text
     assert "Derzeit keine Ergebnisse" in admin.get("/ergebnisse").text
-    assert admin.get("/api/oeffentlich").json() == {"veranstaltung": None}
+    assert admin.get("/api/oeffentlich").json()["veranstaltung"] is None
 
 
 def test_abgeschlossen_bleibt_beendet(admin, v):

@@ -1,5 +1,5 @@
-"""Release 2: Version aus einer Quelle (pyproject.toml), sichtbar im Admin, klein auf öffentlichen
-Seiten und in der Hilfe, unter /version und als Image-Label; CHANGELOG mit Eintrag 0.1.0."""
+"""Version aus einer Quelle (pyproject.toml), sichtbar im Admin, klein auf öffentlichen
+Seiten und in der Hilfe, unter /version und als Image-Label; CHANGELOG mit Eintrag zur Version."""
 
 import re
 import tomllib
@@ -13,7 +13,7 @@ PROJEKT = Path(__file__).resolve().parents[2]
 
 def test_eine_quelle():
     pyproject = tomllib.loads((PROJEKT / "pyproject.toml").read_text(encoding="utf-8"))
-    assert VERSION == pyproject["project"]["version"] == "0.1.0"
+    assert VERSION == pyproject["project"]["version"] == "0.1.1"
     docker = (PROJEKT / "Dockerfile").read_text(encoding="utf-8")
     assert f"ARG VERSION={VERSION}" in docker  # Vorgabe im Image = pyproject
     assert 'org.opencontainers.image.version="${VERSION}"' in docker
@@ -25,7 +25,9 @@ def test_version_json(client):
 
 
 def test_version_sichtbar(client, admin):  # noqa: F811
-    assert f"TapTrial {VERSION}" in admin.get("/admin").text  # Fußzeile im Admin
+    assert re.search(
+        rf'id="admin-version">TapTrial {re.escape(VERSION)}<', admin.get("/admin").text
+    )
     for pfad in ("/", "/ergebnisse"):
         assert re.search(
             rf'class="app-version">TapTrial {re.escape(VERSION)}<', client.get(pfad).text

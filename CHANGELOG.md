@@ -4,6 +4,19 @@ Alle nennenswerten Änderungen an TapTrial. Format nach [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [0.1.1] – 2026-10-19
+
+### Behoben
+- **Vereinsname war fast unsichtbar:** Er stand nur klein auf der Startseite. Jetzt steht er vorn – Startseite, Kopf der Ergebnisse („Verein · Veranstaltung“), Admin-Kopf, Zielmonitor, Druckansichten, Urkunden und Seitentitel; „TapTrial“ nur noch klein. Ohne Vereinsnamen bleibt alles neutral.
+- Änderungen am Branding sind sofort sichtbar: HTML-Seiten werden nicht mehr vom Browser zwischengespeichert, ein offener Zielmonitor übernimmt den Namen beim nächsten Abruf.
+- **Versionsangabe** stand mitten auf dem Bildschirm: jetzt klein unten in der Admin-Seitenleiste bzw. rechts in der Fußzeile der öffentlichen Seiten und der Hilfe; Zielmonitor und Geräte ohne Version.
+
+### Geändert
+- Umgebungsvariablen heißen `TAPTRIAL_…` (z. B. `TAPTRIAL_TOKEN_ADMIN`). Die alten Namen `RCB_…` gelten weiter (Hinweis „veraltet“ im Log), der neue Name gewinnt.
+- „Als Nächstes“ erinnert dezent, wenn noch kein Vereinsname eingetragen ist; Hilfe-Abschnitt „Branding“.
+- GitHub Actions auf aktuelle Hauptversionen mit Node 24, Runner `ubuntu-24.04`.
+- Kommentare und Testbeschreibungen ohne Verweise auf interne Arbeitsnotizen.
+
 ## [0.1.0] – 2026-10-14
 
 Erste öffentliche Version: Zeitnahme für Einzelzeitfahren mit Handys und Tablets im Browser – ohne Chips, ohne App-Store.

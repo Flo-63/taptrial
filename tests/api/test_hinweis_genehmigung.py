@@ -1,4 +1,4 @@
-"""Release 4: ruhiger Hinweis auf die Erlaubnis nach § 29 StVO im Assistenten (Schritt Grunddaten),
+"""Ruhiger Hinweis auf die Erlaubnis nach § 29 StVO im Assistenten (Schritt Grunddaten),
 gleicher Satz im README und im Betriebshandbuch."""
 
 from pathlib import Path

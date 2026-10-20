@@ -32,7 +32,7 @@ Voraussetzung: ein Rechner oder Server mit Docker und Docker Compose.
 ```bash
 mkdir taptrial && cd taptrial
 # docker-compose.yml, docker-compose.caddy.yml, Caddyfile und .env.example aus diesem Repository holen
-cp .env.example .env          # RCB_TOKEN_ADMIN setzen: openssl rand -base64 32
+cp .env.example .env          # TAPTRIAL_TOKEN_ADMIN setzen: openssl rand -base64 32
 docker compose up -d          # http://localhost:8000
 ```
 
@@ -56,7 +56,7 @@ Ohne Docker (Entwicklung): Python 3.12 und [uv](https://docs.astral.sh/uv/), dan
 
 ```bash
 uv sync
-RCB_TOKEN_ADMIN=geheim uv run uvicorn app.main:app --reload    # http://localhost:8000
+TAPTRIAL_TOKEN_ADMIN=geheim uv run uvicorn app.main:app --reload    # http://localhost:8000
 uv run pytest -q                                                # Tests (E2E: uv run playwright install chromium)
 ```
 
@@ -66,15 +66,15 @@ Alle Einstellungen kommen aus Umgebungsvariablen (Vorlage: [.env.example](.env.e
 
 | Variable | Pflicht | Bedeutung |
 |---|---|---|
-| `RCB_TOKEN_ADMIN` | ja | Admin-Passphrase. Ohne sie startet die App nicht (Meldung im Log). |
+| `TAPTRIAL_TOKEN_ADMIN` | ja | Admin-Passphrase. Ohne sie startet die App nicht (Meldung im Log). |
 | `TAPTRIAL_DOMAIN` | mit Caddy | Domain für HTTPS (`docker-compose.caddy.yml`). |
 | `TAPTRIAL_VERSION` | nein | Image-Version für Compose (Standard `latest`). |
 | `TAPTRIAL_PORT` | nein | Port ohne Caddy (Standard 8000). |
-| `RCB_VERTRAUTE_PROXYS` | nein | Proxys, deren `X-Forwarded-*` ausgewertet werden (Standard `127.0.0.1,::1`, passt für Caddy). |
-| `RCB_KLASSEN_DATEI`, `RCB_WERTUNGEN_VERZEICHNIS` | nein | Andere Altersklassen bzw. Wertungen für den ersten Start. |
-| `RCB_DB_PFAD` | nein | Nur ohne Docker: Pfad der SQLite-Datei (im Image fest `/data/zeitfahren.sqlite3`). |
+| `TAPTRIAL_VERTRAUTE_PROXYS` | nein | Proxys, deren `X-Forwarded-*` ausgewertet werden (Standard `127.0.0.1,::1`, passt für Caddy). |
+| `TAPTRIAL_KLASSEN_DATEI`, `TAPTRIAL_WERTUNGEN_VERZEICHNIS` | nein | Andere Altersklassen bzw. Wertungen für den ersten Start. |
+| `TAPTRIAL_DB_PFAD` | nein | Nur ohne Docker: Pfad der SQLite-Datei (im Image fest `/data/zeitfahren.sqlite3`). |
 
-Die Präfixe `RCB_` stammen aus der Entstehung des Projekts und bleiben aus Kompatibilitätsgründen.
+Ältere Installationen nutzen noch die Namen `RCB_…` (z. B. `RCB_TOKEN_ADMIN`). Sie gelten weiter; ist beides gesetzt, gewinnt `TAPTRIAL_…`. Beim Start steht dann einmal je Variable der Hinweis „veraltet“ im Log – umbenennen genügt.
 
 ## Sicherung und Wiederherstellung
 

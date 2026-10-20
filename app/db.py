@@ -1,11 +1,12 @@
 """Datenbankanbindung (SQLite, WAL-Modus)."""
 
-import os
 from datetime import date
 from pathlib import Path
 
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
+
+from app import umgebung
 
 
 class Basis(DeclarativeBase):
@@ -76,10 +77,10 @@ NACHGERUESTETE_SPALTEN = [
 
 
 def _ort_id_aus_wert(conn) -> None:
-    """Segmente 43: Bisher stand der Ort eines Start-/Zielgeräts in „wert“ (A144). Einmalig beim
+    """Bisher stand der Ort eines Start-/Zielgeräts in „wert“. Einmalig beim
     Nachrüsten der Spalte nach „ort_id“ übernehmen – nur wenn „wert“ die ID eines weiteren Orts
     gleicher Art derselben Veranstaltung ist. „wert“ bleibt unverändert; der append-only-Trigger
-    wird dafür nur innerhalb dieser Transaktion entfernt (wie beim Löschen, A14)."""
+    wird dafür nur innerhalb dieser Transaktion entfernt (wie beim Löschen)."""
     conn.exec_driver_sql("DROP TRIGGER IF EXISTS ereignis_kein_update")
     conn.exec_driver_sql(
         "UPDATE ereignis SET ort_id = (SELECT m.id FROM messpunkt m WHERE CAST(m.id AS TEXT) = "
@@ -93,7 +94,7 @@ def _ort_id_aus_wert(conn) -> None:
 
 
 def _messpunkte_zur_veranstaltung(conn) -> None:
-    """Segmente 12: Messpunkte gehören zur Veranstaltung statt zur Strecke. Ältere Tabellen
+    """Messpunkte gehören zur Veranstaltung statt zur Strecke. Ältere Tabellen
     (strecke_id NOT NULL) werden umgebaut; IDs und Tokens bleiben, strecke_id bleibt als Herkunft."""
     spalten = {z[1] for z in conn.exec_driver_sql("PRAGMA table_info(messpunkt)")}
     if not spalten or "veranstaltung_id" in spalten:
@@ -124,7 +125,7 @@ def tabellen_anlegen(engine: Engine) -> None:
 
 
 def schema_aktualisieren(engine: Engine) -> None:
-    """Rüstet ältere SQLite-Dateien nach (kein Migrationstool bei dieser Größe, PLAN Phase 2)."""
+    """Rüstet ältere SQLite-Dateien nach (kein Migrationstool bei dieser Größe)."""
     from app.models import ANONYMISIEREN_NACH_MONATEN, neues_token, plus_monate
 
     with engine.begin() as conn:
@@ -135,7 +136,7 @@ def schema_aktualisieren(engine: Engine) -> None:
                 conn.exec_driver_sql(f"ALTER TABLE {tabelle} ADD COLUMN {spalte} {typ}")
                 if (tabelle, spalte) == ("ereignis", "ort_id") and "art" in vorhanden:
                     _ort_id_aus_wert(conn)
-        # Zuerst (vor der Token-Vergabe): genau eine aktive Veranstaltung (E7) auch in der
+        # Zuerst (vor der Token-Vergabe): genau eine aktive Veranstaltung auch in der
         # Datenbank erzwingen. Ältere Dateien mit mehreren aktiven: die zuletzt angelegte bleibt.
         conn.exec_driver_sql(
             "UPDATE veranstaltung SET aktiv = 0 WHERE aktiv = 1 AND id < "
@@ -152,8 +153,8 @@ def schema_aktualisieren(engine: Engine) -> None:
         ).fetchall()
         for vid, aktiv, datum, t_start, t_ziel, anon in zeilen:
             if t_start is None or t_ziel is None:
-                alt_start = os.environ.get("RCB_TOKEN_START") if aktiv else None
-                alt_ziel = os.environ.get("RCB_TOKEN_ZIEL") if aktiv else None
+                alt_start = umgebung.wert("token_start") if aktiv else None
+                alt_ziel = umgebung.wert("token_ziel") if aktiv else None
                 conn.exec_driver_sql(
                     "UPDATE veranstaltung SET token_start = ?, token_ziel = ? WHERE id = ?",
                     (

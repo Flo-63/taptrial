@@ -1,4 +1,4 @@
-"""Fachschicht des Admin (Phase 6, KONZEPT 5/6/8a).
+"""Fachschicht des Admin.
 
 Alle Korrekturen an Zeitdaten sind neue Ereignisse (append-only) mit Pflichtnotiz.
 Stammdaten (Veranstaltung, Teilnehmer, Tokens, Lebenszyklus) sind normale Tabellenzeilen.
@@ -164,7 +164,7 @@ def _startnummer_bekannt(session: Session, v: Veranstaltung, nr: int) -> None:
         raise KorrekturFehler(f"Startnummer {nr} ist nicht in der Teilnehmerliste.")
 
 
-# Segmente 46: diese Ereignisse gibt es erst nach der Freigabe (Merkmal, Ergebnis-Erklärung nicht)
+# Diese Ereignisse gibt es erst nach der Freigabe (Merkmal, Ergebnis-Erklärung nicht)
 RENN_ARTEN = {Art.START, Art.ZIEL, Art.DURCHFAHRT, Art.STATUS, Art.RUNDE, Art.ZUORDNUNG, Art.STORNO,
               Art.ZEITKORREKTUR, Art.MANUELLE_ZEIT}  # fmt: skip
 
@@ -306,7 +306,7 @@ def manuelle_zeit(session, v, nr: int, art: str, uhrzeit: str | None, fahrzeit: 
 
 
 def _ort_der_zeit(session: Session, v: Veranstaltung, nr: int, art: str) -> int | None:
-    """Messpunkt einer manuellen Start-/Zielzeit (Segmente 43): der des bisherigen Stempels dieses
+    """Messpunkt einer manuellen Start-/Zielzeit: der des bisherigen Stempels dieses
     Fahrers, sonst Start bzw. Ziel seiner Strecke; None = Standard-Start/-Ziel."""
     erg = ergebnis(session, v)
     bisher = [s for s in (erg.startstempel if art == "START" else erg.zielstempel)
@@ -361,7 +361,7 @@ def strecke_text(n: int) -> str:
 
 def offiziell_sperrgruende(erg: Ergebnis) -> list[str]:
     gruende = []
-    unterwegs = auf_der_strecke(erg)  # Segmente 47: erst, wenn alle Gestarteten durch sind
+    unterwegs = auf_der_strecke(erg)  # Erst, wenn alle Gestarteten durch sind
     if unterwegs:
         gruende.append(strecke_text(len(unterwegs)))
     if erg.vorlaeufige_dsq:
@@ -399,7 +399,7 @@ def veranstaltung_anlegen(
     v = Veranstaltung(name=name[:200], datum=datum, aktiv=False, klassensatz_id=klassensatz_id)
     session.add(v)
     session.flush()
-    strecken.sicherstellen(session, v)  # eine Strecke mit allen Klassen (Phase 13)
+    strecken.sicherstellen(session, v)  # eine Strecke mit allen Klassen
     session.commit()
     if aktivieren:
         aktiv_setzen(session, v)
@@ -407,7 +407,7 @@ def veranstaltung_anlegen(
 
 
 def laufende_andere(session: Session, v: Veranstaltung | None = None) -> Veranstaltung | None:
-    """Segmente 55: die aktive Veranstaltung, wenn sie läuft und Startzeiten hat (und nicht v ist)."""
+    """Die aktive Veranstaltung, wenn sie läuft und Startzeiten hat (und nicht v ist)."""
     a = aktive_veranstaltung(session)
     if a is None or (v is not None and a.id == v.id) or not a.laufend:
         return None
@@ -423,9 +423,9 @@ def aktiv_sperrgrund(v: Veranstaltung) -> str:
 
 
 def aktiv_beenden(session: Session, v: Veranstaltung) -> None:
-    """„Nicht mehr aktiv setzen“ (Segmente 46): nur, solange es keine Startzeit gibt; danach sind
+    """„Nicht mehr aktiv setzen“: nur, solange es keine Startzeit gibt; danach sind
     die Geräte wieder gesperrt. Eine abgeschlossene Veranstaltung darf immer zurücktreten
-    (Segmente 68: die Demo bleibt nicht aktiv)."""
+    (die Demo bleibt nicht aktiv)."""
     if not v.aktiv:
         raise KorrekturFehler("Die Veranstaltung ist nicht aktiv.")
     if v.laufend and startzeiten_vorhanden(session, v):
@@ -443,12 +443,12 @@ def aktiv_setzen(session: Session, v: Veranstaltung) -> None:
     """In einer Transaktion: alle anderen deaktivieren, dann diese aktivieren.
 
     Die Datenbank erzwingt zusätzlich höchstens eine aktive Veranstaltung (partieller Unique-Index).
-    Segmente 46: erst nach abgeschlossener Einrichtung.
+    Erst nach abgeschlossener Einrichtung.
     """
     if v.einrichtung_schritt:
         raise KorrekturFehler(aktiv_sperrgrund(v))
     laufend = laufende_andere(session, v)
-    if laufend is not None:  # Segmente 55: keine laufende Veranstaltung verdrängen
+    if laufend is not None:  # Keine laufende Veranstaltung verdrängen
         raise KorrekturFehler(verdraengen_text(laufend))
     try:
         session.execute(update(Veranstaltung).where(Veranstaltung.id != v.id).values(aktiv=False))
@@ -486,7 +486,7 @@ def token_erneuern(session: Session, v: Veranstaltung, rolle: str) -> str:
         session.commit()
         return f"Posten-Token „{m.name}“"
     art, _, oid = rolle.partition("-")
-    if oid and art in ("start", "ziel", "rennleitung"):  # Segmente 38: weiterer Start-/Zielort
+    if oid and art in ("start", "ziel", "rennleitung"):  # Weiterer Start-/Zielort
         m = next((m for m in strecken.orte_von(session, v) if str(m.id) == oid and not m.standard
                   and m.art == ("start" if art == "start" else "ziel")), None)  # fmt: skip
         if m is None:
@@ -506,8 +506,8 @@ def token_erneuern(session: Session, v: Veranstaltung, rolle: str) -> str:
 
 def rennleitung_umschalten(session: Session, v: Veranstaltung, zusammen: bool,
                            bestaetigt: bool, ort: str = "") -> str:  # fmt: skip
-    """Ziel und Rennleitung auf einem Gerät (zusammen) oder getrennte Links (Test 08.10.); je
-    Zielort (Segmente 38, ort = ID eines weiteren Zielorts, leer = Standard-Zielort)."""
+    """Ziel und Rennleitung auf einem Gerät (zusammen) oder getrennte Links; je
+    Zielort (ort = ID eines weiteren Zielorts, leer = Standard-Zielort)."""
     _schreibbar(v)
     ziel = v
     if ort:
@@ -571,7 +571,7 @@ def loeschen(session: Session, v: Veranstaltung) -> None:
     bleiben nur die Fingerabdrücke der Gerätetokens (410 „Veranstaltung gelöscht“).
 
     Der append-only-Trigger wird dafür nur innerhalb dieser Transaktion entfernt und
-    sofort wieder angelegt (FRAGEN A14).
+    sofort wieder angelegt.
     """
     try:
         # Gerätetokens nur als Fingerabdruck merken: alte Geräte bekommen 410 und räumen auf

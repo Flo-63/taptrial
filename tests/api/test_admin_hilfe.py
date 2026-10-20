@@ -1,4 +1,4 @@
-"""Hilfe im Admin: gleicher Tab, Rücksprung, passender Abschnitt je Seite (Test 08.10., Punkt 12)."""
+"""Hilfe im Admin: gleicher Tab, Rücksprung, passender Abschnitt je Seite."""
 
 import html as h
 import re
@@ -26,7 +26,7 @@ def test_hilfe_springt_zum_passenden_abschnitt(admin, v):
         link = hilfe_link(admin.get(f"/admin/v/{v.id}{pfad}").text)
         assert link == f"/hilfe/admin?zurueck=/admin/v/{v.id}{pfad}#{anker}", pfad
         assert f'id="{anker}"' in handbuch, anker
-    assert 'id="oeffentlichkeit"' in handbuch  # Segmente 60: früherer Anker springt weiter
+    assert 'id="oeffentlichkeit"' in handbuch  # Früherer Anker springt weiter
     r = admin.get(f"/admin/v/{v.id}/einstellungen/oeffentlichkeit", follow_redirects=False)
     assert (
         r.status_code == 307
@@ -48,7 +48,7 @@ def test_hilfe_springt_zum_passenden_abschnitt(admin, v):
         "segmente",
         "zielmonitor",
         "strecke",
-    ):  # Unterabschnitte der Einstellungen (Segmente 20)
+    ):  # Unterabschnitte der Einstellungen
         assert f'id="{anker}"' in handbuch, anker
     with admin.app.state.sessionmaker() as s:
         from app import strecken as st

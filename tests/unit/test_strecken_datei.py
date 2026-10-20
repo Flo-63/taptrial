@@ -1,4 +1,4 @@
-"""Segmente 22: Streckendefinition als TOML speichern und laden."""
+"""Streckendefinition als TOML speichern und laden."""
 
 import pytest
 
@@ -44,7 +44,7 @@ def test_speichern_und_in_andere_veranstaltung_laden(session):
     assert "klasse" not in text.lower().replace(
         "klassenzuordnung", ""
     )  # Klassenzuordnung gehört nicht dazu
-    # Segmente 52: Darstellung (anzeigen, Vergleich) gehört nicht mehr in die Datei
+    # Darstellung (anzeigen, Vergleich) gehört nicht mehr in die Datei
     assert "vergleich" not in text and "aus =" not in text and "segment_abschnitt" not in text
     e = sd.lesen(text.encode())
     assert (
@@ -72,7 +72,7 @@ def test_speichern_und_in_andere_veranstaltung_laden(session):
         sg.abfolge_text(st.teile_von(neu), namen)
         == "Start · kreisel · Berg · kreisel · Berg · kreisel · Ziel"
     )
-    # neue Abschnitte: angezeigt, ohne Vergleich (Segmente 52)
+    # neue Abschnitte: angezeigt, ohne Vergleich
     assert [(a.name, a.aus, a.vergleich) for a in st.abschnitte_von(neu)] == [
         (a.name, False, False) for a in st.abschnitte_von(lang)
     ]
@@ -134,7 +134,7 @@ def test_einfache_strecke_ohne_messpunkte(session):
 
 
 def test_bestehende_strecke_ersetzen(session):
-    """Segmente 39: Verlauf, Abschnitte, Länge, Beschreibung, Komoot ersetzt; Name und Klassen bleiben."""
+    """Verlauf, Abschnitte, Länge, Beschreibung, Komoot ersetzt; Name und Klassen bleiben."""
     v, lang = beispiel_veranstaltung(session)
     text = sd.strecke_toml(session, v, lang).replace("laenge_km = 20", "laenge_km = 21.5")
     e = sd.lesen(text.encode())
@@ -169,7 +169,7 @@ def test_bestehende_strecke_ersetzen(session):
 
 
 def test_ersetzen_nennt_was_verloren_geht():
-    """Segmente 50: Bestätigungstext beim Ersetzen."""
+    """Bestätigungstext beim Ersetzen."""
     import json
 
     from app.models import Strecke
@@ -192,7 +192,7 @@ def test_ersetzen_nennt_was_verloren_geht():
 
 
 def test_alte_datei_mit_darstellung_laedt_mit_hinweis():
-    """Segmente 52: „anzeigen“/„Vergleich“ aus älteren Dateien werden ignoriert – mit Hinweis."""
+    """„anzeigen“/„Vergleich“ aus älteren Dateien werden ignoriert – mit Hinweis."""
     alt = (
         'version = 1\nname = "Alt"\nmesspunkte = ["P1"]\n'
         '[[teil]]\nname = ""\nwdh = 1\n[[teil.segment]]\nvon = "Start"\nnach = "P1"\n'

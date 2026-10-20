@@ -1,4 +1,4 @@
-"""Geräte (inkl. Monitor-QR) und Protokoll mit Filtern (ADMIN-REVIEW Schritt 7)."""
+"""Geräte (inkl. Monitor-QR) und Protokoll mit Filtern."""
 
 import re
 
@@ -63,7 +63,7 @@ def test_geraetedatei_eigene_seite(admin, v):
 
 
 def test_geraete_karten_einheitlich(admin, v):
-    """Titel, QR-Code, Buttons, darunter der gekürzte Link mit Tooltip (Test 08.10., Punkt 11)."""
+    """Titel, QR-Code, Buttons, darunter der gekürzte Link mit Tooltip."""
     html = admin.get(f"/admin/v/{v.id}/geraete").text
     karten = html.split('<section class="card geraet"')[1:]
     assert len(karten) == 4

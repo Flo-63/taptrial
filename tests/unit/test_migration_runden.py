@@ -72,7 +72,7 @@ def aufbau_roh(pfad) -> tuple:
 @pytest.mark.parametrize("backup", BACKUPS, ids=lambda p: p.name)
 def test_kopie_des_backups(tmp_path, backup):
     """Sicherungen von vor den Segmenten: danach ohne Teile, Messpunkte und Durchfahrten (vorher =
-    nachher). Release 10: Sicherungen, die schon mit der Segment-Version gezogen wurden (ab
+    nachher). Sicherungen, die schon mit der Segment-Version gezogen wurden (ab
     12.10. 19:30, mit Demo-Veranstaltung), enthalten Segment-Strecken, Messpunkte und Durchfahrten
     bereits – dort muss die Migration Aufbau, Messpunkte, Ereignisse und Ergebnisse unverändert
     lassen."""
@@ -161,7 +161,7 @@ def test_segment_daten_von_phase_14_vorher_gleich_nachher(tmp_path):
 
 
 def test_messpunkte_je_strecke_werden_messpunkte_der_veranstaltung(tmp_path):
-    """Segmente 12: alte Tabelle (Messpunkt je Strecke, strecke_id Pflicht) → Messpunkt der
+    """Alte Tabelle (Messpunkt je Strecke, strecke_id Pflicht) → Messpunkt der
     Veranstaltung; IDs, Tokens und Teile bleiben, gleiche Namen werden eindeutig, Auswertung gleich."""
     from datetime import date
 
@@ -186,7 +186,7 @@ def test_messpunkte_je_strecke_werden_messpunkte_der_veranstaltung(tmp_path):
         s.flush()
         vid, sid = v.id, strecke.id
         s.commit()
-    with engine.begin() as conn:  # Schema von Segmente 7–11 nachbauen
+    with engine.begin() as conn:  # Schema des ersten Segment-Modells nachbauen
         conn.exec_driver_sql("DROP TABLE messpunkt")
         conn.exec_driver_sql(
             "CREATE TABLE messpunkt (id INTEGER NOT NULL PRIMARY KEY, strecke_id INTEGER NOT NULL "

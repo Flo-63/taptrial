@@ -1,4 +1,4 @@
-"""Phase 12 im Browser: Klassen- und Wertungssätze im Admin."""
+"""Im Browser: Klassen- und Wertungssätze im Admin."""
 
 from pathlib import Path
 

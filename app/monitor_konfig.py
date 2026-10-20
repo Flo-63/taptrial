@@ -1,14 +1,14 @@
-"""Zielmonitor konfigurierbar (Segmente 14): Seiten, Reihenfolge, Anzeigedauer, Live-Bereich.
+"""Zielmonitor konfigurierbar: Seiten, Reihenfolge, Anzeigedauer, Live-Bereich.
 
 Konfiguration je Veranstaltung in `veranstaltung.monitor_json`:
 
     {"seiten": [{"typ": "ergebnis", "an": true, "dauer": 10, "live": true,
                  "abzeichen": true, "strecken": [<Strecken-ID>, …]}, …],
      "live_abschnitte": ["<Strecken-ID>:<Abschnitt-ID>", …],
-     "live_vergleich": [<Teilmenge von live_abschnitte: „mit Pfeil und Differenz“, Segmente 52>]}
+     "live_vergleich": [<Teilmenge von live_abschnitte: „mit Pfeil und Differenz“>]}
 
 Seitentypen: „ergebnis“ (Ergebnisbereich mit internem Blättern; „dauer“ je Unterseite) und
-„rangliste“ (Rangliste eines Abschnitts, Segmente 15). „strecken“ leer = alle Strecken. Die
+„rangliste“ (Rangliste eines Abschnitts). „strecken“ leer = alle Strecken. Die
 Standardkonfiguration entspricht dem bisherigen Monitor; der frühere Schalter „Segmentzeiten auf
 dem Zielmonitor“ wird zur Auswahl aller sichtbaren Segment-Abschnitte im Live-Bereich.
 """
@@ -50,9 +50,9 @@ def standard(v, liste) -> dict:
 
 
 def vorschlag(liste) -> dict:
-    """Segmente 66: Vorgabe im Assistenten – Ergebnisseite an, Live-Bereich an, je sichtbarem
+    """Vorgabe im Assistenten – Ergebnisseite an, Live-Bereich an, je sichtbarem
     Abschnitt (Segmente, Rundenblöcke, eigene) ein Feld; „mit Pfeil und Differenz“ bei Abschnitten
-    mit mehreren Durchfahrten (A172)."""
+    mit mehreren Durchfahrten."""
     from app import segmente as sg
 
     live, mit = [], []
@@ -77,7 +77,7 @@ def kontext(v, liste, mit_wertung: bool, ziel: str, konf: dict | None = None) ->
 
 
 def _bisheriger_vergleich(liste) -> set[str]:
-    """Abschnitte mit dem früheren Streckenschalter „Vergleich“ (vor Segmente 52) – daraus wird für
+    """Abschnitte mit dem früheren Streckenschalter „Vergleich“ (ältere Einstellungen) – daraus wird für
     ältere Konfigurationen „mit Pfeil und Differenz“ der Live-Felder (Migration vorher = nachher)."""
     return {f"{s.id}:{a.id}" for s in liste for a in st.abschnitte_von(s) if a.vergleich}
 
@@ -176,7 +176,7 @@ def fuer_monitor(konf: dict, liste, erg) -> dict:
         ]
     from app import segmente as sg
 
-    # Segmente 72: Name und „mehrere Durchfahrten“ je Abschnitt – fürs Ergebnis („beste Runde 9:18“)
+    # Name und „mehrere Durchfahrten“ je Abschnitt – fürs Ergebnis („beste Runde 9:18“)
     info = {}
     for s in liste:
         teile = st.teile_von(s)

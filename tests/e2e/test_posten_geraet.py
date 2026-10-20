@@ -1,4 +1,4 @@
-"""Posten-Gerät wie Start/Ziel (Segmente 2): Statusleiste mit Uhr, Zurücksetzen, Hilfe."""
+"""Posten-Gerät wie Start/Ziel: Statusleiste mit Uhr, Zurücksetzen, Hilfe."""
 
 import pytest
 from playwright.sync_api import expect
@@ -27,7 +27,7 @@ def test_posten_seite_wie_start_und_ziel(server, neues_geraet):
 
 
 class TestGemeinsamerMesspunkt:
-    """Segmente 12: der Posten zeigt nur Fahrer der Strecken, die an seinem Messpunkt vorbeiführen."""
+    """Der Posten zeigt nur Fahrer der Strecken, die an seinem Messpunkt vorbeiführen."""
 
     @pytest.fixture
     def rundkurs(self):
@@ -52,7 +52,7 @@ class TestGemeinsamerMesspunkt:
 
 
 def test_durchfahrten_anzeige_springt_nach_vergessenem_klick_und_schalter(server, neues_geraet):
-    """Segmente 53: „1. von 2 Durchfahrten“ mit Erklärzeile; Klick am Berg vergessen, nächste Zeit
+    """„1. von 2 Durchfahrten“ mit Erklärzeile; Klick am Berg vergessen, nächste Zeit
     am Kreisel da → am Berg gilt die 1. als verpasst; Schalter „Durchfahrten anzeigen“ gemerkt."""
     import uuid as _uuid
 
@@ -98,7 +98,7 @@ def test_durchfahrten_anzeige_springt_nach_vergessenem_klick_und_schalter(server
 
 
 def test_fehlklick_anderswo_fahrer_bleibt_erreichbar(server, neues_geraet):
-    """Segmente 56: Ein Fehlklick am Kreisel (dritte Durchfahrt zu früh) lässt Nr. 1 am Berg als
+    """Ein Fehlklick am Kreisel (dritte Durchfahrt zu früh) lässt Nr. 1 am Berg als
     vorbei gelten – nach dem Rückgängig ist er dort wieder eine Kachel; mit „Alle Fahrer“ bleibt er
     auch so antippbar, und der Klick zählt."""
     import uuid as _uuid

@@ -1,4 +1,4 @@
-"""E2E: Exportdatei eines Geräts im Admin einlesen (AUSBAU C2)."""
+"""E2E: Exportdatei eines Geräts im Admin einlesen."""
 
 import json
 from pathlib import Path

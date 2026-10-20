@@ -1,4 +1,4 @@
-"""Segmente 44: Mehrere Geräte im selben Browser – Gerätekennung, Outbox, Einstellungen und
+"""Mehrere Geräte im selben Browser – Gerätekennung, Outbox, Einstellungen und
 Uhrmeldung je Rolle und Messpunkt getrennt (z. B. zwei Posten oder Ziel und Rennleitung auf einem
 Laptop)."""
 

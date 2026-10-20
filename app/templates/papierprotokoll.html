@@ -26,7 +26,7 @@
   {% include "_druckleiste.html" %}
   <main class="blatt">
   <table>
-    <caption><strong>Start- und Zielprotokoll</strong> · {{ v.name }} · {{ v.datum.strftime('%d.%m.%Y') }}<br>
+    <caption><strong>Start- und Zielprotokoll</strong> · {% if vereinsname(request) %}<span class="druck-verein">{{ vereinsname(request) }}</span> · {% endif %}{{ v.name }} · {{ v.datum.strftime('%d.%m.%Y') }}<br>
       <span class="hinweis">Uhrzeiten von Hand eintragen (hh:mm:ss,z). Nachtragen im Admin als manuelle Zeit.</span></caption>
     <colgroup><col class="nr"><col class="name"><col class="klasse"><col class="strecke"><col class="zeit"><col class="zeit"><col class="bemerkung"></colgroup>
     <thead><tr><th>Nr.</th><th>Name</th><th>Klasse</th><th>Strecke</th><th>Uhrzeit Start</th><th>Uhrzeit Ziel</th><th>Bemerkung</th></tr></thead>

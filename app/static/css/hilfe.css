@@ -1,4 +1,6 @@
 /* Hilfe/Kurzanleitungen: am Bildschirm lesbar, gedruckt genau eine DIN-A4-Seite (Kurzanleitungen) */
+.fuss-rechts { display: flex; gap: 10px; margin-left: auto; }
+.fuss-rechts a { color: inherit; }
 body { color: var(--text); background: var(--surface); line-height: 1.4; }
 .hilfe-nav { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 10px 16px; background: var(--kopf); }
 .hilfe-nav a { color: var(--kopf-text); text-decoration: none; font-size: 0.9rem; }
@@ -16,7 +18,7 @@ pre code { background: none; padding: 0; }
 img { max-width: 100%; border: 1px solid var(--line); border-radius: var(--r-sm); }
 .kurz img { float: right; width: 42%; max-width: 230px; margin: 0 0 8px 14px; }
 .lang img { display: block; max-width: 520px; margin: 8px 0; }
-.fuss { clear: both; margin-top: 16px; font-size: 0.75rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 4px; }
+.fuss { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; clear: both; margin-top: 16px; font-size: 0.75rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 4px; }
 
 @page { size: A4; margin: 11mm 12mm; }
 @media print {
@@ -29,7 +31,7 @@ img { max-width: 100%; border: 1px solid var(--line); border-radius: var(--r-sm)
   .lang img { max-width: 120mm; break-inside: avoid; }
   a { color: inherit; text-decoration: none; }
 }
-/* Vom Admin aus: fixierte Kopfzeile, Sprungziele unter der Kopfzeile (Test 08.10., Punkt 12) */
+/* Vom Admin aus: fixierte Kopfzeile, Sprungziele unter der Kopfzeile */
 body.aus-admin .hilfe-nav { position: sticky; top: 0; z-index: 10; }
 html:has(body.aus-admin) { scroll-padding-top: 64px; }
 .hilfe-nav .hilfe-zurueck { color: var(--brand-ink); border-color: var(--kopf-linie); background: transparent; }

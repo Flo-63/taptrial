@@ -1,4 +1,4 @@
-"""Klassen- und Wertungssätze in der Datenbank (Phase 12)."""
+"""Klassen- und Wertungssätze in der Datenbank."""
 
 import uuid
 from datetime import date
@@ -249,7 +249,7 @@ def test_regeln_setzen_und_validieren(session):
     assert [(x.name, x.laenge_km) for x in strecken.strecken_von(session, v)] == [
         ("Strecke 1", 4.0)
     ]
-    # A.1 (gesamtzeit): Segmente 49 – keine Strecken still angelegt, die vorhandene bleibt
+    # A.1 (gesamtzeit): keine Strecken still angelegt, die vorhandene bleibt
     hinweise = sz.regeln_setzen(session, v, v.klassensatz_id, ws(session).id, None)
     assert [(x.name, x.laenge_km) for x in strecken.strecken_von(session, v)] == [
         ("Strecke 1", 4.0)
@@ -271,7 +271,7 @@ def test_regeln_setzen_und_validieren(session):
         session, None, "Nur Herren Wertung", "gesamtzeit", None, None, mini.id,
         [stufe("Herren 31-40", "0:40:00", "0:43:00", "0:46:00", "20")],
     )  # fmt: skip
-    # „Strecke 1“ (20,0 km) bleibt, auch wenn der Platz im Satz „20 km“ heißt (Segmente 49)
+    # „Strecke 1“ (20,0 km) bleibt, auch wenn der Platz im Satz „20 km“ heißt
     assert sz.regeln_setzen(session, v, mini.id, eigene.id, 20.0) == []
     assert [(x.name, x.laenge_km) for x in strecken.strecken_von(session, v)] == [
         ("Strecke 1", 20.0)

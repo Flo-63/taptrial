@@ -1,4 +1,4 @@
-"""Segmente 70: Messpunkte, die keine Strecke nutzt, haben keinen Gerätelink (Geräte, QR-Blatt,
+"""Messpunkte, die keine Strecke nutzt, haben keinen Gerätelink (Geräte, QR-Blatt,
 „Als Nächstes“); ein ungenutzter Standard-Start/-Ziel ohne Zeiten wird automatisch ausgeblendet –
 auch direkt nach dem Laden der Strecken im Assistenten. Wird ein Messpunkt wieder genutzt, ist sein
 Link wieder da (gleicher Token)."""

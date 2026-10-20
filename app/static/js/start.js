@@ -1,4 +1,4 @@
-// Startgerät (KONZEPT 5): nächster Fahrer, START, Überspringen, DNS, Rückgängig, Nummer wählen.
+// Startgerät: nächster Fahrer, START, Überspringen, DNS, Rückgängig, Nummer wählen.
 import { Geraet, formatUhrzeit, streckeMarke } from "./geraet.js";
 
 const RUECKGAENGIG_MS = 30000;
@@ -11,7 +11,7 @@ const $ = (id) => document.getElementById(id);
 
 let uebersprungen = JSON.parse(localStorage.getItem(g.schluessel("uebersprungen")) || "[]");
 // bestätigte Wahl für den nächsten Start; lokal gespeichert bis START, DNS oder „Wahl aufheben“
-// (übersteht Neuladen und Funkloch; „Gerät zurücksetzen“ löscht rcb_<profil>_*, Segmente 44)
+// (übersteht Neuladen und Funkloch; „Gerät zurücksetzen“ löscht rcb_<profil>_*)
 const GEWAEHLT = g.schluessel("gewaehlt");
 let manuell = (() => {
   try {
@@ -52,7 +52,7 @@ function anzeigeSetzen(name, an) {
 }
 let letzterDruck = 0;
 let dnsTimer = null;
-let dnsAufheben = null; // Startnummer, deren DNS auf den zweiten Tipp wartet (AUSBAU A1)
+let dnsAufheben = null; // Startnummer, deren DNS auf den zweiten Tipp wartet
 let dnsAufhebenTimer = null;
 
 function speichereUebersprungen() {
@@ -155,7 +155,7 @@ function zeichnen() {
   const wartelisteAn = anzeigeAn("warteliste");
   $("toggle-nummer").setAttribute("aria-pressed", String(nummerAn));
   $("toggle-warteliste").setAttribute("aria-pressed", String(wartelisteAn));
-  // Endzustand mit DNS-Fahrern (Segmente 35): deren Kacheln bleiben sichtbar – auch wenn „Nummer
+  // Endzustand mit DNS-Fahrern: deren Kacheln bleiben sichtbar – auch wenn „Nummer
   // wählen“ aus ist –, damit sich DNS weiter aufheben lässt (online wie offline)
   const dnsImEnde = fertig && z.dns.length > 0;
   $("dns-hinweis").hidden = !dnsImEnde;

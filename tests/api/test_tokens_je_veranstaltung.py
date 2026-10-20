@@ -37,7 +37,7 @@ def test_tokens_werden_beim_anlegen_erzeugt(client):
 def test_geraetetoken_bindet_an_seine_veranstaltung(client):
     aktiv = anlegen(client, "Aktiv", aktiv=True)
     andere = anlegen(client, "Andere")
-    # Segmente 46: die nicht aktive Veranstaltung ist nicht freigegeben – Zeiten werden abgelehnt
+    # Die nicht aktive Veranstaltung ist nicht freigegeben – Zeiten werden abgelehnt
     r = start(client, andere.token_start)
     assert r.status_code == 423 and r.json()["detail"]["grund"] == "nicht_freigegeben"
     assert start(client, aktiv.token_start).status_code == 200

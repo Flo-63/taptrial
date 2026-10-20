@@ -1,4 +1,4 @@
-"""Druckansichten im Browser: Start- und Zielprotokoll (AUSBAU A6)."""
+"""Druckansichten im Browser: Start- und Zielprotokoll."""
 
 import re
 

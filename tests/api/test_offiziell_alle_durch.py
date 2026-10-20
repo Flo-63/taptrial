@@ -1,4 +1,4 @@
-"""Segmente 47: „Ergebnis offiziell erklären“ erst, wenn alle gestarteten Fahrer eine Zielzeit
+"""„Ergebnis offiziell erklären“ erst, wenn alle gestarteten Fahrer eine Zielzeit
 oder einen Status (DNF/DSQ) haben."""
 
 import re

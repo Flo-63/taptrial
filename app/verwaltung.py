@@ -1,4 +1,4 @@
-"""Kommandozeile für die Einrichtung (bis die Admin-Oberfläche aus Phase 6 da ist).
+"""Kommandozeile für Einrichtung und Betrieb ohne Admin-Oberfläche.
 
 uv run python -m app.verwaltung veranstaltung "Zeitfahren Kottenforst" 2026-10-10
 uv run python -m app.verwaltung import teilnehmer.csv [--ersetzen]
@@ -7,7 +7,6 @@ uv run python -m app.verwaltung demo [--ersetzen]
 """
 
 import argparse
-import os
 import sqlite3
 import sys
 from datetime import date
@@ -15,7 +14,7 @@ from pathlib import Path
 
 from sqlalchemy import update
 
-from app import saetze, strecken
+from app import saetze, strecken, umgebung
 from app.db import erzeuge_engine, erzeuge_sessionmaker, tabellen_anlegen
 from app.einstellungen import STANDARD_KLASSEN_DATEI, STANDARD_WERTUNGEN
 from app.models import Veranstaltung, Wertungssatz, aktive_veranstaltung
@@ -35,25 +34,25 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("datei", help="Name des Wertungssatzes (z. B. „DRA A.1 flach“) oder „aus“")
     p.add_argument("strecke_km", nargs="?", help="gemessene Streckenlänge, z. B. 20,0")
     p.add_argument("--laengen-verwerfen", action="store_true",
-                   help="ohne Wirkung (Strecken werden nicht mehr neu vorgeschlagen, Segmente 49)")  # fmt: skip
+                   help="ohne Wirkung (Strecken werden nicht mehr neu vorgeschlagen)")  # fmt: skip
     p = befehle.add_parser("backup", help="konsistente Kopie der SQLite-Datei (auch im Betrieb)")
     p.add_argument("ziel", help="Pfad der Sicherungsdatei (darf noch nicht existieren)")
     p = befehle.add_parser("links", help="Gerätelinks mit Tokens ausgeben")
     p.add_argument("basis_url")
     befehle.add_parser("demo", add_help=False,
-                       help="Demo-Veranstaltung anlegen (Segmente 68), --ersetzen löscht eine vorhandene")  # fmt: skip
+                       help="Demo-Veranstaltung anlegen, --ersetzen löscht eine vorhandene")  # fmt: skip
     args, rest = parser.parse_known_args(argv)
     if args.befehl == "demo":
         from app import demo
 
-        return demo.main(rest, db_pfad=os.environ.get("RCB_DB_PFAD") or "data/zeitfahren.sqlite3")
+        return demo.main(rest, db_pfad=umgebung.wert("db_pfad", "data/zeitfahren.sqlite3"))
     if rest:
         parser.error(f"unbekannte Argumente: {' '.join(rest)}")
 
     # Für Veranstaltung/Import reichen DB-Pfad und Klassen-Datei, Tokens sind nicht nötig.
-    db_pfad = os.environ.get("RCB_DB_PFAD") or "data/zeitfahren.sqlite3"
-    klassen_datei = os.environ.get("RCB_KLASSEN_DATEI") or STANDARD_KLASSEN_DATEI
-    wertungen_verzeichnis = os.environ.get("RCB_WERTUNGEN_VERZEICHNIS") or STANDARD_WERTUNGEN
+    db_pfad = umgebung.wert("db_pfad", "data/zeitfahren.sqlite3")
+    klassen_datei = umgebung.wert("klassen_datei", STANDARD_KLASSEN_DATEI)
+    wertungen_verzeichnis = umgebung.wert("wertungen_verzeichnis", STANDARD_WERTUNGEN)
     if args.befehl == "backup":
         return _backup(db_pfad, args.ziel)
     engine = erzeuge_engine(db_pfad)
@@ -64,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
                 from app import korrekturen
 
                 laufend = korrekturen.laufende_andere(session)
-                if laufend is not None:  # Segmente 55
+                if laufend is not None:
                     print(korrekturen.verdraengen_text(laufend), file=sys.stderr)
                     return 1
                 saetze.standardsaetze_anlegen(session, klassen_datei, wertungen_verzeichnis)
@@ -92,7 +91,7 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"Rennleitung: {basis}/rennleitung?token={v.token_rennleitung}")
                 else:
                     print(f"Rennleitung: {basis}/ziel?token={v.token_ziel}&sicht=rennleitung")
-                admin = os.environ.get("RCB_TOKEN_ADMIN")
+                admin = umgebung.wert("token_admin")
                 if admin:
                     print(f"Admin: {basis}/admin?token={admin}")
                 return 0

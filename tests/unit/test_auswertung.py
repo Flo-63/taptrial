@@ -103,7 +103,7 @@ def test_fahrzeit_und_status(config):
 
 
 def test_rundung_schneidet_ab():
-    # E4: 12:34,567 -> 12:34,5
+    # 12:34,567 -> 12:34,5
     ms = 12 * MIN + 34_567
     assert zehntel(ms) == 7545
     assert format_zehntel(zehntel(ms)) == "12:34,5"
@@ -342,7 +342,7 @@ def test_zielstempel_mit_effektiver_nummer(config):
     assert [(s.uuid, s.startnummer) for s in erg.zielstempel] == [(z1.uuid, 1), (z2.uuid, 3)]
 
 
-# --- DSQ zweistufig (Feedback Gate B) --------------------------------------
+# --- DSQ zweistufig --------------------------------------
 
 
 def test_dsq_vorlaeufig_behaelt_zeit_und_rang(config):

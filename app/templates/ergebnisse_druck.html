@@ -9,16 +9,17 @@
 </head>
 <body class="druck druckansicht">
   {% include "_druckleiste.html" %}
+  {% set verein = vereinsname(request) %}
   {% if not d %}<p>Derzeit keine Ergebnisse.</p>{% elif d.keine_ergebnisse %}<p id="keine-ergebnisse">{{ d.keine_ergebnisse }}</p>{% else %}
   {% if not d.klassen %}
-  <header class="druck-kopf"><div><strong>{{ d.veranstaltung.name }}</strong> · {{ d.veranstaltung.datum }}</div>
+  <header class="druck-kopf"><div>{% if verein %}<span class="druck-verein">{{ verein }}</span> · {% endif %}<strong>{{ d.veranstaltung.name }}</strong> · {{ d.veranstaltung.datum }}</div>
     <div class="ergebnisstatus {{ 'offiziell' if d.offiziell else 'vorlaeufig' }}">{{ d.kopf }}</div></header>
   <p>Noch keine Ergebnisse.</p>
   {% endif %}
   {% if rl %}
   <section class="seite" data-rangliste="{{ rl.schluessel }}">
     <header class="druck-kopf">
-      <div><strong>{{ d.veranstaltung.name }}</strong> · {{ d.veranstaltung.datum }}</div>
+      <div>{% if verein %}<span class="druck-verein">{{ verein }}</span> · {% endif %}<strong>{{ d.veranstaltung.name }}</strong> · {{ d.veranstaltung.datum }}</div>
       <div class="ergebnisstatus {{ 'offiziell' if d.offiziell else 'vorlaeufig' }}">{{ d.kopf }}</div>
     </header>
     <h2>Rangliste {{ rl.titel }}</h2>
@@ -28,7 +29,7 @@
   {% for kl in d.klassen %}
   <section class="seite" data-klasse="{{ kl.name }}">
     <header class="druck-kopf">
-      <div><strong>{{ d.veranstaltung.name }}</strong> · {{ d.veranstaltung.datum }}</div>
+      <div>{% if verein %}<span class="druck-verein">{{ verein }}</span> · {% endif %}<strong>{{ d.veranstaltung.name }}</strong> · {{ d.veranstaltung.datum }}</div>
       <div class="ergebnisstatus {{ 'offiziell' if d.offiziell else 'vorlaeufig' }}">{{ d.kopf }}</div>
       {% if d.wertung %}<div class="wertung">Leistungswertung: {{ d.wertung }}</div>{% endif %}
     </header>

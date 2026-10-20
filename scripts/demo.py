@@ -1,4 +1,4 @@
-"""Demo-Veranstaltung „Demo-Zeitfahren Kottenforst“ anlegen (Segmente 68, Details in app/demo.py).
+"""Demo-Veranstaltung „Demo-Zeitfahren Kottenforst“ anlegen (Details in app/demo.py).
 
 uv run python scripts/demo.py --db data/zeitfahren.sqlite3 [--ersetzen]
 """

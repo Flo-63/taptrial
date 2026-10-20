@@ -1,4 +1,4 @@
-"""Segmente 45: Übersicht und Geräte aktualisieren sich alle 10 s selbst – ohne Neuladen; Fokus,
+"""Übersicht und Geräte aktualisieren sich alle 10 s selbst – ohne Neuladen; Fokus,
 offene Bereiche und Eingaben bleiben, im Hintergrund-Tab ruht es."""
 
 import re

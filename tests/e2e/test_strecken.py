@@ -1,4 +1,4 @@
-"""Phase 13 im Browser: Strecken im Admin anlegen, Klassen umordnen, Kennzeichen auf den Geräten."""
+"""Im Browser: Strecken im Admin anlegen, Klassen umordnen, Kennzeichen auf den Geräten."""
 
 import re
 
@@ -40,7 +40,7 @@ def test_strecke_anlegen_und_kennzeichen_ueberall(admin, server, neues_geraet):
     admin.click("#zurueck-strecken")
     expect(admin.locator("#strecken-liste .strecke-marke")).to_have_text(["Lang", "Kurz"])
     expect(admin.locator(".strecke-kurz[data-strecke='Kurz']")).to_contain_text("5,0 km")
-    # Klassenzuordnung (Segmente 26): eine Tabelle, ein Speichern
+    # Klassenzuordnung: eine Tabelle, ein Speichern
     admin.select_option("#zuordnung tr[data-klasse='Damen 61-70'] select", label="Kurz")
     admin.click("#zuordnung-speichern")
     expect(admin.locator(".meldung")).to_contain_text("Klassenzuordnung gespeichert")
@@ -48,7 +48,7 @@ def test_strecke_anlegen_und_kennzeichen_ueberall(admin, server, neues_geraet):
         admin.locator("#zuordnung tr[data-klasse='Damen 61-70'] select option:checked")
     ).to_have_text("Kurz")
 
-    # Reiter „Klassen & Wertung“ (Segmente 49): ein Wertungssatz legt keine Strecken an –
+    # Reiter „Klassen & Wertung“: ein Wertungssatz legt keine Strecken an –
     # fehlt einer Strecke die Länge, nennt die Seite sie; die Strecken bleiben
     einstellungen(admin, "klassen")
     expect(admin.locator("#strecken-neu-info")).to_be_visible()
@@ -105,7 +105,7 @@ def test_strecke_anlegen_und_kennzeichen_ueberall(admin, server, neues_geraet):
 
 
 def test_strecken_editor_reiter_aktionsleiste(admin):
-    """Segmente 27: Reiter wechseln ohne Speichern, Fehler am Feld markieren den Reiter, „Abbrechen“
+    """Reiter wechseln ohne Speichern, Fehler am Feld markieren den Reiter, „Abbrechen“
     verwirft, „Zurück“ warnt bei ungespeicherten Änderungen."""
     admin.click("#strecke-oeffnen-0")
     expect(admin.locator("#grunddaten")).to_be_visible()

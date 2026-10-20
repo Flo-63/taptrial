@@ -1,4 +1,4 @@
-"""Schnellkorrektur am Ziel über die API, im Admin-Protokoll und in der Admin-CSV (Phase 14a)."""
+"""Schnellkorrektur am Ziel über die API, im Admin-Protokoll und in der Admin-CSV."""
 
 import re
 

@@ -49,7 +49,7 @@ export function neueUuid() {
 
 const zwei = (n) => String(n).padStart(2, "0");
 
-// Streckenkennzeichen (Phase 13): Name als Text plus Farbe, nur wenn es mehrere Strecken gibt.
+// Streckenkennzeichen: Name als Text plus Farbe, nur wenn es mehrere Strecken gibt.
 export const STRECKEN_FARBEN = 6;
 export function streckeMarke(stand, t) {
   const strecken = (stand && stand.strecken) || [];
@@ -60,7 +60,7 @@ export function streckeMarke(stand, t) {
   return s;
 }
 
-// Text der Uhrprüfung in der Statusleiste (AUSBAU A2); null = ohne Verbindung/Messung
+// Text der Uhrprüfung in der Statusleiste; null = ohne Verbindung/Messung
 export function uhrText(abweichungMs) {
   if (abweichungMs === null) return { text: "Uhr ungeprüft", warnung: false };
   const z = Math.round(Math.abs(abweichungMs) / 100);
@@ -76,7 +76,7 @@ export function formatUhrzeit(ms, mitZehntel = true) {
   return mitZehntel ? `${basis},${Math.floor(d.getMilliseconds() / 100)}` : basis;
 }
 
-// E4: Fahrzeit auf Zehntel abschneiden
+// Fahrzeit auf Zehntel abschneiden
 export function formatFahrzeit(ms) {
   if (ms == null || ms < 0) return "–";
   const z = Math.floor(ms / 100);
@@ -100,7 +100,7 @@ const SERVERFELDER = [
   "notiz", "veranstaltung_id", "delta_ms",
 ];
 
-// Mehrere Geräte im selben Browser (Segmente 44): Token, Gerätekennung, Outbox, Stand und
+// Mehrere Geräte im selben Browser: Token, Gerätekennung, Outbox, Stand und
 // Einstellungen gelten je „Profil“ = Rolle + Messpunkt (?ort=, aus dem Gerätelink) – für das
 // umschaltbare Ziel zusätzlich „-rl“ beim Rennleitungs-Link. Ohne ?ort= ist das Profil die Rolle
 // (bisherige Schlüssel, bisherige Links). Ohne Token in der Adresse gilt das zuletzt geöffnete Profil.
@@ -118,7 +118,7 @@ export function profilVon(rolle, suche = location.search) {
   return `${rolle}${ort ? `-${ort}` : ""}${rl}`;
 }
 
-// Segmente 63: Fingerabdruck des Tokens (FNV-1a) – bindet Einträge an Veranstaltung und Zugang, ohne
+// Fingerabdruck des Tokens (FNV-1a) – bindet Einträge an Veranstaltung und Zugang, ohne
 // den Token selbst in Einträgen oder Exportdateien abzulegen
 export function bindungVon(token) {
   let h = 0x811c9dc5;
@@ -139,11 +139,11 @@ export class Geraet {
     this._syncLaeuft = false;
     this._syncNochmal = false;
     this.uhrMessungen = []; // letzte Messungen der Uhrabweichung {laufzeit, abweichung}
-    this.frueher = []; // Segmente 63: nicht übertragene Einträge einer früheren Veranstaltung
+    this.frueher = []; // Nicht übertragene Einträge einer früheren Veranstaltung
     this._bindungVorbereiten();
   }
 
-  // Segmente 63: Alle Gerätedaten gehören zu Veranstaltung und Token (Tokens sind je Veranstaltung
+  // Alle Gerätedaten gehören zu Veranstaltung und Token (Tokens sind je Veranstaltung
   // eindeutig, gelöschte bleiben gesperrt). Öffnet der Link einen anderen Token als den gespeicherten,
   // beginnt das Profil leer: Einstellungen (Startfolge, Anzeige …) weg –
   // schon hier, bevor die Seite sie liest; Log und Stand trennt init().
@@ -207,7 +207,7 @@ export class Geraet {
     this.sync();
   }
 
-  // Sperrbildschirm „Zeitnahme noch nicht freigegeben“ (Segmente 46): statt der Bedienung die
+  // Sperrbildschirm „Zeitnahme noch nicht freigegeben“: statt der Bedienung die
   // fehlenden Schritte; schaltet sich mit dem nächsten Stand von selbst frei.
   sperreZeigen() {
     const f = this.stand && this.stand.freigabe;
@@ -226,7 +226,7 @@ export class Geraet {
     hinweis.textContent = `${n} ${n === 1 ? "Eintrag wartet" : "Einträge warten"} auf die Freigabe und ${n === 1 ? "wird" : "werden"} danach gesendet.`;
   }
 
-  // Weiterer Start-/Zielort (Segmente 38): Name in der Statusleiste, z. B. „Start · Nord“
+  // Weiterer Start-/Zielort: Name in der Statusleiste, z. B. „Start · Nord“
   ortZeigen() {
     const ort = this.stand && this.stand.ort;
     const feld = document.querySelector("#statusleiste .rolle");
@@ -236,7 +236,7 @@ export class Geraet {
     feld.textContent = ort && !standard ? `${feld.dataset.titel} · ${ort.name}` : feld.dataset.titel;
   }
 
-  // Einträge dieses Profils; ältere Einträge ohne Profil gehören zum Profil der Rolle (Segmente 44)
+  // Einträge dieses Profils; ältere Einträge ohne Profil gehören zum Profil der Rolle
   eigenerEintrag(e) {
     return e.profil ? e.profil === this.profil : this.profil === this.rolle && String(e.geraet || "").startsWith(`${this.rolle}-`);
   }
@@ -346,7 +346,7 @@ export class Geraet {
       this.serverErreichbar = false;
       if (err instanceof HttpFehler && err.status === 410) {
         // gelöscht oder abgeschlossen: aufräumen (nicht übertragene Einträge bleiben immer)
-        // Segmente 48: gelöscht → „gibt es nicht mehr“ (nicht übertragene Einträge bleiben zum Export)
+        // Gelöscht → „gibt es nicht mehr“ (nicht übertragene Einträge bleiben zum Export)
         await this.aufraeumen(err.text.includes("gelöscht")
           ? "Diese Veranstaltung gibt es nicht mehr – Daten auf diesem Gerät gelöscht."
           : "Veranstaltung beendet – Daten auf diesem Gerät gelöscht.");
@@ -373,7 +373,7 @@ export class Geraet {
       await this._markieren(bestaetigt, BESTAETIGT);
     } catch (err) {
       if (err instanceof HttpFehler && err.status === 423) {
-        // Segmente 46: noch nicht freigegeben – Einträge bleiben ausstehend und gehen nach der
+        // Noch nicht freigegeben – Einträge bleiben ausstehend und gehen nach der
         // Freigabe beim nächsten Sync durch (nie löschen)
         let fehlt = [];
         try {
@@ -406,7 +406,7 @@ export class Geraet {
     await fertig(tx);
   }
 
-  // Uhrabweichung (AUSBAU A2) = Serverzeit − Mitte aus Sende- und Empfangszeitpunkt.
+  // Uhrabweichung = Serverzeit − Mitte aus Sende- und Empfangszeitpunkt.
   // Es zählt die Messung mit der kürzesten Laufzeit der letzten UHR_MESSUNGEN. Nur Anzeige:
   // gemessene Zeiten werden nie korrigiert.
   uhrMessen(gesendet, empfangen, serverMs) {
@@ -444,7 +444,7 @@ export class Geraet {
     return kopf;
   }
 
-  // Segmente 63: Einträge einer anderen Veranstaltung abtrennen. Übertragene werden gelöscht (sie
+  // Einträge einer anderen Veranstaltung abtrennen. Übertragene werden gelöscht (sie
   // liegen auf dem Server), nicht übertragene NIE: sie bleiben als „früher“ getrennt auf dem Gerät,
   // werden nicht gesendet und lassen sich als Datei sichern. alles: auch Stand und Sync-Zeit verwerfen.
   async _trennen(fremd, alles) {
@@ -546,9 +546,9 @@ export class Geraet {
   async exportieren(frueher = false) {
     const quelle = frueher ? this.frueher : this.nichtUebertragen();
     const eintraege = quelle.map(({ bindung, frueher_veranstaltung, frueher_ort, ...e }) => ({ ...e, zeit: e.zeit_ms ? formatUhrzeit(e.zeit_ms) : null }));
-    // Admin warnt bei fremder Veranstaltung; frühere Einträge nennen ihre eigene (Segmente 63)
+    // Admin warnt bei fremder Veranstaltung; frühere Einträge nennen ihre eigene
     const veranstaltung = frueher ? (quelle[0] && quelle[0].frueher_veranstaltung) || null : this.stand ? this.stand.veranstaltung : null;
-    const ort = frueher ? (quelle[0] && quelle[0].frueher_ort) || null : this.stand && this.stand.ort ? this.stand.ort : null; // Segmente 43
+    const ort = frueher ? (quelle[0] && quelle[0].frueher_ort) || null : this.stand && this.stand.ort ? this.stand.ort : null;
     const inhalt = JSON.stringify({ geraet: this.geraetId, exportiert: new Date().toISOString(), veranstaltung, ort, eintraege }, null, 2);
     const name = `rcb-${this.geraetId}-${frueher ? "fruehere-veranstaltung" : "nicht-uebertragen"}-${new Date().toISOString().slice(0, 10)}.json`;
     const datei = new File([inhalt], name, { type: "application/json" });

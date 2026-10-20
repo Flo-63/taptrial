@@ -1,4 +1,4 @@
-"""Segmente 14: Zielmonitor-Konfiguration (Standard, Auflösung für den Monitor)."""
+"""Zielmonitor-Konfiguration (Standard, Auflösung für den Monitor)."""
 
 import json
 from types import SimpleNamespace
@@ -46,7 +46,7 @@ def test_fuer_monitor_nur_eingeschaltete_seiten_mit_strecken_index():
         and aus["seiten"][1]["titel"] == "Lang: Kreisel→Berg"
         and aus["seiten"][1]["top"] == 5
     )
-    # Segmente 72: Name und „mehrere Durchfahrten“ fürs Ergebnis („beste … 9:18“)
+    # Name und „mehrere Durchfahrten“ fürs Ergebnis („beste … 9:18“)
     assert aus["live"] == [{"id": "1:s1.0", "strecke": 1, "abschnitt": "s1.0", "vergleich": False,
                             "name": "Kreisel→Berg", "mehrfach": True}]  # fmt: skip
     # nichts eingeschaltet → eine Ergebnisseite
@@ -66,8 +66,8 @@ class Formular(dict):
 
 
 def test_kein_pfeil_fuer_nicht_gewaehltes_feld():
-    """Segmente 71: Der Server speichert „mit Pfeil und Differenz“ nur für gewählte Felder; die
-    Vorgabe für das Formular kommt aus dem Vorschlag (Segmente 66)."""
+    """Der Server speichert „mit Pfeil und Differenz“ nur für gewählte Felder; die
+    Vorgabe für das Formular kommt aus dem Vorschlag."""
     liste = [strecke()]
     form = Formular(live_abschnitt=["7:s1.0"], live_vergleich=["7:s1.0", "7:s1.1", "7:b1"])
     konf = mk.aus_formular(form, {"seiten": []}, liste)
@@ -77,7 +77,7 @@ def test_kein_pfeil_fuer_nicht_gewaehltes_feld():
 
 
 def test_beste_abschnittszeit_fuers_ergebnis():
-    """Segmente 72 (A178): erstes gewähltes Feld der eigenen Strecke mit mehreren Durchfahrten."""
+    """Erstes gewähltes Feld der eigenen Strecke mit mehreren Durchfahrten."""
     from app.oeffentlich import beste_abschnittszeit
 
     zeit = lambda s, ms: SimpleNamespace(schluessel=s, zeit_ms=ms)

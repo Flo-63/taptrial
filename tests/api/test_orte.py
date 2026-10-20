@@ -1,4 +1,4 @@
-"""Segmente 37/38: Start- und Zielorte im Admin, Geräte je Ort."""
+"""Start- und Zielorte im Admin, Geräte je Ort."""
 
 import re
 
@@ -81,7 +81,7 @@ def test_strecke_waehlt_start_und_zielort(admin, v):
     assert "Gesperrt: genutzt von" in nord and "disabled" in nord
 
 
-# --- Segmente 38: Geräte je Ort ---------------------------------------------------------------
+# --- Geräte je Ort ---------------------------------------------------------------
 
 import uuid
 
@@ -137,7 +137,7 @@ def test_startgeraet_je_startort_eigene_fahrer(admin, v):
     assert nord["gestartet"] == [3]
     assert admin.get("/api/stand", headers=hdr(v.token_start)).json()["gestartet"] == []
     protokoll = admin.get("/api/ereignisse", headers=hdr("tok-admin")).json()["ereignisse"]
-    assert protokoll[0]["ort_id"] == t["Nord"][2] and protokoll[0]["wert"] is None  # Segmente 43
+    assert protokoll[0]["ort_id"] == t["Nord"][2] and protokoll[0]["wert"] is None
     geraete = admin.get(f"/admin/v/{v.id}/geraete").text
     assert "Start Nord" in geraete and "handy-nord" in geraete
 
@@ -177,7 +177,7 @@ def test_zielgeraet_je_zielort_und_rennleitung_getrennt(admin, v):
     assert not admin.get("/api/stand", headers=hdr(v.token_ziel)).json()["rennleitung_getrennt"]
     geraete = admin.get(f"/admin/v/{v.id}/geraete").text
     assert f"/rennleitung?token={t['Hof'][1]}" in geraete and 'id="erneuern-rennleitung-' in geraete
-    geraete = admin.get(f"/admin/v/{v.id}/geraete").text  # Segmente 51: Option je Ziel-Karte
+    geraete = admin.get(f"/admin/v/{v.id}/geraete").text  # Option je Ziel-Karte
     assert 'data-zielort="Hof"' in geraete and 'data-zielort="Ziel"' in geraete
 
 
@@ -193,7 +193,7 @@ def test_geraete_gruppiert_als_naechstes_und_token(admin, v):
         "Öffentlich",
     ]
     assert (
-        f"/start?token={t['Nord'][0]}&amp;ort={t['Nord'][2]}" in html  # Segmente 44: eigenes Profil
+        f"/start?token={t['Nord'][0]}&amp;ort={t['Nord'][2]}" in html  # Eigenes Profil
         and f"/ziel?token={t['Hof'][0]}&amp;ort={t['Hof'][2]}&amp;sicht=rennleitung" in html
     )
     assert "Strecke: Nord" in html  # mehrere Startorte: Karte nennt die Strecken
@@ -226,7 +226,7 @@ def test_geraete_gruppiert_als_naechstes_und_token(admin, v):
     assert admin.get("/api/stand", headers=hdr(neu)).status_code == 410
 
 
-# --- Segmente 39: Strecke aus Datei ersetzen ----------------------------------------------------
+# --- Strecke aus Datei ersetzen ----------------------------------------------------
 
 
 def test_strecke_aus_datei_ersetzen_oder_neu(admin, v):
@@ -236,7 +236,7 @@ def test_strecke_aus_datei_ersetzen_oder_neu(admin, v):
     )
     vorschau = admin.post(f"/admin/v/{v.id}/strecken/laden", data={"csrf": admin.csrf},
                           files={"datei": ("s.toml", text.encode(), "application/toml")}).text  # fmt: skip
-    # Segmente 50: nichts vorausgewählt (Pflichtwahl); „Ersetzen“ nennt, was verloren geht
+    # Nichts vorausgewählt (Pflichtwahl); „Ersetzen“ nennt, was verloren geht
     assert 'id="laden-modus"' in vorschau and "checked" not in re.search(
         r'<fieldset[^>]*id="laden-modus".*?</fieldset>', vorschau, re.DOTALL
     ).group(0)
@@ -274,7 +274,7 @@ def test_strecke_aus_datei_ersetzen_oder_neu(admin, v):
     assert (
         "aus der Datei übernommen" in r.text and [s.name for s in strecken(admin, v)][-1] == "Kopie"
     )
-    # Assistent: „aus Datei laden“ je Strecke speichert erst den Schritt (Segmente 50), dann laden
+    # Assistent: „aus Datei laden“ je Strecke speichert erst den Schritt, dann laden
     assistent = admin.get(f"/admin/einrichtung/{v.id}/2").text
     assert f'name="laden" value="{sid}"' in assistent
     r = admin.post(f"/admin/einrichtung/{v.id}/2", data={"csrf": admin.csrf, "klassensatz_id": str(v.klassensatz_id),
@@ -286,7 +286,7 @@ def test_strecke_aus_datei_ersetzen_oder_neu(admin, v):
     assert f'name="ersetzen" value="{sid}"' in laden
 
 
-# --- Segmente 40: Strecke mit Klassen entfernen ---------------------------------------------------
+# --- Strecke mit Klassen entfernen ---------------------------------------------------
 
 
 def test_strecke_mit_klassen_entfernen_klassen_gehen_an_gewaehlte(admin, v):
@@ -316,7 +316,7 @@ def test_strecke_mit_klassen_entfernen_klassen_gehen_an_gewaehlte(admin, v):
 
 
 def test_ort_bleibt_bei_umbuchen_und_korrektur(admin, v):
-    """Segmente 43: Eine Zeit vom Start „Start 5km“ behält ihren Ort beim Umbuchen und bei der
+    """Eine Zeit vom Start „Start 5km“ behält ihren Ort beim Umbuchen und bei der
     manuellen Korrektur; Geräte können den Ort nicht über „wert“ vortäuschen."""
     from app import korrekturen as k
 
@@ -347,7 +347,7 @@ def test_ort_bleibt_bei_umbuchen_und_korrektur(admin, v):
 
 
 def test_geraetedatei_behaelt_den_ort(admin, v):
-    """Segmente 43: Die Exportdatei eines Geräts nennt seinen Ort; beim Einlesen bekommen dessen
+    """Die Exportdatei eines Geräts nennt seinen Ort; beim Einlesen bekommen dessen
     Start-/Zielzeiten „ort_id“ (sonst gingen sie an den Standard-Start/-Ziel)."""
     import json
 
@@ -362,7 +362,7 @@ def test_geraetedatei_behaelt_den_ort(admin, v):
 
 
 def test_standard_start_entfernbar_wenn_ungenutzt(admin, v):
-    """Segmente 65: Beide Strecken nutzen eigene Startorte → „Start“ ist nicht mehr gesperrt und
+    """Beide Strecken nutzen eigene Startorte → „Start“ ist nicht mehr gesperrt und
     lässt sich entfernen; danach erscheint er weder unter „Messpunkte“ noch unter „Geräte“ noch in
     der Auswahl der Strecke, der bisherige Start-Link bleibt gültig."""
     from app.models import Strecke

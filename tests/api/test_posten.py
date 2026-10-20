@@ -20,7 +20,7 @@ ADMIN = {"Authorization": "Bearer tok-admin"}
 
 
 def kern(live):
-    """Live-Felder ohne die Angaben fürs Ergebnis (Name, mehrere Durchfahrten; Segmente 72)."""
+    """Live-Felder ohne die Angaben fürs Ergebnis (Name, mehrere Durchfahrten)."""
     return [{k: x[k] for k in ("id", "strecke", "abschnitt", "vergleich")} for x in live]
 
 
@@ -187,7 +187,7 @@ def test_posten_token_je_messpunkt_erneuerbar(client, v):
     assert client.get("/api/stand", headers=posten("bruecke")).status_code == 200
 
 
-# --- Segmente 3: Admin (Posten-Links, Einstellungen, Fahrer-Seite, Aufgaben) ---
+# --- Admin (Posten-Links, Einstellungen, Fahrer-Seite, Aufgaben) ---
 
 
 def anmelden(client):
@@ -202,7 +202,7 @@ def test_admin_geraete_mit_posten_links(client, v):
     anmelden(client)
     html = client.get(f"/admin/v/{v.id}/geraete").text
     assert 'data-titel="Posten Kreisel"' in html and "/posten?token=tok-kreisel" in html
-    assert "Strecke: Strecke 1" in html  # Segmente 12: Karte nennt die nutzenden Strecken
+    assert "Strecke: Strecke 1" in html  # Karte nennt die nutzenden Strecken
     assert html.count("<svg") >= 5  # Start, Ziel, Rennleitung + 2 Posten
     r = client.post(f"/admin/v/{v.id}/token",
                     data={"csrf": csrf_aus(html), "rolle": f"posten-{v.mp['Kreisel']}"})  # fmt: skip
@@ -226,7 +226,7 @@ def test_uhrentabelle_und_als_naechstes_mit_posten(client, v):
 
 
 def test_messpunkte_seite_verbunden_und_entfernen_gesperrt(client, v):
-    """Segmente 26: Liste mit nutzenden Strecken, Posten-Gerät verbunden ja/nein; genutzte Messpunkte
+    """Liste mit nutzenden Strecken, Posten-Gerät verbunden ja/nein; genutzte Messpunkte
     lassen sich nicht entfernen (Grund steht dabei)."""
     anmelden(client)
     with client.app.state.sessionmaker() as s:
@@ -252,7 +252,7 @@ def test_messpunkte_seite_verbunden_und_entfernen_gesperrt(client, v):
 
 
 def test_messpunkte_im_reiter_verlauf_und_abschnitte_auf_der_strecken_seite(client, v):
-    """Segmente 18: Messpunkte im Reiter „Strecken“, Streckenverlauf und Abschnitte auf der Seite der Strecke."""
+    """Messpunkte im Reiter „Strecken“, Streckenverlauf und Abschnitte auf der Seite der Strecke."""
     anmelden(client)
     html = client.get(f"/admin/v/{v.id}/messpunkte").text
     assert 'id="messpunkte"' in html and 'name="mp_name_1" value="Kreisel"' in html  # nach „Start“
@@ -281,7 +281,7 @@ def test_messpunkte_im_reiter_verlauf_und_abschnitte_auf_der_strecken_seite(clie
         "Messpunkte gespeichert" in r.text
         and "„Abzweig“ kommt noch in keiner Strecke vor" in r.text
     )
-    # Punktfolge (Segmente 28) ohne Brücke, mit Abzweig und Rundenblock aus einem Messpunkt
+    # Punktfolge ohne Brücke, mit Abzweig und Rundenblock aus einem Messpunkt
     folge = ["Abzweig", "Kreisel", {"block": "Runde", "wdh": 3, "punkte": ["Kreisel"]}]
     daten = {"csrf": zeichen, "verlauf": json.dumps({"punkte": folge}), "sg_km_0": "1,0", "sg_km_2": "7,0",
              **{f"sg_anzeigen_{k}": "1" for k in range(4)}}  # fmt: skip
@@ -302,7 +302,7 @@ def test_messpunkte_im_reiter_verlauf_und_abschnitte_auf_der_strecken_seite(clie
     )
     assert "muss dort auch enden" in client.post(f"/admin/v/{v.id}/strecken/{sid}", data=daten).text
     # Abschnitt „Runde“ = Kreisel bis nächster Kreisel; „Kreisel→Ziel“ nicht angezeigt – das stellt
-    # Segmente 52 unter „Öffentlichkeit & Zielmonitor“ ein („Spalten in den Ergebnissen“)
+    # inzwischen unter „Öffentlichkeit & Zielmonitor“ ein („Spalten in den Ergebnissen“)
     daten["verlauf"] = json.dumps({"punkte": folge})
     r = client.post(f"/admin/v/{v.id}/strecken/{sid}", data=daten | {"ab_anzahl": "1",
                     "ab_name_0": "Runde", "ab_von_0": "Kreisel", "ab_nach_0": "Kreisel", "ab_art_0": "wiederkehrend"})  # fmt: skip
@@ -323,7 +323,7 @@ def test_messpunkte_im_reiter_verlauf_und_abschnitte_auf_der_strecken_seite(clie
 
 
 def test_auswertungsabschnitte_verstaendlich(client, v):
-    """Segmente 29: Einleitungstext, „jede Durchfahrt“/„eine bestimmte Durchfahrt“, Vorschau in Worten."""
+    """Einleitungstext, „jede Durchfahrt“/„eine bestimmte Durchfahrt“, Vorschau in Worten."""
     anmelden(client)
     with client.app.state.sessionmaker() as s:
         x = st.strecken_von(s, s.get(Veranstaltung, v.id))[0]
@@ -348,7 +348,7 @@ def test_auswertungsabschnitte_verstaendlich(client, v):
 
 
 def test_punktfolge_verlustfrei_uebernommen(client, v):
-    """Segmente 28: Die bestehende Definition kommt als Punktfolge in den Editor und unverändert zurück."""
+    """Die bestehende Definition kommt als Punktfolge in den Editor und unverändert zurück."""
     anmelden(client)
     with client.app.state.sessionmaker() as s:
         x = st.strecken_von(s, s.get(Veranstaltung, v.id))[0]
@@ -403,12 +403,12 @@ def test_fahrer_seite_zeigt_zwischenzeiten_mit_herkunft(client, v):
     assert r.status_code == 200 and "storniert" in r.text.lower()
 
 
-# --- Segmente 4: Auswertung sichtbar (Ergebnis Admin/öffentlich, Druck, CSV) ---
+# --- Auswertung sichtbar (Ergebnis Admin/öffentlich, Druck, CSV) ---
 
 
 def test_segmentzeiten_je_spalte_in_ergebnis_druck_und_csv(client, v):
     fahrt(client, v, 1, ohne={2})  # Kreisel (2) vergessen: danach keine Segmentzeiten
-    # je Abschnitt (Segmente und Rundenblöcke sind Abschnitte, Segmente 32) und Durchfahrt
+    # je Abschnitt (Segmente und Rundenblöcke sind Abschnitte) und Durchfahrt
     labels = ["Start→Kreisel", "Kreisel→Brücke (1)", "Kreisel→Brücke (2)", "Brücke→Kreisel (1)",
               "Brücke→Kreisel (2)", "Kreisel→Ziel", "Runde (1)", "Runde (2)"]  # fmt: skip
     d = client.get("/api/oeffentlich").json()
@@ -468,7 +468,7 @@ def test_ohne_segmente_keine_zwischenzeiten_spalte(client, v):
     )
 
 
-# --- Segmente 8: Doppeltipp automatisch verworfen, im Protokoll sichtbar und zurücknehmbar ---
+# --- Doppeltipp automatisch verworfen, im Protokoll sichtbar und zurücknehmbar ---
 
 
 def test_doppeltipp_im_protokoll_und_doch_werten(client, v):
@@ -518,14 +518,12 @@ def test_rennleitung_kann_keine_runde_mehr_senden(client, v):
     )
 
 
-# --- Segmente 14: Zielmonitor konfigurierbar -------------------------------------------------
+# --- Zielmonitor konfigurierbar -------------------------------------------------
 
 
 def test_zielmonitor_seite_standard_speichern_reihenfolge(client, v):
     anmelden(client)
-    r = client.get(
-        f"/admin/v/{v.id}/zielmonitor", follow_redirects=False
-    )  # Segmente 19: jetzt Reiter
+    r = client.get(f"/admin/v/{v.id}/zielmonitor", follow_redirects=False)  # Jetzt Reiter
     assert r.status_code == 307 and r.headers["location"].endswith("/einstellungen/zielmonitor")
     html = client.get(f"/admin/v/{v.id}/zielmonitor").text
     assert 'data-seite="zielmonitor"' not in html and 'id="monitor-vorschau"' in html
@@ -596,7 +594,7 @@ def test_live_abschnittszeit_im_oeffentlichen_stand(client, v):
     }
 
 
-# --- Segmente 15: Ranglisten je Abschnitt ----------------------------------------------------
+# --- Ranglisten je Abschnitt ----------------------------------------------------
 
 
 def runde_einrichten(client, v, top=3):
@@ -681,7 +679,7 @@ def test_zwischenzeiten_oeffentlich_im_reiter_speichern(client, v):
     assert r.url.path.endswith("/einstellungen/zielmonitor") and "Zielmonitor gespeichert" in r.text
 
 
-# --- Segmente 22: Strecke als Datei speichern und laden, Meta-Infos ----------------------------
+# --- Strecke als Datei speichern und laden, Meta-Infos ----------------------------
 
 
 def test_strecke_speichern_laden_und_meta(client, v):
@@ -741,7 +739,7 @@ def test_strecke_speichern_laden_und_meta(client, v):
     assert 'id="vorschau-fehler"' in r.text and 'id="uebernehmen" disabled' in r.text
 
 
-# --- Segmente 32: Rundenblock automatisch als Auswertungsabschnitt ----------------------------
+# --- Rundenblock automatisch als Auswertungsabschnitt ----------------------------
 
 
 def test_rundenblock_abschnitt_im_editor_und_monitor(client, v):
@@ -755,7 +753,7 @@ def test_rundenblock_abschnitt_im_editor_und_monitor(client, v):
     assert (
         "<strong>Runde</strong>" in zeile and "jede Durchfahrt" in zeile and "automatisch" in zeile
     )
-    assert "ab_vergleich_0" not in zeile and "ab_aus_0" not in zeile  # Segmente 52: nicht mehr hier
+    assert "ab_vergleich_0" not in zeile and "ab_aus_0" not in zeile  # Nicht mehr hier
     assert "ab_entfernen_0" not in zeile  # nicht löschbar
     assert "Runde: Kreisel → Brücke → Kreisel, 2-mal" in zeile
     # im Zielmonitor wählbar: Live-Bereich und Ranglisten-Seite
@@ -771,7 +769,7 @@ def test_rundenblock_abschnitt_im_editor_und_monitor(client, v):
     ]
     assert {"schluessel": "0:b1", "titel": "Runde"} in d["ranglisten"]
     assert "10:00,0" in client.get("/ergebnisse?rangliste=0:b1").text  # beide Runden je 10 min
-    # ausblenden (Segmente 52: „Spalten in den Ergebnissen“) → aus der Monitor-Auswahl verschwunden
+    # ausblenden („Spalten in den Ergebnissen“) → aus der Monitor-Auswahl verschwunden
     with client.app.state.sessionmaker() as s:
         alle = st.abschnitte_von(st.strecken_von(s, s.get(Veranstaltung, v.id))[0])
     r = client.post(f"/admin/v/{v.id}/spalten", data={"csrf": csrf_aus(seite), "spalten_strecke": str(sid),
@@ -811,12 +809,12 @@ def test_rundenblock_abschnitt_in_streckendatei(client, v):
         x.abschnitte_json = json.dumps({"bloecke": {"1": {"aus": True, "vergleich": False}}})
         s.commit()
         text = strecken_datei.strecke_toml(s, s.get(Veranstaltung, v.id), x)
-    # Segmente 52: Darstellung gehört nicht mehr in die Datei; der Rundenblock ergibt sich aus dem Verlauf
+    # Darstellung gehört nicht mehr in die Datei; der Rundenblock ergibt sich aus dem Verlauf
     assert "block_abschnitt" not in text and '[[teil]]\nname = "Runde"\nwdh = 2' in text
     assert strecken_datei.lesen(text.encode()).hinweise == []
 
 
-# --- Segmente 33: Anfang und Ende als Auswahl aus der Abfolge ---------------------------------
+# --- Anfang und Ende als Auswahl aus der Abfolge ---------------------------------
 
 
 def test_abschnitt_anfang_ende_auswahl_und_monitor(client, v):
@@ -879,7 +877,7 @@ def test_abschnitt_anfang_ende_auswahl_und_monitor(client, v):
     assert all(f'<option value="{sid}:{a}"' in r.text for a in alle)
 
 
-# --- Segmente 34: gespeicherte Monitor-Einstellungen wirken -----------------------------------
+# --- Gespeicherte Monitor-Einstellungen wirken -----------------------------------
 
 
 def test_monitor_einstellungen_speichern_wirkt_in_api_und_seite(client, v):

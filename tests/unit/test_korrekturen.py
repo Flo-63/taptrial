@@ -1,4 +1,4 @@
-"""Fachschicht des Admin (Phase 6): Korrekturen, DSQ, Ergebnisstatus, Lebenszyklus, Teilnehmer."""
+"""Fachschicht des Admin: Korrekturen, DSQ, Ergebnisstatus, Lebenszyklus, Teilnehmer."""
 
 import uuid
 from datetime import date, datetime

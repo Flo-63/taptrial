@@ -1,4 +1,4 @@
-"""Auswertung als reine Funktion über Teilnehmer und Ereignisse (KONZEPT 6, E4).
+"""Auswertung als reine Funktion über Teilnehmer und Ereignisse.
 
 Kein Datenbankzugriff. Eingaben sind beliebige Objekte mit den passenden Attributen
 (ORM-Modelle oder Dataclasses in Tests).
@@ -25,7 +25,7 @@ class Art(StrEnum):
     MANUELLE_ZEIT = "MANUELLE_ZEIT"
     ERGEBNIS = "ERGEBNIS"  # Ergebnis offiziell/vorläufig erklärt (nur Admin, nur Protokoll)
     MERKMAL = "MERKMAL"  # Abzeichen/außer Konkurrenz im Admin umgeschaltet (nur Protokoll)
-    ZEITKORREKTUR = "ZEITKORREKTUR"  # ±1 s auf einen ZIEL- oder DURCHFAHRT-Stempel (Phase 14a)
+    ZEITKORREKTUR = "ZEITKORREKTUR"  # ±1 s auf einen ZIEL- oder DURCHFAHRT-Stempel
     DURCHFAHRT = "DURCHFAHRT"  # Posten: Fahrer passiert einen Messpunkt (wert = Messpunkt-ID)
     RUNDE = "RUNDE"  # Rennleitung: Durchfahrt einer Runde zuordnen (wert „R3“) oder „VERWORFEN“
 
@@ -45,7 +45,7 @@ class Status(StrEnum):
 STATUS_WERTE = ("DNS", "DNF", "DSQ", "DSQ_VORLAEUFIG", "OK")
 ERGEBNIS_WERTE = ("OFFIZIELL", "VORLAEUFIG")
 # Schnellkorrektur am Ziel: je Tipp ±1000 ms (bis 10/2026: ±200 ms, bleibt gültig),
-# Summe je Stempel höchstens ±5000 ms (Phase 14a)
+# Summe je Stempel höchstens ±5000 ms
 KORREKTUR_SCHRITT_MS = 1000
 KORREKTUR_SCHRITTE_MS = (200, 1000)
 MAX_KORREKTUR_MS = 5000
@@ -92,16 +92,16 @@ class MesspunktDef:
 
 @dataclass(frozen=True)
 class StreckenDef:
-    """Eine Strecke der Veranstaltung (Phase 13): Name, gemessene Länge, zugeordnete Klassen;
-    mit Segmenten (AUSBAU C1) Messpunkte und Teile (Segmente, Rundenblöcke, app/segmente.py)."""
+    """Eine Strecke der Veranstaltung: Name, gemessene Länge, zugeordnete Klassen;
+    mit Segmenten Messpunkte und Teile (Segmente, Rundenblöcke, app/segmente.py)."""
 
     name: str
     zehntel_km: int | None
     klassen: frozenset[str] = frozenset()
     messpunkte: tuple[MesspunktDef, ...] = ()
     teile: tuple = ()  # tuple[segmente.TeilDef, ...]
-    abschnitte: tuple = ()  # tuple[segmente.AbschnittDef, ...] (Segmente 13, inkl. ausgeblendeter)
-    startort: MesspunktDef | None = None  # Segmente 37: erster Punkt (None = Standard „Start“)
+    abschnitte: tuple = ()  # tuple[segmente.AbschnittDef, ...] (inkl. ausgeblendeter)
+    startort: MesspunktDef | None = None  # Erster Punkt (None = Standard „Start“)
     zielort: MesspunktDef | None = None  # letzter Punkt (None = Standard „Ziel“)
 
     @property
@@ -126,9 +126,9 @@ class AuswertungsConfig:
     plausibel_min_prozent: int = 50
     plausibel_max_prozent: int = 200
     plausibel_mindestanzahl: int = 3
-    wertung: Wertung | None = None  # Leistungswertung aus (None) oder an (KONZEPT 7a)
+    wertung: Wertung | None = None  # Leistungswertung aus (None) oder an
     strecke_zehntel_km: int | None = None  # nur ohne `strecken`: Länge der einzigen Strecke
-    # Phase 13: Strecken mit ihren Klassen; leer = eine Strecke für alle (bisheriges Verhalten)
+    # Strecken mit ihren Klassen; leer = eine Strecke für alle (bisheriges Verhalten)
     strecken: tuple[StreckenDef, ...] = ()
 
     def strecken_liste(self) -> tuple[StreckenDef, ...]:
@@ -149,13 +149,11 @@ class OffenesZiel:
     zeit_ms: int  # korrigierte Zeit
     geraet: str
     korrektur_ms: int = 0
-    ort: str = (
-        ""  # Zielort-ID des Geräts (Segmente 38/43: ereignis.ort_id); leer = Standard-Zielort
-    )
+    ort: str = ""  # Zielort-ID des Geräts (ereignis.ort_id); leer = Standard-Zielort
 
 
 def _ort(e) -> str:
-    """Messpunkt eines Start-/Zielstempels bzw. einer manuellen Zeit (Segmente 43), leer = Standard."""
+    """Messpunkt eines Start-/Zielstempels bzw. einer manuellen Zeit, leer = Standard."""
     oid = getattr(e, "ort_id", None)
     return str(oid) if oid else ""
 
@@ -167,7 +165,7 @@ class Zielstempel:
     geraet: str
     startnummer: int | None
     korrektur_ms: int = 0
-    ort: str = ""  # Durchfahrten: Messpunkt-ID (Phase 14); Start/Ziel: ort_id (Segmente 43)
+    ort: str = ""  # Durchfahrten: Messpunkt-ID; Start/Ziel: ort_id
 
 
 @dataclass
@@ -215,12 +213,12 @@ class ErgebnisZeile:
     rang_gesamt: int | None = None  # Rang auf der eigenen Strecke
     rang_klasse: int | None = None
     strecke: int = 0  # Index in Ergebnis.strecken
-    korrektur_ms: int = 0  # Schnellkorrektur der verwendeten Zielzeit (Phase 14a)
+    korrektur_ms: int = 0  # Schnellkorrektur der verwendeten Zielzeit
     durchfahrten: list[DurchfahrtZeile] = field(
         default_factory=list
     )  # erwartete Durchfahrten (Segmente)
     segmentzeiten: list[SegmentZeit] = field(default_factory=list)
-    # Zeiten der sichtbaren Auswertungsabschnitte je Durchfahrt (Segmente 13; schluessel = Abschnitt-ID)
+    # Zeiten der sichtbaren Auswertungsabschnitte je Durchfahrt (schluessel = Abschnitt-ID)
     abschnittszeiten: list[SegmentZeit] = field(default_factory=list)
     naechste_runde: dict[str, int] = field(
         default_factory=dict
@@ -282,7 +280,7 @@ class Ergebnis:
 
 
 def zehntel(ms: int) -> int:
-    """E4: auf Zehntel abschneiden (12:34,567 -> 12:34,5)."""
+    """Auf Zehntel abschneiden (12:34,567 -> 12:34,5)."""
     return ms // 100
 
 
@@ -338,7 +336,7 @@ def auswerten(
         if e.art == Art.ZUORDNUNG and e.bezug_uuid in nummer:
             nummer[e.bezug_uuid] = e.startnummer
 
-    # Durchfahrten an Messpunkten (Phase 14)
+    # Durchfahrten an Messpunkten
     durchfahrten = [e for e in gueltig if e.art == Art.DURCHFAHRT and e.startnummer is not None
                     and e.zeit_ms is not None and e.wert]  # fmt: skip
     # Schnellkorrektur: Summe der Deltas je ZIEL-/DURCHFAHRT-Stempel, Summe höchstens ±5000 ms
@@ -518,7 +516,7 @@ def auswerten(
     gewertet = [z for z in zeilen if z.status == Status.OK]
     if config.wertung is not None:
         # Stufe nur für Abzeichen-Teilnehmer; keine bei DNF/DSQ/DNS/Konflikt/unvollständig.
-        # Maßgeblich ist die gemessene Länge der eigenen Strecke (Phase 13).
+        # Maßgeblich ist die gemessene Länge der eigenen Strecke.
         for z in (z for z in gewertet if z.abzeichen):
             z.stufe = stufe_berechnen(
                 config.wertung, z.klasse, z.fahrzeit_ms, strecken[z.strecke].zehntel_km
@@ -643,14 +641,14 @@ def _segmente_auswerten(strecken, strecke_von, start_von, ziel_von, durchfahrten
             werte = sg.segmentzeiten(s.teile, fahrt, zu, zeit)
             liste, vorher = [], {}
             for d, ms in zip(folge, werte, strict=True):
-                diff = None  # Segmente 52: Differenz immer; ob sie gezeigt wird, entscheidet die Anzeige
+                diff = None  # Differenz immer; ob sie gezeigt wird, entscheidet die Anzeige
                 if ms is not None and vorher.get(d.schluessel) is not None:
                     diff = ms - vorher[d.schluessel]
                 vorher[d.schluessel] = ms
                 liste.append(SegmentZeit(d.label, d.schluessel, d.k, ms, diff))
             erg.segmentzeiten[nr] = liste
             erg.abschnittszeiten[nr] = _abschnittszeiten(s, fahrt, zu, zeit)
-            # Segmente 53: nächste Durchfahrt je Messpunkt aus der Zuordnung – eine Position gilt als
+            # Nächste Durchfahrt je Messpunkt aus der Zuordnung – eine Position gilt als
             # vorbei (gezählt oder verpasst), sobald der Fahrer an einer späteren gesehen wurde
             gesehen = [j for j, u in enumerate(zu.positionen) if u]
             letzte = (
@@ -671,7 +669,7 @@ def _abschnittszeiten(s: StreckenDef, fahrt, zu, zeit) -> list[SegmentZeit]:
         werte = sg.abschnittszeiten(a, s.teile, fahrt, zu, zeit)
         vorher = None
         for k, ms in enumerate(werte, start=1):
-            diff = ms - vorher if ms is not None and vorher is not None else None  # Segmente 52
+            diff = ms - vorher if ms is not None and vorher is not None else None
             liste.append(
                 SegmentZeit(f"{a.name} ({k})" if len(werte) > 1 else a.name, a.id, k, ms, diff)
             )

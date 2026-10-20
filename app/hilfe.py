@@ -26,7 +26,7 @@ SEITEN = {
     "admin": ("ADMIN.md", "Admin-Handbuch", False),
 }  # Name → (Datei, Titel, Kurzanleitung für eine A4-Seite)
 OFFLINE = ("start", "ziel", "rennleitung", "posten")
-# Frühere Sprungziele, die weiter funktionieren (alt → neu), z. B. Segmente 60
+# Frühere Sprungziele, die weiter funktionieren (alt → neu), z. B. nach umbenannten Reitern
 ANKER_ALIAS = {"oeffentlichkeit": "zielmonitor-ergebnisse"}  # vom Service Worker vorab gespeichert
 
 router = APIRouter(prefix="/hilfe", include_in_schema=False)

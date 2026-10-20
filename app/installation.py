@@ -1,10 +1,11 @@
-"""Globale Einstellungen der Installation (nicht je Veranstaltung): Vereinsname aus dem Branding
-(Release 1), Impressum und Datenschutz (Release 3). Gespeichert als Schlüssel/Wert in
+"""Globale Einstellungen der Installation (nicht je Veranstaltung): Vereinsname aus dem Branding,
+Impressum und Datenschutz. Gespeichert als Schlüssel/Wert in
 `app_einstellung`; fehlt ein Schlüssel, gilt „“ (frische Installation: neutral, ohne Verein)."""
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
+from app import marke
 from app.models import AppEinstellung
 
 SCHLUESSEL = (
@@ -52,8 +53,27 @@ def fuer_vorlage(request) -> dict[str, str]:
         return dict.fromkeys(SCHLUESSEL, "")
 
 
+def vereinsname(request) -> str:
+    """v0.1.1: Ist ein Vereinsname gesetzt, steht er vorn; „TapTrial“ nur noch klein."""
+    return fuer_vorlage(request)["vereinsname"].strip()
+
+
+def titel_zusatz(request) -> str:
+    """Zusatz im Seitentitel: „<Verein> · TapTrial“ oder neutral „TapTrial“."""
+    verein = vereinsname(request)
+    return f"{verein} · {marke.NAME}" if verein else marke.NAME
+
+
+def kuerzel(name: str) -> str:
+    """Zeichen im Admin-Kopf: kurze Namen ganz („RCB“), sonst die Anfangsbuchstaben (max. 3)."""
+    name = name.strip()
+    if len(name) <= 4 and " " not in name:
+        return name.upper()
+    return "".join(w[0] for w in name.split() if w[:1].isalnum())[:3].upper() or marke.NAME[:2]
+
+
 def rechtliches_pruefen(form) -> dict[str, str]:
-    """Release 3: je Seite (Impressum, Datenschutz) ein Link (https) **oder** ein Text, beides leer
+    """Je Seite (Impressum, Datenschutz) ein Link (https) **oder** ein Text, beides leer
     erlaubt. Gibt die zu speichernden Werte zurück, sonst EingabeFehler."""
     werte = {}
     for art, titel in RECHTLICHES.items():

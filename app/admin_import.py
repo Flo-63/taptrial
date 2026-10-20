@@ -1,4 +1,4 @@
-"""Admin: CSV-Import mit Vorschau und Bearbeitung (Feedback phase-12).
+"""Admin: CSV-Import mit Vorschau und Bearbeitung.
 
 Hochladen legt einen Entwurf an (serverseitig gespeichert). Die Vorschau zeigt alle Zeilen mit
 Fehlern/Warnungen je Zelle; Zellen sind bearbeitbar, jede Änderung wird sofort neu geprüft und

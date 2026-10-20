@@ -1,6 +1,6 @@
-"""Vorabprüfung der Dateien in config/wertungen/ (FRAGEN A32).
+"""Vorabprüfung der Dateien in config/wertungen/.
 
-Der eigentliche Loader mit Validierung beim Start folgt in Phase 7 (KONZEPT 7a).
+Den Loader mit Validierung beim Start prüft test_wertung.py.
 """
 
 import tomllib
@@ -45,12 +45,3 @@ def test_wertungsdatei_gueltig(pfad):
         assert _sekunden(stufe["gold"]) < _sekunden(stufe["silber"]) < _sekunden(stufe["bronze"])
         if daten["art"] == "gesamtzeit":
             assert stufe["strecke_km"] > 0
-
-
-def test_konzept_regel_streckenlaenge_gesamtzeit():
-    """FRAGEN A34: bei „gesamtzeit“ gilt Streckenlänge ≥ strecke_km (bis Phase 7 nur Doku)."""
-    pfad = Path(STANDARD_KLASSEN_DATEI).parents[1] / "docs" / "KONZEPT.md"
-    if not pfad.exists():
-        pytest.skip("KONZEPT.md ist ein internes Arbeitsdokument (nicht im Export)")
-    konzept = pfad.read_text("utf-8")
-    assert "Länge der **eigenen Strecke** des Teilnehmers **≥** `strecke_km` der Stufe" in konzept

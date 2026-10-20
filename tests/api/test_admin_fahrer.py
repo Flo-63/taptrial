@@ -1,4 +1,4 @@
-"""Teilnehmerliste mit Suche/Filtern und Fahrer-Seite (ADMIN-REVIEW Schritt 5)."""
+"""Teilnehmerliste mit Suche/Filtern und Fahrer-Seite."""
 
 import re
 

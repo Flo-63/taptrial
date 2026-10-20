@@ -1,4 +1,4 @@
-"""Übersicht mit Kennzahlen und „Als Nächstes“ (ADMIN-REVIEW Schritt 3)."""
+"""Übersicht mit Kennzahlen und „Als Nächstes“."""
 
 import re
 from datetime import date
@@ -35,7 +35,7 @@ def test_kennzahlen_mit_buttons(admin, v):
 def test_aufgaben_aus_dem_zustand(admin, v):
     html = uebersicht(admin, v)
     a = aufgaben(html)
-    # „Strecke 1: Länge fehlt“ führt direkt auf die Seite der Strecke (Segmente 19)
+    # „Strecke 1: Länge fehlt“ führt direkt auf die Seite der Strecke
     assert re.fullmatch(rf"/admin/v/{v.id}/strecken/\d+", a["laenge"])
     assert (
         'id="zielmonitor-einstellen"' in html

@@ -1,9 +1,9 @@
-"""Streckendefinition als Datei speichern und laden (Segmente 22).
+"""Streckendefinition als Datei speichern und laden.
 
 TOML wie die Klassen-/Wertungssätze, mit Versionsfeld. Inhalt: Name, gemessene Länge, Meta-Infos
 (Beschreibung, Komoot-Link), Messpunkte (über ihre Namen), Streckenverlauf (Teile mit Segmenten,
 Rundenblöcke) und Auswertungsabschnitte. Nicht in die Datei gehören die Klassenzuordnung und
-(Segmente 52) die Darstellung – „anzeigen“ und „Vergleich“; ältere Dateien mit diesen Angaben laden
+ die Darstellung – „anzeigen“ und „Vergleich“; ältere Dateien mit diesen Angaben laden
 mit dem Hinweis „Darstellungseinstellungen werden ignoriert“.
 
     version = 1
@@ -82,7 +82,7 @@ def strecke_toml(session: Session, v: Veranstaltung, s: Strecke) -> str:
         zeilen.append(f"beschreibung = {_toml_text(s.beschreibung)}")
     if s.komoot_url:
         zeilen.append(f"komoot = {_toml_text(s.komoot_url)}")
-    orte = st.orte_von(session, v)  # Segmente 37: Start- und Zielort über ihre Namen
+    orte = st.orte_von(session, v)  # Start- und Zielort über ihre Namen
     zeilen.append(f"startort = {_toml_text(st.startort_von(s, orte).name)}")
     zeilen.append(f"zielort = {_toml_text(st.zielort_von(s, orte).name)}")
     zeilen.append(f"messpunkte = [{', '.join(_toml_text(n) for n in benutzt)}]")
@@ -115,12 +115,12 @@ class Entwurf:
     beschreibung: str = ""
     komoot: str | None = None
     messpunkte: list[str] = field(default_factory=list)
-    startort: str = ""  # Segmente 37: Name des Startorts (leer = Standard „Start“)
+    startort: str = ""  # Name des Startorts (leer = Standard „Start“)
     zielort: str = ""
     teile: tuple = ()  # TeilDef mit Messpunkt-NAMEN statt IDs
     abschnitte: list[dict] = field(default_factory=list)
     fehler: list[str] = field(default_factory=list)
-    hinweise: list[str] = field(default_factory=list)  # Segmente 52: z. B. ignorierte Darstellung
+    hinweise: list[str] = field(default_factory=list)  # Z. B. ignorierte Darstellung
 
 
 def _zahl(wert, wo: str, fehler: list[str]) -> float | None:
@@ -199,7 +199,7 @@ def lesen(inhalt: bytes) -> Entwurf:
         or any("vergleich" in x or "aus" in x for x in daten.get("abschnitt") or [])
         or any("vergleich" in y for t in daten.get("teil") or [] for y in t.get("segment") or [])
     )
-    if darstellung:  # Segmente 52: „anzeigen“/„Vergleich“ gehören nicht mehr zur Strecke
+    if darstellung:  # „anzeigen“/„Vergleich“ gehören nicht mehr zur Strecke
         e.hinweise.append(DARSTELLUNG_IGNORIERT)
     for n, x in enumerate(daten.get("abschnitt") or [], start=1):
         a = sg.AbschnittDef(f"a{n}", str(x.get("name") or "").strip()[:100], punkt(x.get("von"), f"Abschnitt {n}"),
@@ -220,12 +220,12 @@ class Vorschau:
     neu: list[str]
     namenskonflikt: bool
     sperre: str | None  # Grund, warum nicht übernommen werden kann (eingefroren)
-    ortkonflikte: list[str] = field(default_factory=list)  # gleicher Name, andere Art (Segmente 37)
-    ersetzbar: Strecke | None = None  # Segmente 39: gleichnamige bzw. gewählte Strecke zum Ersetzen
+    ortkonflikte: list[str] = field(default_factory=list)  # gleicher Name, andere Art
+    ersetzbar: Strecke | None = None  # Gleichnamige bzw. gewählte Strecke zum Ersetzen
 
     @property
     def verlust(self) -> str:
-        """Was „Ersetzen“ überschreibt (Segmente 50), für die Bestätigung."""
+        """Was „Ersetzen“ überschreibt, für die Bestätigung."""
         return ersetzen_verlust(self.ersetzbar) if self.ersetzbar is not None else ""
 
 
@@ -300,7 +300,7 @@ def _orte_anlegen(
             raise SatzFehler(
                 f"„{n}“ ist hier ein Messpunkt der Art „{st.ORTSARTEN[m.art]}“, in der Datei „{st.ORTSARTEN[art]}“."
             )
-        if m is not None and m.entfernt:  # Segmente 65: entfernter Standard kommt zurück
+        if m is not None and m.entfernt:  # Entfernter Standard kommt zurück
             m.entfernt = False
         if m is None:
             m = Messpunkt(veranstaltung_id=v.id, position=pos, name=n, art=art)
@@ -323,7 +323,7 @@ def uebernehmen(
 ) -> Strecke:
     """Legt die Strecke an (ohne Klassen), Orte mit gleichem Namen werden wiederverwendet.
 
-    ersetzen (Segmente 39): bestehende Strecke bekommt Verlauf, Abschnitte, Start-/Zielort, Länge,
+    ersetzen: bestehende Strecke bekommt Verlauf, Abschnitte, Start-/Zielort, Länge,
     Beschreibung und Komoot-Link aus der Datei; Name und Klassenzuordnung bleiben.
     """
     if e.fehler:
@@ -362,7 +362,7 @@ def _teile(e: Entwurf, pid) -> tuple:
 def _inhalt_setzen(
     session, v, e: Entwurf, s: Strecke, teile, pid, start_id: int, ziel_id: int
 ) -> None:
-    """Segmente 52: Darstellung (anzeigen, Vergleich) passender Abschnitte bleibt beim Ersetzen;
+    """Darstellung (anzeigen, Vergleich) passender Abschnitte bleibt beim Ersetzen;
     neue Abschnitte werden angezeigt, ohne Vergleich."""
     bisher = st.abschnitte_von(s) if s.id is not None else []
     alt_teile = st.teile_von(s) if s.id is not None else ()
@@ -410,7 +410,7 @@ def _inhalt_setzen(
                                        ensure_ascii=False)  # fmt: skip
     s.beschreibung, s.komoot_url = e.beschreibung or None, e.komoot
     st.strecke_orte_setzen(session, v, s, str(start_id), str(ziel_id))
-    st.unbenutzte_standards_ausblenden(session, v)  # Segmente 70: auch direkt nach dem Laden
+    st.unbenutzte_standards_ausblenden(session, v)  # Auch direkt nach dem Laden
 
 
 def _ersetzen(

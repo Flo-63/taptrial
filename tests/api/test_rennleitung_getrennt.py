@@ -1,4 +1,4 @@
-"""Ziel und Rennleitung trennbar (Test 08.10., Jetzt 14)."""
+"""Ziel und Rennleitung trennbar."""
 
 import uuid
 

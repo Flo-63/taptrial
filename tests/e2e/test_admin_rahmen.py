@@ -1,4 +1,4 @@
-"""Fixierter Rahmen im Admin (Test 08.10., Punkt 10): Kopfzeile und Seitenleiste bleiben stehen."""
+"""Fixierter Rahmen im Admin: Kopfzeile und Seitenleiste bleiben stehen."""
 
 import pytest
 from playwright.sync_api import expect
@@ -54,7 +54,7 @@ def test_geraete_karten_buttons_auf_gleicher_hoehe(browser, server):
     hoehen = page.locator(".geraet .kopieren").evaluate_all(
         "ks => ks.map(k => Math.round(k.getBoundingClientRect().top))"
     )
-    # Segmente 38: Karten je Ort gruppiert – Start; Ziel und Rennleitung in einer Reihe; Zielmonitor
+    # Karten je Ort gruppiert – Start; Ziel und Rennleitung in einer Reihe; Zielmonitor
     assert len(hoehen) == 4 and hoehen[1] == hoehen[2] and hoehen[0] < hoehen[1] < hoehen[3]
     url = page.locator(".geraet[data-titel=Rennleitung] code.url")
     assert url.get_attribute("title").startswith("http")
@@ -81,9 +81,9 @@ def test_hilfe_im_selben_tab_mit_abschnitt_und_rueckweg(browser, server):
 
 
 def test_einstellungen_reiter_auf_dem_handy(browser, server):
-    """Segmente 17: Reiterleiste waagerecht scrollbar, die Seite selbst scrollt bei 390 px nicht waagerecht."""
+    """Reiterleiste waagerecht scrollbar, die Seite selbst scrollt bei 390 px nicht waagerecht."""
     ctx, page = anmelden(browser, server, 390, 800)
-    for seite in ("strecken", "messpunkte"):  # Segmente 25: eigene Seiten
+    for seite in ("strecken", "messpunkte"):  # Eigene Seiten
         admin_seite(page, seite)
         assert page.evaluate("document.documentElement.scrollWidth") <= 390, seite
     for reiter in ("allgemein", "klassen", "zielmonitor"):
@@ -102,7 +102,7 @@ def test_strecken_seite_auf_dem_handy(browser, server):
     ctx, page = anmelden(browser, server, 390, 800)
     admin_seite(page, "strecken")
     page.click("#strecke-oeffnen-0")
-    for reiter in ("grunddaten", "verlauf", "abschnitte"):  # Segmente 27: Reiter und Aktionsleiste
+    for reiter in ("grunddaten", "verlauf", "abschnitte"):  # Reiter und Aktionsleiste
         page.click(f"#strecke-reiter [data-reiter={reiter}]")
         expect(page.locator("#aktionsleiste")).to_be_visible()
         assert page.evaluate("document.documentElement.scrollWidth") <= 390, reiter
@@ -110,7 +110,7 @@ def test_strecken_seite_auf_dem_handy(browser, server):
 
 
 def test_abbrechen_ohne_speichern(browser, server):
-    """Segmente 21: „Abbrechen“ verwirft Eingaben – Seite verlassen bzw. Aufklapp-Formular schließen."""
+    """„Abbrechen“ verwirft Eingaben – Seite verlassen bzw. Aufklapp-Formular schließen."""
     ctx, page = anmelden(browser, server, 1280, 800)
     einstellungen(page, "allgemein")
     alt = page.locator("#e-name").input_value()

@@ -275,7 +275,7 @@ def test_gewaehlte_sicht_bleibt_nach_neuladen(server, neues_geraet):
 
 
 def bereich(page, name):
-    """Reiter der Rennleitung wählen: offen, letzte oder status (Test 08.10.)."""
+    """Reiter der Rennleitung wählen: offen, letzte oder status."""
     page.click(f"#rl-tab-{name}")
     expect(page.locator(f"#rl-{name}")).to_be_visible()
 

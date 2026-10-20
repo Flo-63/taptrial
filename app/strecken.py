@@ -1,9 +1,9 @@
-"""Mehrere Strecken je Veranstaltung (Phase 13, KONZEPT 3/6).
+"""Mehrere Strecken je Veranstaltung.
 
 - Eine Veranstaltung hat 1..n Strecken (Name, gemessene Länge in km). Jede Klasse fährt genau
   eine Strecke; zugeordnet werden ganze Klassen, nicht einzelne Fahrer.
 - Längen-Plätze aus dem Wertungssatz (Art „gesamtzeit“): je verschiedener `strecke_km` ein Platz,
-  sonst einer für alle Klassen. Strecken entstehen nie still (Segmente 49): im Assistenten je Platz
+  sonst einer für alle Klassen. Strecken entstehen nie still: im Assistenten je Platz
   „aus Datei laden“ oder „Platzhalter anlegen“; ein Satzwechsel lässt die Strecken stehen.
 - Die Zuordnung friert mit der ersten Zeit ein (wie der Klassensatz); Name und Länge bleiben
   änderbar, die Länge bis „Ergebnis offiziell“.
@@ -28,7 +28,7 @@ FARBEN = 6  # Kennzeichen-Farben strecke-farbe-0 … 5 (zusätzlich immer der Na
 
 
 class StreckenFehler(SatzFehler):
-    """Prüffehler; bereich (Segmente 27): Reiter des Strecken-Editors, z. B. „verlauf“."""
+    """Prüffehler; bereich: Reiter des Strecken-Editors, z. B. „verlauf“."""
 
     def __init__(self, text: str, bereich: str | None = None):
         super().__init__(text)
@@ -100,16 +100,16 @@ def zuordnung(strecken: list[Strecke]) -> dict[str, int]:
 
 
 def messpunkte_von(session: Session, v: Veranstaltung) -> list[Messpunkt]:
-    """Messpunkte der Veranstaltung (Segmente 12: gemeinsam für alle Strecken), ohne Start-/Zielorte."""
+    """Messpunkte der Veranstaltung (gemeinsam für alle Strecken), ohne Start-/Zielorte."""
     return list(session.scalars(
         select(Messpunkt).where(Messpunkt.veranstaltung_id == v.id, Messpunkt.art == "punkt")
         .order_by(Messpunkt.position, Messpunkt.id)
     ))  # fmt: skip
 
 
-# --- Orte (Segmente 37): Startorte, Messpunkte, Zielorte ------------------------------------
+# --- Orte: Startorte, Messpunkte, Zielorte ------------------------------------
 
-ORTSARTEN = {"start": "Start", "punkt": "Zwischenzeit", "ziel": "Ziel"}  # Segmente 42
+ORTSARTEN = {"start": "Start", "punkt": "Zwischenzeit", "ziel": "Ziel"}
 _ART_REIHE = {"start": 0, "punkt": 1, "ziel": 2}
 
 
@@ -134,7 +134,7 @@ def orte_von(session: Session, v: Veranstaltung, art: str | None = None,
     """Alle Orte der Veranstaltung: Startorte, Messpunkte, Zielorte (je Art Standard zuerst).
 
     Liest nur: fehlt ein Standardort (noch nicht gespeichert), steht ein ungespeicherter da.
-    Entfernte Standardorte (Segmente 65) nur mit entfernte=True.
+    Entfernte Standardorte nur mit entfernte=True.
     """
     liste = list(session.scalars(select(Messpunkt).where(Messpunkt.veranstaltung_id == v.id)))
     for a, name in (("start", "Start"), ("ziel", "Ziel")):
@@ -159,7 +159,7 @@ def standard_ids(session: Session, v: Veranstaltung) -> dict[str, int | None]:
 
 
 def neue_strecke_orte(session: Session, v: Veranstaltung, s: Strecke) -> None:
-    """Segmente 65: Eine neue Strecke beginnt am ersten Start und endet am ersten Ziel. Ist der
+    """Eine neue Strecke beginnt am ersten Start und endet am ersten Ziel. Ist der
     Standard entfernt, ist das der erste übrige; gibt es keinen, kommt der Standard zurück."""
     with session.no_autoflush:
         _neue_strecke_orte(session, v, s)
@@ -195,13 +195,13 @@ def _ort_von(oid: int | None, art: str, orte: list[Messpunkt]) -> Messpunkt:
 
 
 def ort_bezeichnung(m: Messpunkt) -> str:
-    """„Start“ bzw. „Start Nord“ für Gerätekarten und Meldungen (Segmente 38)."""
+    """„Start“ bzw. „Start Nord“ für Gerätekarten und Meldungen."""
     wort = {"start": "Start", "ziel": "Ziel", "punkt": "Posten"}[m.art]
     return wort if m.name.lower() == wort.lower() else f"{wort} {m.name}"
 
 
 def messpunkt_titel(m: Messpunkt) -> str:
-    """„Start“, „Start Nord“, „Zwischenzeit Kreisel“, „Ziel Hof“ (Segmente 42: Gruppen unter „Geräte“)."""
+    """„Start“, „Start Nord“, „Zwischenzeit Kreisel“, „Ziel Hof“ (Gruppen unter „Geräte“)."""
     wort = ORTSARTEN[m.art]
     return wort if m.name.lower() == wort.lower() else f"{wort} {m.name}"
 
@@ -223,14 +223,14 @@ def strecken_am_ort(session: Session, v: Veranstaltung, ort: Messpunkt) -> list[
 
 
 def genutzt(session: Session, v: Veranstaltung, m: Messpunkt) -> bool:
-    """Segmente 70: Nutzt eine Strecke diesen Messpunkt (Start, Zwischenzeit oder Ziel)? Nur dann
+    """Nutzt eine Strecke diesen Messpunkt (Start, Zwischenzeit oder Ziel)? Nur dann
     hat er einen Gerätelink."""
     return bool(strecken_am_ort(session, v, m))
 
 
 def unbenutzte_standards_ausblenden(session: Session, v: Veranstaltung) -> None:
-    """Segmente 70: Standard-Start/-Ziel, den keine Strecke nutzt, wird ausgeblendet wie beim
-    Entfernen (Segmente 65) – solange es keine Zeiten gibt. Ohne commit."""
+    """Standard-Start/-Ziel, den keine Strecke nutzt, wird ausgeblendet wie beim
+    Entfernen – solange es keine Zeiten gibt. Ohne commit."""
     if v.regeln_json or not strecken_von(session, v):
         return
     session.flush()
@@ -268,14 +268,14 @@ def teile_von(s: Strecke) -> tuple:
 
 
 def abschnitte_von(s: Strecke) -> list:
-    """Auswertungsabschnitte der Strecke (Segment-Abschnitte und eigene, Segmente 13)."""
+    """Auswertungsabschnitte der Strecke (Segment-Abschnitte und eigene)."""
     import json
 
     return sg.abschnitte(teile_von(s), json.loads(s.abschnitte_json) if s.abschnitte_json else None)
 
 
 def abschnitt_hinweise(s: Strecke) -> list[str]:
-    """Hinweise zu Rundenblöcken, die ein eigener Abschnitt schon abdeckt (Segmente 32)."""
+    """Hinweise zu Rundenblöcken, die ein eigener Abschnitt schon abdeckt."""
     import json
 
     return sg.abschnitt_hinweise(
@@ -287,7 +287,7 @@ def messpunkt_fuer_token(session: Session, token: str):
     """(Ort, Veranstaltung, Rolle) zu einem Orts-Token oder None (zeitkonstant verglichen).
 
     Messpunkt → „posten“, Startort → „start“, Zielort → „ziel“ bzw. mit eigenem Rennleitungs-Link
-    „rennleitung“ (Segmente 38). Standardorte nutzen die Tokens der Veranstaltung, nicht diese.
+    „rennleitung“. Standardorte nutzen die Tokens der Veranstaltung, nicht diese.
     """
     import secrets
 
@@ -340,7 +340,7 @@ def sicherstellen(session: Session, v: Veranstaltung) -> None:
 
 
 def anzeigen_speichern(session: Session, v: Veranstaltung, sichtbar: dict[int, set[str]]) -> None:
-    """„Ergebnistabelle“ (Segmente 52): je Strecke (Schlüssel in sichtbar) die Abschnitte,
+    """„Ergebnistabelle“: je Strecke (Schlüssel in sichtbar) die Abschnitte,
     die in Ergebnis, Druck und CSV erscheinen. Auch nach dem Einfrieren änderbar (ohne commit)."""
     import json
 
@@ -364,14 +364,14 @@ def anzeigen_speichern(session: Session, v: Veranstaltung, sichtbar: dict[int, s
     session.flush()
 
 
-# --- Längen-Plätze im Assistenten (Segmente 49) ---------------------------------------------
+# --- Längen-Plätze im Assistenten ---------------------------------------------
 
 
 @dataclass
 class Platz:
     """Ein Längen-Platz aus Klassen- und Wertungssatz, z. B. „5 km“ mit den Klassen U13, U15 …
 
-    Segmente 59: Was der Platz zeigt, kommt aus der tatsächlichen Klassenzuordnung (gruppen); offen
+    Was der Platz zeigt, kommt aus der tatsächlichen Klassenzuordnung (gruppen); offen
     ist er, solange eine seiner Klassen noch an der vorläufigen Strecke hängt."""
 
     schluessel: str
@@ -413,7 +413,7 @@ def vorlaeufige_strecke(session: Session, v: Veranstaltung) -> Strecke | None:
 
 def plaetze(session: Session, v: Veranstaltung) -> list[Platz]:
     """Plätze aus dem Vorschlag (je Länge des Wertungssatzes einer, sonst einer für alle Klassen)
-    mit der tatsächlichen Klassenzuordnung (Segmente 59: eine Quelle der Wahrheit)."""
+    mit der tatsächlichen Klassenzuordnung (eine Quelle der Wahrheit)."""
     r = regeln(session, v)
     liste = strecken_von(session, v)
     je_klasse = {sk.klasse: x for x in liste for sk in x.klassen}
@@ -446,9 +446,9 @@ def plaetze_offen(session: Session, v: Veranstaltung) -> list[Platz]:
 
 
 def platz_entscheiden(session: Session, v: Veranstaltung, schluessel: str, s: Strecke) -> list[str]:
-    """Strecke s übernimmt die Klassen des Platzes (ohne commit) – erstmals oder bei „Ändern“
-    (Segmente 59). Die bisher gewählte Strecke dieses Platzes und die vorläufige Strecke fallen weg,
-    wenn sie danach keine Klassen mehr haben; sonst bleiben sie mit Hinweis. Gibt Hinweise zurück."""
+    """Strecke s übernimmt die Klassen des Platzes (ohne commit) – erstmals oder bei „Ändern“.
+    Die bisher gewählte Strecke dieses Platzes und die vorläufige Strecke fallen weg,
+        wenn sie danach keine Klassen mehr haben; sonst bleiben sie mit Hinweis. Gibt Hinweise zurück."""
     if v.regeln_json:
         raise StreckenFehler("Die Streckenzuordnung ist eingefroren (es gibt bereits Zeiten).")
     p = next((p for p in plaetze(session, v) if p.schluessel == schluessel), None)
@@ -521,7 +521,7 @@ def platzhalter_anlegen(session: Session, v: Veranstaltung, schluessel: str, nam
 
 
 def zuordnung_anpassen(session: Session, v: Veranstaltung) -> list[str]:
-    """Klassen- oder Wertungssatz gewechselt (Segmente 49, statt Strecken neu vorzuschlagen):
+    """Klassen- oder Wertungssatz gewechselt (statt Strecken neu vorzuschlagen):
     Strecken bleiben. Klassen, die es nicht mehr gibt, fallen aus der Zuordnung; neue Klassen
     gehen im Assistenten an die gewählte Strecke ihres Platzes, sonst an die Strecke gleicher Länge
     bzw. die letzte. Entscheidungen für Plätze, die es nicht mehr gibt, verfallen. Ohne commit."""
@@ -565,7 +565,7 @@ def migrieren(session: Session) -> None:
     for v in session.scalars(select(Veranstaltung)):
         if v.id not in mit:
             sicherstellen(session, v)
-        orte_sicherstellen(session, v)  # Segmente 37: Standard-Start- und -Zielort
+        orte_sicherstellen(session, v)  # Standard-Start- und -Zielort
     segmente_migrieren(session)
     messpunkte_eindeutig(session)
     session.commit()
@@ -575,7 +575,7 @@ def segmente_migrieren(session: Session) -> None:
     """Strecken mit Messpunkten oder Runden (phase-14) ohne Teile → Teile mit gleicher Punktfolge.
 
     „Ziellinie ist Rundenlinie“ ist nicht abbildbar (das Ziel tippt nur noch den Zieleinlauf):
-    solche Strecken bekommen keine Segmente (FRAGEN A118).
+    solche Strecken bekommen keine Segmente.
     """
     for s in session.scalars(select(Strecke).where(Strecke.teile_json.is_(None))):
         mps = session.scalars(
@@ -591,7 +591,7 @@ def segmente_migrieren(session: Session) -> None:
 
 
 def messpunkte_eindeutig(session: Session) -> None:
-    """Segmente 12: Messpunkte von Strecken einer Veranstaltung zusammengeführt – Namen eindeutig
+    """Messpunkte von Strecken einer Veranstaltung zusammengeführt – Namen eindeutig
     machen („Kreisel (20 km)“) und die Reihenfolge über die Veranstaltung durchnummerieren."""
     for v in session.scalars(select(Veranstaltung)):
         liste = strecken_von(session, v)
@@ -623,9 +623,9 @@ def strecken_speichern(session: Session, v: Veranstaltung, zeilen: list[dict],
     Segmente: messpunkte der Veranstaltung [{"id", "name", "entfernen"}] und teile [{"strecke",
     "block", "wdh", "name", "von", "nach", "km", "vergleich", "entfernen"}] in Folge (aufeinander-
     folgende Zeilen mit gleichem Blocknamen bilden einen Rundenblock; „von“/„nach“ = „Start“, „Ziel“
-    oder Messpunkt-Name). abschnitte (Segmente 13): [{"strecke", "segment" (Schlüssel bei Segment-
+    oder Messpunkt-Name). abschnitte: [{"strecke", "segment" (Schlüssel bei Segment-
     Abschnitten), "id", "name", "von", "nach", "art", "von_nr", "nach_nr", "vergleich", "aus",
-    "entfernen"}]. None lässt Messpunkte, Teile bzw. Abschnitte unverändert. nur (Segmente 18): Teile und
+    "entfernen"}]. None lässt Messpunkte, Teile bzw. Abschnitte unverändert. nur: Teile und
     Abschnitte nur für diese Zeilen übernehmen (Seite einer Strecke), die anderen bleiben.
     """
     if v.zustand == "anonymisiert":
@@ -708,7 +708,7 @@ def strecken_speichern(session: Session, v: Veranstaltung, zeilen: list[dict],
         for (
             i,
             d,
-        ) in behalten.items():  # im Assistenten erst, wenn je Platz entschieden ist (Segmente 49)
+        ) in behalten.items():  # im Assistenten erst, wenn je Platz entschieden ist
             if klassen_je_zeile[i] and d["laenge"] is None:
                 raise StreckenFehler(
                     f"Strecke „{d['name']}“: Für die Leistungswertung ist die Streckenlänge Pflicht."
@@ -727,7 +727,7 @@ def strecken_speichern(session: Session, v: Veranstaltung, zeilen: list[dict],
         s.position, s.name, s.laenge_km = pos, d["name"], d["laenge"]
         s.klassen = [StreckeKlasse(klasse=kl) for kl in klassen_je_zeile[i]]
     hinweise_mp: list[str] = []
-    if mp_neu is not None:  # Messpunkte der Veranstaltung (Segmente 12)
+    if mp_neu is not None:  # Messpunkte der Veranstaltung
         vorhanden = {str(m.id): m for m in messpunkte_von(session, v)}
         bleibt_alt = [s for i, s in zip(sorted(behalten), strecken_von(session, v), strict=False)
                       if teile_neu is None or (nur is not None and i not in nur)]  # fmt: skip
@@ -775,7 +775,7 @@ def strecken_speichern(session: Session, v: Veranstaltung, zeilen: list[dict],
 
 
 def orte_speichern(session: Session, v: Veranstaltung, zeilen: list[dict]) -> list[str]:
-    """Seite „Orte“ (Segmente 37): [{"id", "name", "art", "entfernen"}] in Anzeigereihenfolge.
+    """Seite „Orte“: [{"id", "name", "art", "entfernen"}] in Anzeigereihenfolge.
 
     Die Art eines vorhandenen Orts bleibt; neue Zeilen ohne Art sind Messpunkte. Standardorte und
     Orte, die eine Strecke nutzt, sind nicht entfernbar; nach der ersten Zeit kommen keine Orte
@@ -815,7 +815,7 @@ def orte_speichern(session: Session, v: Veranstaltung, zeilen: list[dict]) -> li
                     f"„{name}“ ist als Name nur für einen Messpunkt der Art „{ORTSARTEN[a]}“ möglich."
                 )
         if m is None and (art, name.lower()) in entfernt and not v.regeln_json:
-            m = entfernt.pop((art, name.lower()))  # Segmente 65: entfernter Standard kommt zurück
+            m = entfernt.pop((art, name.lower()))  # Entfernter Standard kommt zurück
             m.entfernt = False
         neu.append((m, name, art))
     namen = [n.lower() for _, n, _ in neu]
@@ -830,7 +830,7 @@ def orte_speichern(session: Session, v: Veranstaltung, zeilen: list[dict]) -> li
         raise StreckenFehler(
             "Messpunkte sind eingefroren (es gibt bereits Zeiten): nur der Name ist änderbar."
         )
-    for m in weg:  # Segmente 65: auch der Standard, wenn ihn keine Strecke nutzt
+    for m in weg:  # Auch der Standard, wenn ihn keine Strecke nutzt
         if m.art == "punkt":
             nutzer = [liste[i].name for i in nutzende_strecken(liste, m.id)]
         else:
@@ -868,7 +868,7 @@ def orte_speichern(session: Session, v: Veranstaltung, zeilen: list[dict]) -> li
 
 def strecke_orte_setzen(session: Session, v: Veranstaltung, s: Strecke, start: str | None,
                         ziel: str | None) -> None:  # fmt: skip
-    """Start- und Zielort einer Strecke (Segmente 37, IDs als Text; None = unverändert, ohne
+    """Start- und Zielort einer Strecke (IDs als Text; None = unverändert, ohne
     commit). Nach der ersten Zeit fest wie der Verlauf."""
     orte = orte_von(session, v)
     alt = (startort_von(s, orte).id, zielort_von(s, orte).id)
@@ -950,7 +950,7 @@ def _teile_lesen(teile: list[dict], behalten) -> dict[int, list[dict]]:
             "block": str(x.get("block") or "").strip()[:100], "wdh": int(wdh_text) if wdh_text else None,
             "name": str(x.get("name") or "").strip()[:100], "von": von, "nach": nach,
             "km": _km(x.get("km"), f"Segment {j + 1}"), "vergleich": bool(x.get("vergleich")),
-            "teil": x.get("teil"),  # Punktfolge (Segmente 28): Zeilen eines Teils, unabhängig vom Namen
+            "teil": x.get("teil"),  # Punktfolge: Zeilen eines Teils, unabhängig vom Namen
         })  # fmt: skip
     return je_zeile
 
@@ -995,9 +995,7 @@ def _teile_bauen(zeilen: list[dict], ids: dict[str, str], strecke: str) -> tuple
         for z in gruppe:
             von, nach = punkt(z["von"]), punkt(z["nach"])
             name = z["name"] or f"{z['von'].strip()}→{z['nach'].strip()}"
-            segs.append(
-                sg.SegmentDef(name, von, nach, z["km"])
-            )  # „Vergleich“: Abschnitt (Segmente 13)
+            segs.append(sg.SegmentDef(name, von, nach, z["km"]))  # „Vergleich“: Abschnitt
         teile.append(sg.TeilDef(tuple(segs), wdh, block))
     return tuple(teile)
 
@@ -1005,7 +1003,7 @@ def _teile_bauen(zeilen: list[dict], ids: dict[str, str], strecke: str) -> tuple
 def _abschnitte_bauen(
     zeilen: list[dict], s: Strecke, ids: dict[str, str], strecke: str, mps
 ) -> str | None:
-    """Abschnitts-Zeilen einer Strecke → JSON für strecke.abschnitte_json (Segmente 13)."""
+    """Abschnitts-Zeilen einer Strecke → JSON für strecke.abschnitte_json."""
     import json
 
     teile = teile_von(s)
@@ -1017,7 +1015,7 @@ def _abschnitte_bauen(
     alt = {aid for aid, a in bisher.items() if not a.automatisch}
 
     def behalten(x: dict, aid: str, feld: str) -> bool:
-        """Segmente 52: Anzeigen/Vergleich stellt der Editor nicht mehr ein – fehlt das Feld, bleibt
+        """Anzeigen/Vergleich stellt der Editor nicht mehr ein – fehlt das Feld, bleibt
         der gespeicherte Wert (neue Abschnitte: angezeigt, ohne Vergleich)."""
         if feld in x:
             return bool(x[feld])
@@ -1043,7 +1041,7 @@ def _abschnitte_bauen(
         return int(t)
 
     def punkt_nr(text: str, nummer, wo: str) -> tuple[str, int]:
-        """„2:Kreisel“ aus der Auswahl (Segmente 33) oder Punkt und Nummer getrennt."""
+        """„2:Kreisel“ aus der Auswahl oder Punkt und Nummer getrennt."""
         nummer_text, _, rest = text.partition(":")
         if nummer_text.strip().isdigit() and rest.strip().lower() in ids | {"start": 0, "ziel": 0}:
             return punkt(rest), nr(nummer_text, wo)
@@ -1058,7 +1056,7 @@ def _abschnitte_bauen(
                     "ausdruecklich": "vergleich" in x,
                 }
             continue
-        if x.get("block"):  # Rundenblock (Segmente 32): nur ausblenden und Vergleich
+        if x.get("block"):  # Rundenblock: nur ausblenden und Vergleich
             if x["block"] in bloecke_ok:
                 bloecke[x["block"]] = {
                     "aus": behalten(x, f"b{x['block']}", "aus"),
@@ -1117,7 +1115,7 @@ def laenge_setzen(session: Session, v: Veranstaltung, km: float | None) -> bool:
 
 def wertung_laengen_pruefen(session: Session, v: Veranstaltung, weiter: bool = False) -> None:
     """Bei Leistungswertung braucht jede Strecke mit Klassen eine gemessene Länge. Im Assistenten
-    erst bei „Weiter“ (weiter=True) und wenn für jeden Längen-Platz entschieden ist (Segmente 49/59)."""
+    erst bei „Weiter“ (weiter=True) und wenn für jeden Längen-Platz entschieden ist."""
     if v.einrichtung_schritt and (not weiter or plaetze_offen(session, v)):
         return
     if regeln(session, v).wertung is None:

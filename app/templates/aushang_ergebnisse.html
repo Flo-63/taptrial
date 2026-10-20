@@ -22,7 +22,7 @@
   {% include "_druckleiste.html" %}
   <div class="blatt">
     <h1>Live-Ergebnisse</h1>
-    <p class="veranstaltung">{{ v.name }} · {{ v.datum.strftime('%d.%m.%Y') }}</p>
+    <p class="veranstaltung">{% if vereinsname(request) %}<span class="druck-verein">{{ vereinsname(request) }}</span> · {% endif %}{{ v.name }} · {{ v.datum.strftime('%d.%m.%Y') }}</p>
     <div class="qr">{{ qr|safe }}</div>
     <p class="url">{{ url }}</p>
     <p class="hinweis">QR-Code mit dem Handy scannen – Ergebnisse, Zeiten und Plätze laufend aktuell.</p>

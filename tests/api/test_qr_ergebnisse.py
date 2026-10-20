@@ -1,4 +1,4 @@
-"""QR-Code zu den Live-Ergebnissen (AUSBAU B11): Zielmonitor-Ecke und A4-Aushang im Admin."""
+"""QR-Code zu den Live-Ergebnissen: Zielmonitor-Ecke und A4-Aushang im Admin."""
 
 import re
 

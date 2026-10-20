@@ -1,4 +1,4 @@
-"""Öffentliche Seiten ohne Token (E6, Phase 7): Ergebnisse, Druckansicht, CSV, Zielmonitor.
+"""Öffentliche Seiten ohne Token: Ergebnisse, Druckansicht, CSV, Zielmonitor.
 
 Es werden nur Startnummer, Name, Verein, Klasse, Zeit, Rang, Status und ggf. Abzeichen
 herausgegeben (kein Jahrgang, kein Geschlecht, keine Tokens).
@@ -8,6 +8,7 @@ import segno
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, Response
 
+from app import installation
 from app import korrekturen as k
 from app.auswertung import Ergebnis, ErgebnisZeile, Status, StreckenDef
 from app.auth import SessionDep
@@ -88,7 +89,7 @@ def _sekunden(ms: int) -> str:
 
 def letzte_abschnittszeit(z: ErgebnisZeile, abschnitt: str, vergleich: bool = False) -> dict | None:
     """Letzte vorhandene Zeit eines Abschnitts für den Monitor (ganze Sekunden); ist am Feld „mit
-    Pfeil und Differenz“ gewählt (Segmente 52), dazu der Vergleich mit der vorherigen Durchfahrt
+    Pfeil und Differenz“ gewählt, dazu der Vergleich mit der vorherigen Durchfahrt
     (▼ schneller, ▲ langsamer)."""
     x = next(
         (
@@ -108,7 +109,7 @@ def letzte_abschnittszeit(z: ErgebnisZeile, abschnitt: str, vergleich: bool = Fa
 
 
 def beste_abschnittszeit(z: ErgebnisZeile, live: list[dict]) -> dict | None:
-    """Segmente 72 (A178): im Ergebnis des Zielmonitors die beste Zeit des ersten gewählten
+    """Im Ergebnis des Zielmonitors die beste Zeit des ersten gewählten
     Abschnittsfelds der eigenen Strecke mit mehreren Durchfahrten, z. B. „beste Runde 9:18“."""
     feld = next((x for x in live if x["strecke"] == z.strecke and x.get("mehrfach")), None)
     if feld is None:
@@ -151,7 +152,7 @@ def oeffentlicher_stand(v: Veranstaltung, erg: Ergebnis, klassenreihenfolge: lis
         return _zeile(z, w, erg, zwischen)
 
     def unterwegs_zeile(z: ErgebnisZeile) -> dict:
-        d = zeile(z)  # Live-Bereich (Segmente 14): je ausgewähltem Abschnitt die letzte Zeit
+        d = zeile(z)  # Live-Bereich: je ausgewähltem Abschnitt die letzte Zeit
         d["abschnitte"] = {x["id"]: letzte_abschnittszeit(z, x["abschnitt"], x.get("vergleich", False))
                            for x in monitor["live"] if x["strecke"] == z.strecke}  # fmt: skip
         return d
@@ -159,7 +160,7 @@ def oeffentlicher_stand(v: Veranstaltung, erg: Ergebnis, klassenreihenfolge: lis
     def ergebnis_zeile(z: ErgebnisZeile) -> dict:
         return {**zeile(z), "beste": beste_abschnittszeit(z, monitor["live"])}
 
-    strecken = []  # Phase 13: Gesamt- und Klassenlisten je Strecke
+    strecken = []  # Gesamt- und Klassenlisten je Strecke
     for i, sd in enumerate(erg.strecken):
         auf = [z for z in tabelle if z.strecke == i]
         segmente = (
@@ -230,7 +231,7 @@ def rangliste_dict(r, top: int | None = None) -> dict:
 
 
 def _mit_ranglisten(monitor: dict, erg: Ergebnis) -> dict:
-    """Monitor-Seiten „Rangliste Abschnitt“ bekommen ihre Top-N-Zeilen (Segmente 15)."""
+    """Monitor-Seiten „Rangliste Abschnitt“ bekommen ihre Top-N-Zeilen."""
     seiten = []
     for s in monitor["seiten"]:
         if s["typ"] == "rangliste":
@@ -274,7 +275,7 @@ def _stand(
     erg = k.ergebnis(session, v)
     vorschau = request.query_params.get("vorschau") == "1"  # Links aus dem Admin
     if v.laufend and v.freigabe_fehlt and not _hat_zeiten(erg) and not vorschau:
-        # Segmente 46: vor der Freigabe ohne Zeiten nichts zeigen (Admin-Vorschau bleibt möglich)
+        # Vor der Freigabe ohne Zeiten nichts zeigen (Admin-Vorschau bleibt möglich)
         return v, None, {"veranstaltung": {"name": v.name, "datum": v.datum.strftime("%d.%m.%Y")},
                          "keine_ergebnisse": KEINE_ERGEBNISSE}  # fmt: skip
     klassen = k.klassen_von(session, v)
@@ -289,7 +290,7 @@ def _stand(
 
 
 def _rechtliche_seite(request: Request, session, art: str):
-    """Release 3: /impressum, /datenschutz – Text als eigene Seite, Link → Weiterleitung, sonst 404."""
+    """/impressum, /datenschutz – Text als eigene Seite, Link → Weiterleitung, sonst 404."""
     from fastapi.responses import RedirectResponse
 
     from app import installation
@@ -320,10 +321,13 @@ def api_oeffentlich(
     request: Request, response: Response, session: SessionDep, veranstaltung: int | None = None
 ) -> dict:
     _, _, daten = _stand(request, session, veranstaltung)
-    # Segmente 62: der Monitor lädt sich neu, wenn eine neue App-Version läuft (sonst zeigt ein vor
+    # Der Monitor lädt sich neu, wenn eine neue App-Version läuft (sonst zeigt ein vor
     # dem Update geöffneter Monitor neue Daten mit altem Code)
     response.headers["X-App-Version"] = APP_VERSION
-    return daten or {"veranstaltung": None}
+    return {
+        **(daten or {"veranstaltung": None}),
+        "verein": installation.lesen(session)["vereinsname"],
+    }
 
 
 @router.get("/ergebnisse", response_class=HTMLResponse)
@@ -376,9 +380,9 @@ def ergebnisse_csv(request: Request, session: SessionDep, veranstaltung: int | N
     v, erg, daten = _stand(request, session, veranstaltung)
     if v is None:
         return Response("Keine aktive Veranstaltung", status_code=404)
-    if erg is None:  # Segmente 46: noch keine Ergebnisse
+    if erg is None:  # Noch keine Ergebnisse
         return Response(KEINE_ERGEBNISSE, status_code=404)
-    if rangliste:  # Rangliste eines Abschnitts (Segmente 15), nur wenn Segmentzeiten öffentlich
+    if rangliste:  # Rangliste eines Abschnitts, nur wenn Segmentzeiten öffentlich
         from app import ranglisten
 
         r = ranglisten.rangliste(erg, rangliste) if daten.get("zwischenzeiten") else None

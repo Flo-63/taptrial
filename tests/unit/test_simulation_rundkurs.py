@@ -87,7 +87,7 @@ def _klasse(f, plan):
 
 @pytest.mark.parametrize("seed", [2026, 7, 99])
 def test_durchfahrtsanzeige_stimmt_nach_vergessenen_klicks(seed):
-    """Segmente 53: Mitten im Rennen, 20 % der Klicks vergessen – sobald die nächste Zeit eines
+    """Mitten im Rennen, 20 % der Klicks vergessen – sobald die nächste Zeit eines
     Fahrers eingegangen ist, zeigt jeder Posten die richtige nächste Durchfahrt (verpasste zählen
     als vorbei)."""
     import random

@@ -1,4 +1,4 @@
-"""Admin: Klassen- und Wertungssätze (Phase 12)."""
+"""Admin: Klassen- und Wertungssätze."""
 
 import re
 import uuid
@@ -239,7 +239,7 @@ def test_wertungseditor_bietet_nur_freie_klassen(admin):
 
 
 def test_vorlagen_mit_seitenleiste(admin):
-    """Gruppen „Wertung“ und „Gestaltung“ wie in einer Veranstaltung (Test 08.10., Punkt 13)."""
+    """Gruppen „Wertung“ und „Gestaltung“ wie in einer Veranstaltung."""
     html = admin.get("/admin/saetze/klassen").text
     assert (
         '<div class="nav-group">Wertung</div>' in html
@@ -253,8 +253,8 @@ def test_vorlagen_mit_seitenleiste(admin):
         )
         seite_html = admin.get(f"/admin/saetze/{seite}").text
         assert f'data-seite="{seite}"\n         aria-current="page"' in seite_html, seite
-    assert "Kommt mit dem Branding (AUSBAU D1)." in admin.get("/admin/saetze/urkunden").text
-    assert 'name="vereinsname"' in admin.get("/admin/saetze/branding").text  # Release 1
+    assert "Kommt mit dem Branding." in admin.get("/admin/saetze/urkunden").text
+    assert 'name="vereinsname"' in admin.get("/admin/saetze/branding").text
     assert (
         'aria-current="page"' in admin.get("/admin/saetze/klassen/1").text
     )  # Editor: Klassensätze aktiv

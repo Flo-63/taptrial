@@ -1,6 +1,6 @@
 // Zielmonitor: Serverstand alle 5 s, laufende Zeiten jede Sekunde im Browser (Startzeit vom Server +
 // eigene Uhr, nur zur Orientierung).
-// Segmente 72: Kopfleiste mit Kennzahlen, eine Spaltenkopfzeile und ein gemeinsames Raster für alle
+// Kopfleiste mit Kennzahlen, eine Spaltenkopfzeile und ein gemeinsames Raster für alle
 // Bereiche (Platz · Nr. · Name · Klasse · Abschnitt · Zeit · Abz./Status) – „Auf der Strecke“,
 // „Letzte Zieleinläufe“ und das Ergebnis (nach Klasse gruppiert, Klassen in fester Reihenfolge:
 // Strecke, Damen vor Herren, Alter aufsteigend) stehen untereinander in voller Breite.
@@ -8,7 +8,7 @@
 // 4–6 % der Fensterhöhe; die Schrift folgt der Zeilenhöhe. Erst wenn die Mindesthöhe nicht reicht,
 // wird geblättert (je Bereich mindestens 3 Zeilen bzw. alle): Strecke/Zieleinläufe alle 10 s, das
 // Ergebnis nach der eingestellten Anzeigedauer. Leere Bereiche sind ausgeblendet.
-// Segmente 14: Seiten, Reihenfolge, Anzeigedauer und Live-Bereich kommen aus der Konfiguration der
+// Seiten, Reihenfolge, Anzeigedauer und Live-Bereich kommen aus der Konfiguration der
 // Veranstaltung (daten.monitor) und werden bei jedem Abruf übernommen, ohne Neuladen.
 (function () {
   const INTERVALL_MS = 5000;
@@ -62,7 +62,7 @@
     return kl.join(" ");
   }
 
-  // Abschnittsfeld (Segmente 14/52/72): Name klein und gedämpft, Zeit, bei „mit Pfeil und Differenz“
+  // Abschnittsfeld: Name klein und gedämpft, Zeit, bei „mit Pfeil und Differenz“
   // ▼ schneller / ▲ langsamer und die Differenz. Ohne Zeit bleibt das Feld leer.
   function segmentFeld(s) {
     if (!s) return `<span class="segment"></span>`;
@@ -111,6 +111,8 @@
 
   function zeichnen() {
     if (!daten) return;
+    // v0.1.1: Vereinsname vorn, geändertes Branding erscheint mit dem nächsten Abruf
+    if (typeof daten.verein === "string") $("mon-verein").textContent = daten.verein;
     if (!daten.veranstaltung) {
       $("mon-titel").textContent = "Derzeit keine Veranstaltung";
       return;
@@ -120,7 +122,7 @@
     const leer = $("mon-keine-ergebnisse");
     leer.hidden = !daten.keine_ergebnisse;
     leer.textContent = daten.keine_ergebnisse || "";
-    if (daten.keine_ergebnisse) return; // Segmente 46: vor der Freigabe ohne Zeiten
+    if (daten.keine_ergebnisse) return; // Vor der Freigabe ohne Zeiten
     const st = $("mon-status");
     st.textContent = daten.kopf;
     st.className = "mon-status " + (daten.offiziell ? "offiziell" : "vorlaeufig");
@@ -156,7 +158,7 @@
   }
 
   // Ergebniszeile: Spalte Klasse leer (steht in der Gruppenzeile), Abschnitt = beste Zeit des ersten
-  // gewählten Abschnittsfelds mit mehreren Durchfahrten (A178)
+  // gewählten Abschnittsfelds mit mehreren Durchfahrten
   function ergebniszeile(r) {
     const beste = r.beste ? `<span class="segment"><span class="seg-label">${esc(r.beste.label)}</span><span class="seg"><span class="seg-zeit">${esc(r.beste.zeit)}</span></span></span>` : "";
     return `<tr data-nr="${r.startnummer}" class="${zeileKlassen(r)}${r.beste ? " mit-abschnitt" : ""}"><td class="rang">${r.rang_klasse || ""}</td>${nrZelle(r.startnummer)}` +
@@ -207,7 +209,7 @@
     return seitenBilden(posten, p);
   }
 
-  // --- Monitor-Seiten (Segmente 14) ----------------------------------------------------------
+  // --- Monitor-Seiten ----------------------------------------------------------
 
   function seiteAufbauen() {
     const k = konf();
@@ -246,7 +248,7 @@
     zeitenEinpassen();
   }
 
-  // --- Höhe aufteilen (Segmente 72) ------------------------------------------------------------
+  // --- Höhe aufteilen ------------------------------------------------------------
 
   // mittlere Zeilenhöhe eines Bereichs (in Zeilen): zweizeilige Zeilen zählen ZWEIZEILIG
   const gewicht = (n, zweizeilig) => (n ? (n - zweizeilig + zweizeilig * ZWEIZEILIG) / n : 1);
@@ -298,7 +300,7 @@
     const belegt = teile.reduce((s, t) => s + t.pro * t.w, 0) || 1;
     const zh = Math.min(zmax, frei / belegt);
     // Schrift folgt der Zeilenhöhe; ist das Fenster für die größte Zeilenhöhe zu schmal (hochkant,
-    // Handy), wird sie im selben Verhältnis kleiner – weniger Zeilen bleiben größer als mehr (A179)
+    // Handy), wird sie im selben Verhältnis kleiner – weniger Zeilen bleiben größer als mehr
     const f = zh * Math.min(1, W / (schmal ? 13 : 22) / zmax);
     document.body.style.setProperty("--zh", `${Math.floor(zh * 10) / 10}px`);
     document.body.style.setProperty("--f", `${Math.floor(f * 10) / 10}px`);
@@ -374,14 +376,14 @@
     try {
       const antwort = await fetch("/api/oeffentlich" + (vorschau ? `?veranstaltung=${encodeURIComponent(vorschau)}&vorschau=1` : ""), { cache: "no-store" });
       if (!antwort.ok) throw new Error(antwort.status);
-      const version = antwort.headers.get("X-App-Version"); // Segmente 62: neue App-Version → neu laden
+      const version = antwort.headers.get("X-App-Version"); // Neue App-Version → neu laden
       if (version && document.body.dataset.version && version !== document.body.dataset.version) {
         location.reload();
         return;
       }
       daten = await antwort.json();
       // Nur eine geänderte Konfiguration startet von vorn – nicht neue Zeiten auf einer Ranglisten-Seite
-      // (sonst springt der Monitor im laufenden Rennen bei jedem Abruf auf die erste Seite, Segmente 34)
+      // (sonst springt der Monitor im laufenden Rennen bei jedem Abruf auf die erste Seite)
       const k = konfSchluessel(daten.monitor);
       if (k !== letzteKonf) { // neue Konfiguration: von vorn
         letzteKonf = k;
@@ -405,7 +407,7 @@
 
   laden();
   setInterval(laden, INTERVALL_MS);
-  // Vorschau im selben Browser: nach „Speichern“ im Admin sofort neu laden (Segmente 34)
+  // Vorschau im selben Browser: nach „Speichern“ im Admin sofort neu laden
   try {
     new BroadcastChannel("rcb-zielmonitor").onmessage = () => laden();
   } catch (e) { /* ältere Browser: beim nächsten Abruf */ }

@@ -1,4 +1,4 @@
-"""Release 6: GitHub Actions – Tests bei Push auf main (ruff, pytest ohne E2E), Multi-Arch-Image bei
+"""GitHub Actions – Tests bei Push auf main (ruff, pytest ohne E2E), Multi-Arch-Image bei
 Tag v* nach ghcr.io/<konto>/taptrial:<version> und :latest, nur mit GITHUB_TOKEN."""
 
 import re
@@ -40,3 +40,24 @@ def test_keine_geheimnisse_ausser_github_token():
     for datei in WORKFLOWS.glob("*.yml"):
         geheim = set(re.findall(r"secrets\.([A-Za-z_]+)", datei.read_text(encoding="utf-8")))
         assert geheim <= {"GITHUB_TOKEN"}, (datei.name, geheim)
+
+
+# Hauptversionen mit Node 24 (Stand Oktober 2026); ältere laufen auf veralteten Node-Versionen
+MINDESTENS = {"actions/checkout": 7, "astral-sh/setup-uv": 10, "docker/setup-qemu-action": 4,
+              "docker/setup-buildx-action": 4, "docker/login-action": 4, "docker/build-push-action": 7}  # fmt: skip
+
+
+def test_aktuelle_actions_und_fester_runner():
+    genutzt = {}
+    for name in ("tests.yml", "image.yml"):
+        w, _ = lade(name)
+        for job in w["jobs"].values():
+            assert job["runs-on"] == "ubuntu-24.04", name  # fest statt ubuntu-latest
+            for schritt in job["steps"]:
+                if "uses" in schritt:
+                    action, _, version = schritt["uses"].partition("@")
+                    assert re.fullmatch(r"v\d+", version), schritt["uses"]  # Hauptversion
+                    genutzt[action] = int(version[1:])
+    assert set(genutzt) == set(MINDESTENS)
+    for action, version in genutzt.items():
+        assert version >= MINDESTENS[action], action

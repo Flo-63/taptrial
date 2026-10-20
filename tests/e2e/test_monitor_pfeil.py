@@ -1,6 +1,6 @@
-"""Segmente 71: „mit Pfeil und Differenz“ folgt dem Feld – im Reiter „Zielmonitor und Ergebnisse“ und
+"""„mit Pfeil und Differenz“ folgt dem Feld – im Reiter „Zielmonitor und Ergebnisse“ und
 im Assistenten (gemeinsamer Baustein): Feld abgewählt → Pfeil abgewählt und gesperrt; wieder angewählt
-→ frei, mit der Vorgabe aus Segmente 66. Der Server speichert keinen Pfeil für ein nicht gewähltes Feld."""
+→ frei, mit der Vorgabe des Assistenten. Der Server speichert keinen Pfeil für ein nicht gewähltes Feld."""
 
 import json
 import sqlite3

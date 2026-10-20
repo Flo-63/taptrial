@@ -1,7 +1,7 @@
-/* Zentrales Stylesheet (ADMIN-REVIEW 2.3, Schritt 1): Design-Tokens und Bausteine.
+/* Zentrales Stylesheet: Design-Tokens und Bausteine.
    Admin, öffentliche Seiten und Hilfe nutzen es; seitenspezifisches CSS nur für Layout.
    Farbwerte stehen ausschließlich hier in den Token-Blöcken (Test test_keine_farben_ausserhalb).
-   Branding (AUSBAU D1) überschreibt später nur die --brand*-Tokens. */
+   Branding überschreibt später nur die --brand*-Tokens. */
 
 /* IBM Plex Sans/Mono, lokal ausgeliefert (SIL Open Font License 1.1, static/fonts/OFL.txt) */
 @font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 400; font-display: swap;
@@ -33,7 +33,7 @@
   --gefahr-trenner: #F1D3CF;
   /* Abzeichen-Stufen (hell) */
   --gold: #8A6A00; --silber: #5B6470; --bronze: #8C5A2B;
-  /* Streckenfarben (AUSBAU A3, Werte von Branch jetzt): nie Rot, Orange, Gelb; immer mit Text */
+  /* Streckenfarben (Werte von Branch jetzt): nie Rot, Orange, Gelb; immer mit Text */
   --strecke-ink: #FFFFFF;
   --strecke-0: #1565C0; --strecke-1: #7B1FA2; --strecke-2: #00695C;
   --strecke-3: #455A64; --strecke-4: #4527A0; --strecke-5: #212121;
@@ -240,12 +240,12 @@ details.aktion > form { margin-top: var(--s3); padding: var(--s4); border: 1px s
 .fall-titel { margin: 8px 0 2px; font-size: 16px; }
 .dz-row > div:first-child { flex: 1 1 360px; min-width: 0; }
 .tbl td.aktionen .btn-reihe { flex-wrap: nowrap; justify-content: flex-end; }
-/* Reiterleiste (Einstellungen, Segmente 17): eigene Adresse je Reiter; auf dem Handy waagerecht scrollbar */
+/* Reiterleiste (Einstellungen): eigene Adresse je Reiter; auf dem Handy waagerecht scrollbar */
 .reiterleiste { display: flex; gap: var(--s1); max-width: 100%; min-width: 0; overflow-x: auto; border-bottom: 1px solid var(--line); margin-top: var(--s3); scrollbar-width: thin; }
 .reiter-link { flex: none; padding: var(--s2) var(--s3); color: var(--text-2); text-decoration: none; font-weight: 500; font-size: 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
 .reiter-link:hover { color: var(--text); background: var(--hover); }
 .reiter-link[aria-current="page"] { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
-/* Reiter im Editor (Segmente 27): Buttons statt Links, Wechsel ohne Speichern; Fehler markiert den Reiter */
+/* Reiter im Editor: Buttons statt Links, Wechsel ohne Speichern; Fehler markiert den Reiter */
 button.reiter-link { background: none; border: 0; border-bottom: 2px solid transparent; font-family: inherit; cursor: pointer; }
 .reiter-link[aria-selected="true"] { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
 .reiter-link.reiter-fehler { color: var(--danger); }
@@ -255,7 +255,7 @@ button.reiter-link { background: none; border: 0; border-bottom: 2px solid trans
 .aktionsleiste { position: sticky; bottom: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2);
   padding: var(--s3) var(--s4); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
   box-shadow: var(--schatten); }
-/* Verlauf als Punktfolge (Segmente 28) */
+/* Verlauf als Punktfolge */
 .punktfolge, .pf-innen { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s2); }
 .punktfolge > li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); padding: var(--s2) var(--s3);
   border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); min-width: 0; }
@@ -273,13 +273,14 @@ button.reiter-link { background: none; border: 0; border-bottom: 2px solid trans
 [aria-invalid="true"] { border-color: var(--danger) !important; outline-color: var(--danger); }
 .feld-fehler { display: block; color: var(--danger); font-size: 13px; margin-top: 4px; }
 
-/* Standardknopf für Enter im Formular (unsichtbar, Segmente 34) */
+/* Standardknopf für Enter im Formular (unsichtbar) */
 .nur-standard { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
-/* Release 1: kleine Fußzeile der Druckansichten („erstellt mit TapTrial“) */
+/* Kleine Fußzeile der Druckansichten („erstellt mit TapTrial“) */
 .druck-fuss { margin: 12px 0 0; color: var(--muted); font-size: 8pt; text-align: right; }
-/* Release 2: Version klein in der Fußzeile (Admin, öffentliche Seiten) */
-.admin-fuss { margin-top: 32px; padding-top: 8px; border-top: 1px solid var(--line-soft); color: var(--muted); font-size: 12px; }
-.oeffentlich-fuss { max-width: 1000px; margin: 0 auto; padding: 12px 16px 24px; color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+/* Öffentliche Seiten: Fußzeile immer am unteren Rand, klein rechts (auch bei wenig Inhalt) */
+body:has(> .oeffentlich-fuss) { min-height: 100vh; display: flex; flex-direction: column; }
+body:has(> .oeffentlich-fuss) > * { width: 100%; }
+.oeffentlich-fuss { box-sizing: border-box; width: 100%; max-width: 1000px; margin: auto auto 0; padding: 12px 16px 16px; color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 14px; }
 .oeffentlich-fuss a { color: inherit; }
-.startseite .oeffentlich-fuss { justify-content: center; color: var(--d-muted); }
+.startseite .oeffentlich-fuss { max-width: none; color: var(--d-muted); }
 @media print { .oeffentlich-fuss { display: none; } }

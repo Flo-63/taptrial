@@ -1,7 +1,7 @@
 """Container-Tests: Image bauen, starten, Healthcheck, Pflicht-Secrets, nicht als root.
 
 Werden übersprungen, wenn Docker nicht verfügbar ist. Die E2E-Suite gegen den Container
-läuft mit `scripts/container_e2e.sh` (setzt RCB_E2E_IMAGE).
+läuft mit `scripts/container_e2e.sh` (setzt TAPTRIAL_E2E_IMAGE).
 """
 
 import shutil
@@ -50,7 +50,7 @@ def container(image, tmp_path):
     r = docker(
         "run", "-d", "--name", name, "-p", f"127.0.0.1:{port}:8000",
         "-v", f"{tmp_path}:/data",
-        "-e", f"RCB_TOKEN_ADMIN={TOKENS['admin']}",
+        "-e", f"TAPTRIAL_TOKEN_ADMIN={TOKENS['admin']}",
         image,
     )  # fmt: skip
     assert r.returncode == 0, r.stderr
@@ -117,14 +117,14 @@ def test_ein_prozess_uvicorn(image):
 def test_ohne_secrets_kein_start(image):
     r = docker("run", "--rm", image, timeout=60)
     assert r.returncode != 0
-    assert "RCB_TOKEN_ADMIN" in r.stdout + r.stderr
+    assert "TAPTRIAL_TOKEN_ADMIN" in r.stdout + r.stderr
 
 
 def test_verwaltung_im_container(image, tmp_path):
     tmp_path.chmod(0o777)
     csv = "startnummer;vorname;nachname;geschlecht;geburtsjahr\n1;Anna;A;w;1990\n"
     r = docker(
-        "run", "--rm", "-i", "-v", f"{tmp_path}:/data", "-e", "RCB_DB_PFAD=/data/x.sqlite3",
+        "run", "--rm", "-i", "-v", f"{tmp_path}:/data", "-e", "TAPTRIAL_DB_PFAD=/data/x.sqlite3",
         image, "sh", "-c",
         "python -m app.verwaltung veranstaltung Test 2026-10-10 && "
         "python -m app.verwaltung import -",

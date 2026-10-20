@@ -1,4 +1,4 @@
-"""Zielmonitor übersichtlich (Feedback 10/2026): Raster, Reihenfolge, Farben, Spalten, Blättern."""
+"""Zielmonitor übersichtlich: Raster, Reihenfolge, Farben, Spalten, Blättern."""
 
 import re
 import uuid
@@ -8,12 +8,12 @@ from playwright.sync_api import expect
 
 from app.simulation import rennplan
 
-PLAN = rennplan(seed=2026)  # 50 Fahrer, davon 5 Jugendliche (5 km), viele Klassen
+RENNPLAN = rennplan(seed=2026)  # 50 Fahrer, davon 5 Jugendliche (5 km), viele Klassen
 
 
 @pytest.fixture
 def teilnehmer_liste():
-    return PLAN.fahrer
+    return RENNPLAN.fahrer
 
 
 @pytest.fixture
@@ -24,9 +24,9 @@ def zwei_strecken():
 def rennen(server):
     """Alle Starts und Zieleinläufe des Rennplans (ohne Uhr), über die API."""
     starts = [{"uuid": str(uuid.uuid4()), "art": "START", "startnummer": nr, "zeit_ms": t,
-               "erstellt_ms": t, "geraet": "start-api"} for nr, t in PLAN.start_ms.items()]  # fmt: skip
+               "erstellt_ms": t, "geraet": "start-api"} for nr, t in RENNPLAN.start_ms.items()]  # fmt: skip
     ziele = [{"uuid": str(uuid.uuid4()), "art": "ZIEL", "startnummer": nr, "zeit_ms": t,
-              "erstellt_ms": t, "geraet": "ziel-api"} for nr, t in PLAN.ziel_ms.items() if nr != 40]  # fmt: skip
+              "erstellt_ms": t, "geraet": "ziel-api"} for nr, t in RENNPLAN.ziel_ms.items() if nr != 40]  # fmt: skip
     server.senden(starts, rolle="start")
     server.senden(ziele, rolle="ziel")
 
@@ -57,7 +57,7 @@ def alle_klassen(page) -> list[str]:
 def test_raster_reihenfolge_farben_quer(browser, server):
     rennen(server)
     page = monitor(browser, server, 1366, 768)
-    # Segmente 72: ein Spaltenkopf, das Ergebnis als eine Liste in voller Breite im gemeinsamen Raster
+    # Ein Spaltenkopf, das Ergebnis als eine Liste in voller Breite im gemeinsamen Raster
     expect(page.locator("#mon-spaltenkopf")).to_have_count(1)
     assert page.locator("#mon-klassen table").count() == 1
     assert page.locator("#mon-klassen").bounding_box()["width"] >= 1366 - 2
@@ -141,7 +141,7 @@ def test_qr_code_zu_den_ergebnissen(browser, server, groesse):
 
 
 def test_ergebnisseite_nur_eine_strecke_ohne_abzeichen(browser, server):
-    """Segmente 14: Optionen der Ergebnisseite – Strecke(n) und Abzeichen-Spalte."""
+    """Optionen der Ergebnisseite – Strecke(n) und Abzeichen-Spalte."""
     import httpx
 
     from tests.e2e.conftest import TOKENS

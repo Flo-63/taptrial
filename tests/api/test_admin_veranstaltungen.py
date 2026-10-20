@@ -1,4 +1,4 @@
-"""Veranstaltungen mit Seitenleiste und Filtern (Test 08.10., Punkt 14)."""
+"""Veranstaltungen mit Seitenleiste und Filtern."""
 
 import re
 from datetime import date

@@ -1,4 +1,4 @@
-"""E2E: erwartete Fahrer am Ziel hervorheben (AUSBAU A8)."""
+"""E2E: erwartete Fahrer am Ziel hervorheben."""
 
 import time
 import uuid

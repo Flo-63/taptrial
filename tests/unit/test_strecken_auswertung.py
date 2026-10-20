@@ -1,4 +1,4 @@
-"""Auswertung mit mehreren Strecken (Phase 13): alles getrennt je Strecke."""
+"""Auswertung mit mehreren Strecken: alles getrennt je Strecke."""
 
 from datetime import date
 from pathlib import Path
@@ -84,7 +84,7 @@ def test_stufe_gegen_eigene_strecke_gesamtzeit():
     z = {x.startnummer: x for x in erg.zeilen}
     assert z[1].stufe is not None and z[2].stufe is not None  # 5 km gemessen 5,0 ≥ 5
     assert z[4].stufe is not None and z[5].stufe is not None  # 20 km gemessen 20,0 ≥ 20
-    # Strecke zu kurz (A34): 4,9 km bzw. 19,9 km → keine Stufe auf der jeweiligen Strecke
+    # Strecke zu kurz: 4,9 km bzw. 19,9 km → keine Stufe auf der jeweiligen Strecke
     erg = auswerten(TEILNEHMER, ereignisse(), config(kurz=49, wertung=A1))
     z = {x.startnummer: x for x in erg.zeilen}
     assert z[1].stufe is None and z[4].stufe is not None

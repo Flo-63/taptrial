@@ -1,9 +1,11 @@
-/* Admin: nur Layout; Farben, Schrift und Bausteine aus basis.css (ADMIN-REVIEW 2.3) */
+/* Admin: nur Layout; Farben, Schrift und Bausteine aus basis.css */
 /* Kopfzeile: alle Punkte als Navigations-Buttons gleicher Art */
-/* Fixierter Rahmen: Kopfzeile und Seitenleiste bleiben beim Scrollen stehen (Test 08.10., Punkt 10) */
+/* Fixierter Rahmen: Kopfzeile und Seitenleiste bleiben beim Scrollen stehen */
 html { scroll-padding-top: var(--kopf-hoehe, 56px); }
 .topbar { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; min-height: 56px; padding: 10px 20px; background: var(--kopf); color: var(--brand-ink); }
 .marke { display: flex; align-items: center; gap: 10px; margin-right: 12px; color: var(--brand-ink); font-weight: 600; text-decoration: none; }
+.marke-text { display: flex; flex-direction: column; line-height: 1.15; }
+.marke-app { font-size: 11px; font-weight: 400; opacity: 0.75; }
 .marke:hover { color: var(--brand-ink); }
 .marke-zeichen { width: 30px; height: 30px; border-radius: var(--r-sm); background: var(--brand); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; letter-spacing: 0.02em; }
 .top-nav { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -16,6 +18,7 @@ html { scroll-padding-top: var(--kopf-hoehe, 56px); }
 /* Rahmen in der Veranstaltung: linke Seitenleiste mit Gruppen, auf dem Handy Menü-Button */
 .rahmen { display: block; }
 .rahmen.mit-seitenleiste { display: flex; align-items: flex-start; }
+.sl-version { margin: 16px 12px 0; color: var(--muted); font-size: 11px; opacity: 0.8; }
 .seitenleiste { flex: 0 0 248px; padding: 16px 12px; position: sticky; top: var(--kopf-hoehe, 56px); max-height: calc(100vh - var(--kopf-hoehe, 56px)); overflow-y: auto; }
 .sl-kopf { padding: 4px 12px 12px; display: flex; flex-direction: column; gap: 6px; }
 .sl-titel { font-weight: 600; font-size: 15px; line-height: 1.3; }
@@ -71,6 +74,6 @@ html { scroll-padding-top: var(--kopf-hoehe, 56px); }
 .sl-knopf { margin-top: 8px; align-self: stretch; }
 .tbl th.segment-kopf { white-space: nowrap; font-size: 11px; }
 .tbl td.segment { font-size: 12px; color: var(--text-2); }
-/* Strecken-Liste auf der Seite „Strecken“ (Segmente 18) */
+/* Strecken-Liste auf der Seite „Strecken“ */
 .raster-karten { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: var(--s4); }
 .strecke-kurz .fakten dd { overflow-wrap: anywhere; }

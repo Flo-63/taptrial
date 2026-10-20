@@ -1,4 +1,4 @@
-"""Segmente 46 im Browser: Geräte zeigen bis zur Freigabe einen Sperrbildschirm, schalten sich
+"""Freigabe im Browser: Geräte zeigen bis zur Freigabe einen Sperrbildschirm, schalten sich
 ohne Neuladen frei; abgelehnte Einträge bleiben erhalten und gehen nach der Freigabe durch."""
 
 from playwright.sync_api import expect
@@ -54,7 +54,7 @@ def test_offline_erfasst_abgelehnt_bleibt_und_geht_nach_freigabe_durch(server, n
 
 
 def test_laufende_veranstaltung_nicht_verdraengen(server, browser):
-    """Segmente 55: „Aktiv setzen“ einer anderen Veranstaltung ist gesperrt, solange die laufende
+    """„Aktiv setzen“ einer anderen Veranstaltung ist gesperrt, solange die laufende
     Startzeiten hat – mit Grund und Button zur laufenden Veranstaltung."""
     from tests.e2e.test_import_vorschau import anmelden
 

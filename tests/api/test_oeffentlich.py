@@ -1,4 +1,4 @@
-"""Öffentliche Ergebnisse, CSV, Druckansicht, Monitor-Daten und Leistungswertung (Phase 7)."""
+"""Öffentliche Ergebnisse, CSV, Druckansicht, Monitor-Daten und Leistungswertung."""
 
 import uuid
 from datetime import date
@@ -76,7 +76,7 @@ def daten(client):
 def test_ohne_aktive_veranstaltung(client):
     assert client.get("/ergebnisse").status_code == 200
     assert "Derzeit keine Ergebnisse" in client.get("/ergebnisse").text
-    assert daten(client) == {"veranstaltung": None}
+    assert daten(client) == {"veranstaltung": None, "verein": ""}
     assert client.get("/monitor").status_code == 200
     assert client.get("/ergebnisse.csv").status_code == 404
 
@@ -220,7 +220,7 @@ def wertung_an(client, v, strecke=20.0):
         from app import strecken
         from app.models import Wertungssatz
 
-        # Strecken wie der Vorschlag aus dem Satz (Segmente 49: legt der Satzwechsel nicht mehr an)
+        # Strecken wie der Vorschlag aus dem Satz (legt der Satzwechsel nicht mehr an)
         ws = s.get(Wertungssatz, int(satz_id(client)))
         strecken.anlegen(
             s, x, strecken.vorschlag(saetze.regeln(s, x).klassen, saetze.wertung_von(ws))
@@ -306,7 +306,7 @@ def test_wertung_im_admin_setzen(client, v):
     )
     assert "Klassen, Leistungswertung und Strecken gespeichert" in r.text
     assert "20,0 km" in client.get(f"/admin/v/{v.id}/strecken").text
-    assert "vorgeschlagen" not in r.text  # Segmente 49: keine Strecken still angelegt
+    assert "vorgeschlagen" not in r.text  # Keine Strecken still angelegt
     fahrt(client, 1, 30)
     assert "Abzeichen" in client.get(f"/admin/v/{v.id}/ergebnis").text
     r = client.post(
@@ -335,9 +335,7 @@ def test_bestimmte_veranstaltung_fuer_pdf_export(client, v):
     fahrt(client, 1, 30)
     with client.app.state.sessionmaker() as s:
         s.add(Veranstaltung(name="Neu aktiv", datum=date(2026, 11, 1), aktiv=False))
-        s.get(
-            Veranstaltung, v.id
-        ).zustand = "abgeschlossen"  # Segmente 55: laufende erst abschließen
+        s.get(Veranstaltung, v.id).zustand = "abgeschlossen"  # Laufende erst abschließen
         s.commit()
         k.aktiv_setzen(s, s.query(Veranstaltung).filter_by(name="Neu aktiv").one())
     assert "Neu aktiv" in client.get("/ergebnisse/druck").text

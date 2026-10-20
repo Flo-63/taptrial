@@ -1,4 +1,4 @@
-"""Segmente 37/38/42 im Browser: Seite „Messpunkte“, Start-/Zielort im Strecken-Editor, Geräte je Ort."""
+"""Im Browser: Seite „Messpunkte“, Start-/Zielort im Strecken-Editor, Geräte je Ort."""
 
 from playwright.sync_api import expect
 
@@ -55,7 +55,7 @@ def test_orte_anlegen_und_strecke_waehlt_start_und_ziel(server, browser):
     ctx.close()
 
 
-# --- Segmente 38: Geräte je Ort ------------------------------------------------------------------
+# --- Geräte je Ort ------------------------------------------------------------------
 
 import pytest
 
@@ -117,7 +117,7 @@ def test_zielort_zeigt_eigene_fahrer_und_bietet_sie_zuerst_an(
     assert server.teilnehmer(4)["ziel_ms"] is not None
 
 
-# --- Segmente 39: Strecke im Assistenten aus Datei ersetzen --------------------------------------
+# --- Strecke im Assistenten aus Datei ersetzen --------------------------------------
 
 
 def test_assistent_strecke_aus_datei_ersetzen(server, browser, tmp_path):
@@ -128,7 +128,7 @@ def test_assistent_strecke_aus_datei_ersetzen(server, browser, tmp_path):
     ctx, a = admin(server, browser)
     vid = a.url.rstrip("/").rsplit("/", 1)[1]
     a.goto(f"{server.url}/admin/einrichtung/{vid}/2")
-    a.fill("input[name=strecke_name_0]", "Wald")  # Segmente 50: Eingabe geht nicht verloren
+    a.fill("input[name=strecke_name_0]", "Wald")  # Eingabe geht nicht verloren
     a.click("#strecke-laden-0")
     expect(a.locator(".meldung")).to_contain_text("Schritt 2 gespeichert")
     a.set_input_files("#strecke-datei", str(datei))
@@ -136,7 +136,7 @@ def test_assistent_strecke_aus_datei_ersetzen(server, browser, tmp_path):
     expect(a.locator("#modus-ersetzen")).not_to_be_checked()  # nichts vorausgewählt
     expect(a.locator("#modus-neu")).not_to_be_checked()
     expect(a.locator("#laden-name-feld")).to_be_hidden()
-    # Segmente 57: ohne Wahl schickt der Browser nicht ab – die Vorschau (und Datei) bleibt
+    # Ohne Wahl schickt der Browser nicht ab – die Vorschau (und Datei) bleibt
     a.click("#uebernehmen")
     expect(a.locator("#vorschau")).to_be_visible()
     assert a.evaluate("document.getElementById('modus-ersetzen').validity.valueMissing")
@@ -154,7 +154,7 @@ def test_assistent_strecke_aus_datei_ersetzen(server, browser, tmp_path):
     ctx.close()
 
 
-# --- Segmente 40: Strecke mit Klassen entfernen ---------------------------------------------------
+# --- Strecke mit Klassen entfernen ---------------------------------------------------
 
 
 @pytest.mark.parametrize("zwei_strecken", [True])

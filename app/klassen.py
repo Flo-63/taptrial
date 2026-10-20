@@ -1,4 +1,4 @@
-"""Altersklassen laden, validieren und Teilnehmer klassifizieren (KONZEPT 7, E3, E5)."""
+"""Altersklassen laden, validieren und Teilnehmer klassifizieren."""
 
 import tomllib
 from dataclasses import dataclass
@@ -81,7 +81,7 @@ def lade_klassen(pfad: str) -> list[Klasse]:
 
 
 def alter_am_stichtag(geburtsjahr: int, stichtag: date) -> int:
-    """Jahrgangsprinzip (E5): Wettkampfjahr minus Geburtsjahr."""
+    """Jahrgangsprinzip: Wettkampfjahr minus Geburtsjahr."""
     return stichtag.year - geburtsjahr
 
 

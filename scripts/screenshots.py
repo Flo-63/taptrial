@@ -33,7 +33,7 @@ from app.models import Ereignis, Messpunkt, Teilnehmer, Veranstaltung, Wertungss
 from app.simulation import BEISPIEL_MESSPUNKTE, ZEITZONE, beispiel_teile, rennplan, rundkurs
 
 TOKEN_START, TOKEN_ZIEL, TOKEN_ADMIN = "handbuch-start", "handbuch-ziel", "handbuch-admin"
-TOKEN_POSTEN = "handbuch-posten"  # Messpunkt „Kreisel“ (Phase 14)
+TOKEN_POSTEN = "handbuch-posten"  # Messpunkt „Kreisel“
 HANDY = "Pixel 7"
 BILDER = [
     "start.png", "ziel-erfassen.png", "rennleitung.png", "rennleitung-zuordnen.png",
@@ -83,7 +83,7 @@ def daten_anlegen(db: str, ziele_bis: int = 6) -> int:
         mp_id = {k: str(m.id) for (k, _), m in zip(BEISPIEL_MESSPUNKTE, mps, strict=True)}
         teile = beispiel_teile(mp_id)
         lang.teile_json = segmente.nach_json(teile)
-        # Abschnitt „Runde“ = Kreisel bis nächster Kreisel (Segmente 13) und Monitor mit Live-Feld dazu
+        # Abschnitt „Runde“ = Kreisel bis nächster Kreisel und Monitor mit Live-Feld dazu
         import json
 
         lang.abschnitte_json = json.dumps({"segmente": {}, "eigene": [
@@ -168,7 +168,7 @@ def _mit_server(db: str, jetzt: int, aufnehmen) -> None:
     """Server mit der Datenbank starten, `aufnehmen(browser, playwright, url, uhrzeit)` ausführen."""
     uhrzeit = datetime.fromtimestamp(jetzt / 1000, ZEITZONE)
     port = _freier_port()
-    env = {**os.environ, "RCB_DB_PFAD": db, "RCB_TOKEN_ADMIN": TOKEN_ADMIN}
+    env = {**os.environ, "TAPTRIAL_DB_PFAD": db, "TAPTRIAL_TOKEN_ADMIN": TOKEN_ADMIN}
     server = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "app.main:app", "--port", str(port)],
         cwd=PROJEKT, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
@@ -214,7 +214,7 @@ def _aufnehmen(browser, handy, url, uhrzeit, ziel: Path) -> None:
     foto(start, "start.png")
     ctx.close()
 
-    # Posten am Messpunkt (Phase 14)
+    # Posten am Messpunkt
     ctx, posten = handyseite(f"/posten?token={TOKEN_POSTEN}")
     foto(posten, "posten.png")
     ctx.close()
@@ -276,7 +276,7 @@ def _aufnehmen(browser, handy, url, uhrzeit, ziel: Path) -> None:
                         ("drucken", "admin-drucken.png"), ("status", "admin-status.png")):  # fmt: skip
         a.click(f".sl-nav a[data-seite={seite}]")
         foto(a, name)
-    # Strecken, Messpunkte und die Seite der langen Strecke (Segmente 25)
+    # Strecken, Messpunkte und die Seite der langen Strecke
     a.click(".sl-nav a[data-seite=einstellungen]")
     a.click("#einstellungen-reiter a[data-reiter=zielmonitor]")
     foto(a, "admin-zielmonitor.png")
@@ -319,9 +319,7 @@ def _aufnehmen(browser, handy, url, uhrzeit, ziel: Path) -> None:
     a.fill("#schritt input[name=name]", "Zeitfahren Frühjahr")
     a.fill("#schritt input[name=datum]", "2027-04-17")
     a.click("#weiter")
-    a.select_option(
-        "#wahl-wertungssatz", label="DRA A.1 flach"
-    )  # Segmente 49: je Längen-Platz entscheiden
+    a.select_option("#wahl-wertungssatz", label="DRA A.1 flach")  # Je Längen-Platz entscheiden
     a.wait_for_selector(".platz[data-platz='5 km']")
     foto(a, "admin-einrichtung.png")
     ctx.close()

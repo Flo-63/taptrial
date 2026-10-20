@@ -49,7 +49,7 @@ def create_app(einstellungen: Einstellungen | None = None) -> FastAPI:
                 session, einstellungen.klassen_datei, einstellungen.wertungen_verzeichnis
             )
             saetze.veranstaltungen_zuordnen(session)
-            strecken.migrieren(session)  # Phase 13: je Veranstaltung mindestens eine Strecke
+            strecken.migrieren(session)  # Je Veranstaltung mindestens eine Strecke
         app.state.engine = engine
         app.state.sessionmaker = erzeuge_sessionmaker(engine)
         yield
@@ -63,10 +63,19 @@ def create_app(einstellungen: Einstellungen | None = None) -> FastAPI:
 
     @app.get("/version")
     def version() -> dict[str, str]:
-        """Release 2: Name und Version (aus pyproject.toml), dazu der Stand der Oberfläche."""
+        """Name und Version (aus pyproject.toml), dazu der Stand der Oberfläche."""
         from app.seiten import APP_VERSION
 
         return {"name": marke.NAME, "version": VERSION, "oberflaeche": APP_VERSION}
+
+    @app.middleware("http")
+    async def html_nicht_zwischenspeichern(request, call_next):
+        """HTML-Seiten (Branding, Impressum …) ändern sich ohne neue Version; der Browser fragt
+        deshalb jedes Mal beim Server nach statt eine gespeicherte Seite zu zeigen."""
+        antwort = await call_next(request)
+        if antwort.headers.get("content-type", "").startswith("text/html"):
+            antwort.headers.setdefault("Cache-Control", "no-cache")
+        return antwort
 
     app.include_router(api_router)
     app.include_router(seiten_router)

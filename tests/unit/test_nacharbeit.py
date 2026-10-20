@@ -36,7 +36,7 @@ def test_script_bericht(capsys):
 
 
 def test_vergessene_und_doppelte_tipps_keine_falschen_segmentzeiten():
-    """Segmente 8: Abstandsregel und automatisches Verwerfen der Doppeltipps."""
+    """Abstandsregel und automatisches Verwerfen der Doppeltipps."""
     for seed in (
         38,
         46,
@@ -55,7 +55,7 @@ def test_vergessene_und_doppelte_tipps_keine_falschen_segmentzeiten():
 
 
 def test_zwei_strecken_gemeinsamer_messpunkt_und_abschnitt_runde():
-    """Segmente 12–15: kurze Strecke über den gemeinsamen Kreisel, Abschnitt „Runde“ auf der langen."""
+    """Kurze Strecke über den gemeinsamen Kreisel, Abschnitt „Runde“ auf der langen."""
     for seed in (1, 38, 46):
         m = nacharbeit_rundkurs(seed=seed, vergessen=0.15, doppelt=0.02, zwei_strecken=True)
         assert (

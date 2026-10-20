@@ -1,7 +1,6 @@
-"""Migration zu Klassen-/Wertungssätzen: Ergebnisse vorher und nachher identisch (Phase 12)."""
+"""Migration zu Klassen-/Wertungssätzen: Ergebnisse vorher und nachher identisch."""
 
 import hashlib
-import os
 import shutil
 import sqlite3
 from datetime import date
@@ -12,6 +11,7 @@ import pytest
 
 from app import korrekturen as k
 from app import saetze as sz
+from app import umgebung
 from app.auswertung import AuswertungsConfig, auswerten
 from app.db import erzeuge_engine, erzeuge_sessionmaker, tabellen_anlegen
 from app.einstellungen import STANDARD_KLASSEN_DATEI, STANDARD_WERTUNGEN
@@ -20,8 +20,8 @@ from app.models import Veranstaltung
 from app.simulation import rennplan
 from app.wertung import Stufe, Wertung, lade_wertungen, zehntel_km
 
-# Backups des echten Rennens (nur lokal); im Release-Export zeigt RCB_BACKUP_VERZEICHNIS ins Leere
-BACKUP_VERZEICHNIS = Path(os.environ.get("RCB_BACKUP_VERZEICHNIS") or Path.home() / "rcb-backups")
+# Backups des echten Rennens (nur lokal); im Release-Export zeigt TAPTRIAL_BACKUP_VERZEICHNIS ins Leere
+BACKUP_VERZEICHNIS = Path(umgebung.wert("backup_verzeichnis") or Path.home() / "rcb-backups")
 BACKUPS = sorted(BACKUP_VERZEICHNIS.glob("backup-*.sqlite3"))
 
 
@@ -37,7 +37,7 @@ def hat_strecken(pfad: Path) -> bool:
 
 
 def ergebnis_ohne_migration(pfad: Path) -> dict:
-    """Datei schon im Schema ab Phase 13: Referenz = heutige Auswertung ohne Migrationsschritte
+    """Datei schon im Schema mit mehreren Strecken: Referenz = heutige Auswertung ohne Migrationsschritte
     (auf einer eigenen Kopie)."""
     kopie = pfad.with_name(pfad.stem + "-referenz.sqlite3")
     shutil.copy2(pfad, kopie)
@@ -50,7 +50,7 @@ def ergebnis_ohne_migration(pfad: Path) -> dict:
 
 
 def ergebnis_vorher(pfad: Path) -> dict:
-    """Ergebnisse wie bisher (vor Phase 12): Klassen/Wertung aus den Dateien in config/."""
+    """Ergebnisse wie bisher (vor den Klassen- und Wertungssätzen): Klassen/Wertung aus den Dateien in config/."""
     if hat_strecken(pfad):
         return ergebnis_ohne_migration(pfad)
     klassen = lade_klassen(STANDARD_KLASSEN_DATEI)
@@ -68,7 +68,7 @@ def ergebnis_vorher(pfad: Path) -> dict:
         wertung = (
             wertungen.get(v.get("wertung")) if v.get("wertung") and v.get("strecke_km") else None
         )
-        if v.get("wertungssatz_id") and v.get("strecke_km"):  # Datei im Schema ab Phase 12
+        if v.get("wertungssatz_id") and v.get("strecke_km"):  # Datei im Schema mit Sätzen
             wertung = _wertung_aus_db(con, v["wertungssatz_id"])
         config = AuswertungsConfig(
             klassen=klassen, stichtag=date.fromisoformat(v["stichtag_alter"]), wertung=wertung,
@@ -80,7 +80,7 @@ def ergebnis_vorher(pfad: Path) -> dict:
 
 
 def _wertung_aus_db(con, wid: int) -> Wertung:
-    """Wertungssatz direkt aus den Tabellen (Schema Phase 12), unabhängig von app.saetze."""
+    """Wertungssatz direkt aus den Tabellen (Schema mit Sätzen), unabhängig von app.saetze."""
     w = con.execute("SELECT * FROM wertungssatz WHERE id = ?", (wid,)).fetchone()
     stufen = {
         st["klasse"]: Stufe(st["klasse"], st["gold_ms"], st["silber_ms"], st["bronze_ms"],
@@ -119,7 +119,7 @@ def _kurz(erg) -> tuple:
 
 
 def alte_datenbank(pfad: Path, mit_wertung: bool) -> None:
-    """Datei im Schema vor Phase 6 (wie das Backup) bzw. mit Wertungsspalten (Stand Phase 11)."""
+    """Datei im Schema vor der Admin-Oberfläche (wie das Backup) bzw. mit Wertungsspalten."""
     plan = rennplan(seed=5)
     con = sqlite3.connect(pfad)
     extra = ", wertung VARCHAR(100), strecke_km FLOAT" if mit_wertung else ""

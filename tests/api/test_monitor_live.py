@@ -1,4 +1,4 @@
-"""Segmente 62: Live-Bereich des Zielmonitors – je im Admin gewähltem Abschnittsfeld (Segment,
+"""Live-Bereich des Zielmonitors – je im Admin gewähltem Abschnittsfeld (Segment,
 Rundenblock, eigener Abschnitt) die letzte Zeit mit Namen, bei „mit Pfeil und Differenz“ ▼/▲ und
 Differenz; /api/oeffentlich nennt die App-Version, /monitor lädt seine Dateien versioniert."""
 

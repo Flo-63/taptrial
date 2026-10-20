@@ -1,4 +1,4 @@
-"""Migration auf Strecken: genau eine Strecke aus strecke_km, Ergebnisse unverändert (Phase 13)."""
+"""Migration auf Strecken: genau eine Strecke aus strecke_km, Ergebnisse unverändert."""
 
 import hashlib
 import shutil
@@ -55,7 +55,7 @@ def test_migration_alte_datenbank(tmp_path, mit_wertung):
 
 
 def test_migration_stand_phase_12(tmp_path):
-    """Datenbank nach Phase 12: Sätze zugeordnet, eingefroren, eine Länge in strecke_km."""
+    """Datenbank mit Sätzen, vor mehreren Strecken: Sätze zugeordnet, eingefroren, eine Länge in strecke_km."""
     pfad = tmp_path / "p12.sqlite3"
     engine = erzeuge_engine(str(pfad))
     tabellen_anlegen(engine)
@@ -78,7 +78,7 @@ def test_migration_stand_phase_12(tmp_path):
         sz.einfrieren(s, v)
         s.commit()
         assert s.query(Strecke).count() == 0 and s.query(StreckeKlasse).count() == 0
-        vorher = _kurz(k.ergebnis(s, v))  # Phase-12-Weg: eine Länge aus strecke_km
+        vorher = _kurz(k.ergebnis(s, v))  # früherer Weg: eine Länge aus strecke_km
     engine.dispose()
     ergebnisse, strecken = nachher(pfad)
     assert ergebnisse == {1: vorher}
@@ -96,7 +96,7 @@ def test_migration_kopie_des_backups(tmp_path, backup):
     vorher = ergebnis_vorher(kopie)
     ergebnisse, strecken = nachher(kopie)
     assert ergebnisse == vorher
-    if schon_strecken:  # Datei ab Phase 13: Strecken bleiben, wie sie sind
+    if schon_strecken:  # Datei mit Strecken: Strecken bleiben, wie sie sind
         assert strecken and all(liste for liste in strecken.values())
         assert hashlib.sha256(backup.read_bytes()).hexdigest() == original_hash
         return

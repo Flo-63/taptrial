@@ -1,4 +1,4 @@
-"""Segmente 9/14: Abschnittszeiten im Kasten „Auf der Strecke“ des Zielmonitors (Konfiguration, Standard ohne)."""
+"""Abschnittszeiten im Kasten „Auf der Strecke“ des Zielmonitors (Konfiguration, Standard ohne)."""
 
 import time
 import uuid
@@ -59,9 +59,7 @@ def test_segmentzeit_mit_pfeil_und_differenz_quer_und_hochkant(browser, server):
         expect(page.locator("#mon-unterwegs tr[data-nr='3'] .segment")).to_have_text("")
         # übrige Bereiche unverändert, kein waagerechtes Scrollen
         assert page.evaluate("document.documentElement.scrollWidth") <= breite
-        assert (
-            page.locator("#mon-unterwegs tr[data-nr='1'] td").count() == 7
-        )  # Raster (Segmente 72)
+        assert page.locator("#mon-unterwegs tr[data-nr='1'] td").count() == 7  # Raster
         page.close()
 
 
@@ -73,7 +71,7 @@ def test_platzmangel_erst_differenz_dann_pfeil_weg_zeit_bleibt(browser, server):
     senden_direkt(server, durchfahrten(server, starts))
     page = monitor(browser, server, 360, 740)
     feld = page.locator("#mon-unterwegs tr[data-nr='1'] .segment")
-    # Segmente 62: ein Feld hat auch bei 360 px Platz für Name, Zeit, Pfeil und Differenz
+    # Ein Feld hat auch bei 360 px Platz für Name, Zeit, Pfeil und Differenz
     for teil in (".seg-label", ".seg-zeit", ".seg-pfeil", ".seg-diff"):
         expect(feld.locator(teil)).to_be_visible()
     assert page.evaluate("document.documentElement.scrollWidth") <= 360
@@ -151,7 +149,7 @@ def test_seiten_wechseln_live_bereich_je_seite_ohne_neuladen(browser, server, ru
 
 
 def test_monitor_seite_rangliste_abschnitt(browser, server):
-    """Segmente 15: Monitor-Seite „Rangliste Abschnitt“ mit Top N."""
+    """Monitor-Seite „Rangliste Abschnitt“ mit Top N."""
     import re
 
     import httpx
@@ -180,7 +178,7 @@ def test_monitor_seite_rangliste_abschnitt(browser, server):
     assert page.evaluate("document.documentElement.scrollWidth") <= 1366
 
 
-# --- Segmente 34: gespeicherte Einstellungen wirken in Vorschau und Live-Monitor ---------------
+# --- Gespeicherte Einstellungen wirken in Vorschau und Live-Monitor ---------------
 
 
 def _durchfahrt(server, nr, mp, rolle, zeit):

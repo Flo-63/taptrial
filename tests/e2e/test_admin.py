@@ -1,4 +1,4 @@
-"""Abnahme Phase 6 im Browser: Admin auf dem Laptop, Geräte als Handys."""
+"""Admin im Browser: Admin auf dem Laptop, Geräte als Handys."""
 
 import uuid
 from pathlib import Path
@@ -63,7 +63,7 @@ def test_einrichtung_komplett_ueber_admin(admin, server, neues_geraet):
     expect(admin.locator(".meldung")).to_contain_text("angelegt")
     expect(admin.locator("#fortschritt li.aktuell")).to_contain_text("Klassen")
     expect(admin.locator("#fortschritt li.erledigt")).to_have_count(1)
-    # Segmente 49: erst je Platz entscheiden, dann „Strecken & Zuordnung“ und „Weiter“
+    # Erst je Platz entscheiden, dann „Strecken & Zuordnung“ und „Weiter“
     expect(admin.locator("#weiter")).to_be_disabled()
     admin.click(".platz-anlegen")
     expect(admin.locator("#strecken-tabelle tbody tr")).to_have_count(1)
@@ -79,7 +79,7 @@ def test_einrichtung_komplett_ueber_admin(admin, server, neues_geraet):
     expect(admin.locator("#fortschritt li.aktuell")).to_contain_text("Klassen")
     admin.click("#weiter")
     admin.click("#weiter")
-    expect(admin.locator("#fortschritt li.aktuell")).to_contain_text("Zielmonitor")  # Segmente 66
+    expect(admin.locator("#fortschritt li.aktuell")).to_contain_text("Zielmonitor")
     expect(admin.locator("#monitor-vorschau")).to_be_visible()
     expect(
         admin.locator("#seiten-tabelle tr[data-typ=ergebnis] input[name=seite_an_0]")
@@ -328,12 +328,12 @@ def test_einstieg_anmelden_abmelden(browser, server):
 
 
 def test_assistent_strecke_mit_messpunkten(admin):
-    """Segmente 23: „mit Messpunkten“ → „Messpunkte einrichten“ → Strecken-Seite → zurück in den Assistenten."""
+    """„mit Messpunkten“ → „Messpunkte einrichten“ → Strecken-Seite → zurück in den Assistenten."""
     admin.click("#neue-veranstaltung")
     admin.fill("#schritt input[name=name]", "Mit Posten")
     admin.fill("#schritt input[name=datum]", "2026-10-11")
     admin.click("#weiter")
-    admin.click(".platz-anlegen")  # Segmente 49: erst für den Platz entscheiden
+    admin.click(".platz-anlegen")  # Erst für den Platz entscheiden
     knopf = admin.locator(".messpunkte-einrichten").first
     expect(knopf).to_be_hidden()  # „einfach“ wie bisher
     admin.check("input[name=strecke_art_0][value=messpunkte]")
@@ -356,7 +356,7 @@ messpunkte = []
 
 
 def test_assistent_plaetze_datei_und_platzhalter(admin, tmp_path):
-    """Segmente 49: Der Assistent legt keine Strecken von selbst an. Platz 5 km aus Datei (deren
+    """Der Assistent legt keine Strecken von selbst an. Platz 5 km aus Datei (deren
     Länge gilt, mit Hinweis), Platz 20 km als Platzhalter – Klassen richtig, keine weiteren Strecken."""
     datei = tmp_path / "jugend.toml"
     datei.write_text(STRECKE_5KM, encoding="utf-8")
@@ -407,7 +407,7 @@ messpunkte = []
 
 
 def test_assistent_platz_aendern_und_tatsaechliche_zuordnung(admin, tmp_path):
-    """Segmente 59: Platz 5 km versehentlich mit der 20-km-Datei geladen → „Ändern“ → Platzhalter:
+    """Platz 5 km versehentlich mit der 20-km-Datei geladen → „Ändern“ → Platzhalter:
     Klassen richtig, keine überzählige Strecke; eine Umordnung in der Klassenzuordnung zeigt
     „Strecken je Länge“ sofort."""
     datei = tmp_path / "zwanzig.toml"

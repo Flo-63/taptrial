@@ -1,4 +1,4 @@
-"""JSON-API für Start- und Zielgerät: Synchronisation und Stand (KONZEPT 4)."""
+"""JSON-API für Start- und Zielgerät: Synchronisation und Stand."""
 
 import re
 import time
@@ -38,7 +38,7 @@ ERLAUBTE_ARTEN = {
     "start": {Art.START, Art.STORNO, Art.STATUS},
     # STATUS: Rennleitung
     "ziel": {Art.ZIEL, Art.ZUORDNUNG, Art.STORNO, Art.STATUS, Art.ZEITKORREKTUR},
-    # Posten (Phase 14): nur Durchfahrten am eigenen Messpunkt und deren Korrektur/Rückgängig
+    # Posten: nur Durchfahrten am eigenen Messpunkt und deren Korrektur/Rückgängig
     "posten": {Art.DURCHFAHRT, Art.ZEITKORREKTUR, Art.STORNO},
     "admin": set(Art),
 }
@@ -111,7 +111,7 @@ class Batch(BaseModel):
 
 class Bestaetigung(BaseModel):
     bestaetigt: list[str]
-    server_ms: int  # Uhrzeit des Servers für die Messung der Uhrabweichung (AUSBAU A2)
+    server_ms: int  # Uhrzeit des Servers für die Messung der Uhrabweichung
 
 
 MAX_UHR_ABWEICHUNG_MS = 86_400_000  # unplausible Meldungen werden ignoriert
@@ -137,7 +137,7 @@ def uhr_meldung_merken(request: Request, session: Session, zugang: Zugang) -> No
         zeile = GeraetUhr(veranstaltung_id=v.id, geraet=geraet)
         session.add(zeile)
     rolle = f"posten-{zugang.messpunkt.id}" if zugang.messpunkt is not None else zugang.rolle
-    if zugang.ort is not None:  # Segmente 38: Gerät eines weiteren Start-/Zielorts
+    if zugang.ort is not None:  # Gerät eines weiteren Start-/Zielorts
         rolle = f"{zugang.rolle}-{zugang.ort.id}"
     zeile.rolle, zeile.abweichung_ms, zeile.gemessen_ms = rolle, abweichung, jetzt_ms()
     session.commit()
@@ -163,7 +163,7 @@ def veranstaltung_fuer(zugang: Zugang, session: Session, veranstaltung_id: int |
 
 
 def ort_von(session: Session, zugang: Zugang, v: Veranstaltung):
-    """Start-/Zielort eines Start-, Ziel- oder Rennleitungsgeräts (Segmente 38), sonst None."""
+    """Start-/Zielort eines Start-, Ziel- oder Rennleitungsgeräts, sonst None."""
     if zugang.rolle not in ("start", "ziel", "rennleitung"):
         return None
     if zugang.ort is not None:
@@ -231,7 +231,7 @@ def ereignisse_empfangen(
 
 def ereignisse_annehmen(session: Session, zugang: Zugang, batch: Batch) -> list[str]:
     """Prüft und speichert einen Stapel wie vom Gerät gesendet; gibt die bestätigten UUIDs zurück
-    (HTTPException bei Ablehnung). Auch für die Demo-Veranstaltung (Segmente 68)."""
+    (HTTPException bei Ablehnung). Auch für die Demo-Veranstaltung."""
     rolle = zugang.rolle
     for e in batch.ereignisse:
         if e.art not in ERLAUBTE_ARTEN[rolle]:
@@ -249,7 +249,7 @@ def ereignisse_annehmen(session: Session, zugang: Zugang, batch: Batch) -> list[
             raise HTTPException(422, "Ereignis gehört zu einer anderen Veranstaltung als der Token")
         if not v.laufend:
             raise HTTPException(409, f"Veranstaltung ist {v.zustand} und schreibgeschützt")
-        if v.freigabe_fehlt:  # Segmente 46: Rennereignisse erst nach Freigabe
+        if v.freigabe_fehlt:  # Rennereignisse erst nach Freigabe
             raise HTTPException(
                 423, freigabe_daten(v) | {"grund": "nicht_freigegeben", "text": freigabe_text(v)}
             )
@@ -264,7 +264,7 @@ def ereignisse_annehmen(session: Session, zugang: Zugang, batch: Batch) -> list[
             continue
         daten = e.model_dump()
         daten["veranstaltung_id"] = ziel_ids[e.veranstaltung_id]
-        # Segmente 43: Messpunkt des Geräts in eigener Spalte (leer = Standard-Start/-Ziel)
+        # Messpunkt des Geräts in eigener Spalte (leer = Standard-Start/-Ziel)
         ort = zugang.ort.id if zugang.ort is not None and e.art in (Art.START, Art.ZIEL) else None
         daten["ort_id"] = ort
         zeilen.append({**daten, "empfangen_ms": empfangen})
@@ -292,7 +292,7 @@ def _posten_pruefen(zugang: Zugang, session: Session, batch: Batch) -> None:
 
 
 def freigabe_daten(v: Veranstaltung) -> dict:
-    """{"frei": bool, "fehlt": [{"code", "text"}]} – maschinenlesbar für Geräte (Segmente 46)."""
+    """{"frei": bool, "fehlt": [{"code", "text"}]} – maschinenlesbar für Geräte."""
     fehlt = v.freigabe_fehlt
     return {"frei": not fehlt, "fehlt": [{"code": c, "text": FREIGABE_SCHRITTE[c]} for c in fehlt]}
 
@@ -312,18 +312,16 @@ def stand(
     zeilen = sorted(erg.zeilen, key=lambda z: z.startnummer)
     daten = _stand(erg, v, zeilen)
     daten["rolle"] = zugang.rolle
-    daten["freigabe"] = freigabe_daten(v)  # Segmente 46: Geräte sperren sich bis zur Freigabe
+    daten["freigabe"] = freigabe_daten(v)  # Geräte sperren sich bis zur Freigabe
     ort = ort_von(session, zugang, v)
-    if (
-        ort is not None
-    ):  # Segmente 38: Ort des Geräts und die Strecken, die dort beginnen bzw. enden
+    if ort is not None:  # Ort des Geräts und die Strecken, die dort beginnen bzw. enden
         _ort_daten(session, v, erg, daten, ort)
         daten["rennleitung_getrennt"] = rennleitung_getrennt(zugang, v)
     if zugang.rolle == "posten":  # Segmente: eigener Messpunkt, letzte Durchfahrten dort
         from app import segmente
 
         m = zugang.messpunkt
-        # Segmente 12: gemeinsamer Messpunkt – Strecken, die vorbeiführen, und Durchfahrten je Strecke
+        # Gemeinsamer Messpunkt – Strecken, die vorbeiführen, und Durchfahrten je Strecke
         erwartet = {
             i: segmente.erwartete_anzahl(sd.teile).get(str(m.id), 0)
             for i, sd in enumerate(erg.strecken)
@@ -381,7 +379,7 @@ def _stand(erg: Ergebnis, v: Veranstaltung, zeilen) -> dict:
                 "dsq_vorlaeufig": z.dsq_vorlaeufig,
                 "stufe": z.stufe,
                 "ausser_konkurrenz": z.ausser_konkurrenz,
-                "strecke": z.strecke,  # Index in „strecken“ (Phase 13)
+                "strecke": z.strecke,  # Index in „strecken“
                 # Segmente: nächste Durchfahrt je Messpunkt, Segmentzeiten
                 "naechste_runde": z.naechste_runde,
                 "zwischenzeiten": [[x.label, x.zeit_ms] for x in z.segmentzeiten],

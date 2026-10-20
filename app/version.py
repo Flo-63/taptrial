@@ -1,4 +1,4 @@
-"""Version der App (Release 2): eine Quelle der Wahrheit – `version` in `pyproject.toml`.
+"""Version der App: eine Quelle der Wahrheit – `version` in `pyproject.toml`.
 
 Im Docker-Image liegt `pyproject.toml` unter /app; fehlt sie (z. B. als installiertes Paket), gilt
 die Paket-Metadaten-Version. `/version` liefert sie als JSON, das Image trägt sie als Label.

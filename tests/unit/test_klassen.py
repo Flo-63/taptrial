@@ -55,13 +55,13 @@ def test_nachbarjahre_wechseln_klasse(klassen):
 
 
 def test_jahrgangsprinzip_unabhaengig_vom_tag(klassen):
-    # E5: nur das Jahr des Stichtags zählt
+    # Nur das Jahr des Stichtags zählt
     assert alter_am_stichtag(1990, date(2026, 1, 1)) == 36
     assert alter_am_stichtag(1990, date(2026, 12, 31)) == 36
 
 
 def test_divers_ohne_eigene_klassen_wird_offen(klassen):
-    # E3: eigene Wertung "offen", da die Konfiguration keine d-Klassen enthält
+    # Eigene Wertung "offen", da die Konfiguration keine d-Klassen enthält
     assert klassifizieren(T("d", 1980), STICHTAG, klassen) == OFFENE_KLASSE
 
 

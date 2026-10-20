@@ -1,4 +1,4 @@
-"""Urkunden als Druckansicht (AUSBAU B6)."""
+"""Urkunden als Druckansicht."""
 
 import re
 

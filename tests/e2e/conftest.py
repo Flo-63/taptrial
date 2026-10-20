@@ -14,18 +14,19 @@ from pathlib import Path
 import httpx
 import pytest
 
+from app import umgebung
 from app.db import erzeuge_engine, erzeuge_sessionmaker, tabellen_anlegen
 from app.models import Teilnehmer, Veranstaltung
 
 PROJEKT = Path(__file__).resolve().parents[2]
-# Posten am Messpunkt „Kreisel“ (Fixture rundkurs, Phase 14)
+# Posten am Messpunkt „Kreisel“ (Fixture rundkurs)
 TOKENS = {
     "start": "e2e-start",
     "ziel": "e2e-ziel",
     "admin": "e2e-admin",
     "posten": "e2e-posten-kreisel",
     "posten-berg": "e2e-posten-berg",
-    "start-nord": "e2e-start-nord",  # Segmente 38: weiterer Startort (rundkurs „orte“)
+    "start-nord": "e2e-start-nord",  # Weiterer Startort (rundkurs „orte“)
     "ziel-hof": "e2e-ziel-hof",  # weiterer Zielort (rundkurs „zielorte“)
 }
 GERAET = "Pixel 7"
@@ -137,7 +138,7 @@ def _seed(
                     ausser_konkurrenz=f.ausser_konkurrenz,
                 )
             )
-        if zwei_strecken:  # Phase 13: DRA A.1 mit Vorschlag „5 km“ (Jugend) und „20 km“
+        if zwei_strecken:  # DRA A.1 mit Vorschlag „5 km“ (Jugend) und „20 km“
             from app import saetze, strecken
             from app.models import Wertungssatz
 
@@ -147,7 +148,7 @@ def _seed(
             v.wertungssatz_id = a1.id
             strecken.anlegen(s, v, strecken.vorschlag(saetze.klassen_von(saetze.standard_klassensatz(s)),
                                                        saetze.wertung_von(a1)))  # fmt: skip
-        if rundkurs in ("orte", "zielorte", "nord"):  # Segmente 38/41: weiterer Start- bzw. Zielort
+        if rundkurs in ("orte", "zielorte", "nord"):  # Weiterer Start- bzw. Zielort
             from app import strecken
             from app.models import Messpunkt, StreckeKlasse
 
@@ -200,7 +201,7 @@ def _seed(
             strecke = strecken.strecken_von(s, v)[-1]
             ids = {"P1": str(mps[0].id), "P2": str(mps[1].id)}
             strecke.teile_json = segmente.nach_json(beispiel_teile(ids))
-            if rundkurs == "gemeinsam":  # Segmente 12: Kreisel auch auf der kurzen Strecke (Damen)
+            if rundkurs == "gemeinsam":  # Kreisel auch auf der kurzen Strecke (Damen)
                 from app.models import StreckeKlasse
 
                 kurz = strecken.strecken_von(s, v)[0]
@@ -214,13 +215,13 @@ def _seed(
                 ]
                 kurz.klassen = [*(sk for sk in kurz.klassen if not sk.klasse.startswith("Damen")),
                                 *(StreckeKlasse(klasse=k) for k in damen)]  # fmt: skip
-            if rundkurs == "eigen":  # Segmente 62: dazu ein eigener Abschnitt Berg→Kreisel
+            if rundkurs == "eigen":  # Dazu ein eigener Abschnitt Berg→Kreisel
                 import json
 
                 strecke.abschnitte_json = json.dumps({"eigene": [{"id": "a1", "name": "Abfahrt",
                                                                   "von": ids["P2"], "nach": ids["P1"],
                                                                   "art": "wiederkehrend"}]})  # fmt: skip
-            if rundkurs == "monitor":  # Zielmonitor: Live-Feld „Kreisel→Berg“ (Segmente 14)
+            if rundkurs == "monitor":  # Zielmonitor: Live-Feld „Kreisel→Berg“
                 import json
 
                 s.flush()
@@ -266,7 +267,7 @@ def teilnehmer_liste():
 
 @pytest.fixture
 def zwei_strecken() -> bool:
-    """True: Veranstaltung mit DRA A.1 und den Strecken „5 km“/„20 km“ (Phase 13)."""
+    """True: Veranstaltung mit DRA A.1 und den Strecken „5 km“/„20 km“."""
     return False
 
 
@@ -274,10 +275,10 @@ def zwei_strecken() -> bool:
 def rundkurs() -> str | None:
     """None, „messpunkte“ (Beispielstrecke mit Messpunkten Kreisel und Berg, Segmente),
     „monitor“ (dasselbe mit Segmentzeiten auf dem Zielmonitor), „eigen“ (dasselbe mit eigenem
-    Abschnitt „Abfahrt“ Berg→Kreisel, Segmente 62) oder „gemeinsam“ (mit
-    zwei_strecken: Kreisel auch auf der kurzen Strecke der Damen, Segmente 12), „orte“ bzw. „zielorte“
-    (mit zwei_strecken: Damen auf der kurzen Strecke mit Startort „Nord“ bzw. Zielort „Hof“, Segmente 38),
-    „nord“ (mit zwei_strecken: Klassen wie vorgeschlagen, die kurze Strecke startet in „Nord“, Segmente 41)."""
+    Abschnitt „Abfahrt“ Berg→Kreisel) oder „gemeinsam“ (mit
+    zwei_strecken: Kreisel auch auf der kurzen Strecke der Damen), „orte“ bzw. „zielorte“
+    (mit zwei_strecken: Damen auf der kurzen Strecke mit Startort „Nord“ bzw. Zielort „Hof“),
+    „nord“ (mit zwei_strecken: Klassen wie vorgeschlagen, die kurze Strecke startet in „Nord“)."""
     return None
 
 
@@ -285,7 +286,7 @@ def rundkurs() -> str | None:
 def server(tmp_path, teilnehmer_anzahl, teilnehmer_liste, zwei_strecken, rundkurs):
     """Echter Server mit frischer DB.
 
-    Ist RCB_E2E_IMAGE gesetzt (scripts/container_e2e.sh), läuft der Server im Docker-Container
+    Ist TAPTRIAL_E2E_IMAGE gesetzt (scripts/container_e2e.sh), läuft der Server im Docker-Container
     dieses Images, sonst als uvicorn-Prozess.
     """
     daten = tmp_path / "daten"
@@ -294,9 +295,9 @@ def server(tmp_path, teilnehmer_anzahl, teilnehmer_liste, zwei_strecken, rundkur
     _seed(str(db), teilnehmer_anzahl, teilnehmer_liste, zwei_strecken, rundkurs)
     port = _freier_port()
     secrets_env = {
-        "RCB_TOKEN_ADMIN": TOKENS["admin"],
+        "TAPTRIAL_TOKEN_ADMIN": TOKENS["admin"],
     }
-    image = os.environ.get("RCB_E2E_IMAGE")
+    image = umgebung.wert("e2e_image")
     if image:
         daten.chmod(0o777)
         db.chmod(0o666)
@@ -315,7 +316,7 @@ def server(tmp_path, teilnehmer_anzahl, teilnehmer_liste, zwei_strecken, rundkur
             [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1",
              "--port", str(port)],
             cwd=PROJEKT,
-            env={**os.environ, "RCB_DB_PFAD": str(db), **secrets_env},
+            env={**os.environ, "TAPTRIAL_DB_PFAD": str(db), **secrets_env},
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )  # fmt: skip
@@ -373,7 +374,7 @@ def warte_bis(bedingung, timeout: float = 15.0, text: str = "Bedingung") -> None
 
 
 def einstellungen(page, reiter: str) -> None:
-    """Reiter der Einstellungen öffnen (Segmente 17): allgemein, klassen, zielmonitor (Segmente 60)."""
+    """Reiter der Einstellungen öffnen: allgemein, klassen, zielmonitor."""
     admin_seite(page, "einstellungen")
     if reiter != "allgemein":
         page.click(f"#einstellungen-reiter a[data-reiter={reiter}]")

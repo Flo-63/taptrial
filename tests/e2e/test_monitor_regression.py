@@ -1,4 +1,4 @@
-"""Segmente 62: Regression – Abschnittsfelder im Live-Bereich, im Admin gewählt, zeigen auf /monitor
+"""Regression – Abschnittsfelder im Live-Bereich, im Admin gewählt, zeigen auf /monitor
 je Fahrer die letzte Zeit mit Namen (Segment, Rundenblock, eigener Abschnitt), bei „mit Pfeil und
 Differenz“ mit ▼/▲ und Differenz; der Monitor lädt sich bei einer neuen App-Version selbst neu."""
 

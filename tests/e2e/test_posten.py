@@ -103,7 +103,7 @@ def test_segmente_im_admin_und_posten_link(server, browser):
     admin_seite(a, "strecken")
     a.click("#strecke-oeffnen-0")
     a.click("#strecke-reiter [data-reiter=verlauf]")
-    # Punktfolge (Segmente 28): Start · Kreisel · [Runde ×2: Berg · Kreisel] · Ziel
+    # Punktfolge: Start · Kreisel · [Runde ×2: Berg · Kreisel] · Ziel
     expect(a.locator("#punktfolge > li")).to_have_count(4)
     expect(a.locator("#segmente-tabelle tbody tr")).to_have_count(4)
     a.click("#punkt-neu")
@@ -137,18 +137,18 @@ def test_segmente_im_admin_und_posten_link(server, browser):
         "button", name="entfernen"
     ).click()
     expect(a.locator("#punktfolge > li.pf-block")).to_have_count(1)
-    # Auswertungsabschnitt „Runde“ = Kreisel bis nächster Kreisel, wiederkehrend (Segmente 52: ohne
+    # Auswertungsabschnitt „Runde“ = Kreisel bis nächster Kreisel, wiederkehrend (ohne
     # „Vergleich“ und „anzeigen“ – die stehen unter „Öffentlichkeit & Zielmonitor“)
     a.click("#strecke-reiter [data-reiter=abschnitte]")
     a.click("#abschnitt-neu")
     neu = a.locator("#abschnitte tbody tr").last
     neu.locator("input[name^=ab_name_]").fill("Runde")
-    # Anfang und Ende als Auswahl aus der Abfolge (Segmente 33): bei „jede Durchfahrt“ je Punkt
+    # Anfang und Ende als Auswahl aus der Abfolge: bei „jede Durchfahrt“ je Punkt
     expect(neu.locator(".ab-von option")).to_have_text(["Start", "Kreisel", "Berg", "Wald", "Ziel"])
     neu.locator(".ab-von").select_option(label="Kreisel")
     neu.locator(".ab-nach").select_option(label="Kreisel")
     expect(neu.locator(".ab-vergleich")).to_have_count(0)
-    # Vorschau in Worten (Segmente 29), sofort und ohne Speichern
+    # Vorschau in Worten, sofort und ohne Speichern
     expect(neu.locator(".ab-vorschau")).to_have_text("Runde: Kreisel → Berg → Kreisel, 2-mal")
     neu.locator(".ab-art").select_option(label="eine bestimmte Durchfahrt")
     # … bei „eine bestimmte Durchfahrt“ je Durchfahrt; Ende nur nach dem Anfang wählbar
@@ -176,7 +176,7 @@ def test_segmente_im_admin_und_posten_link(server, browser):
     a.click("#strecke-reiter [data-reiter=verlauf]")
     expect(a.locator("#segmente-tabelle tbody tr")).to_have_count(5)  # je Segment ein Abschnitt
     expect(a.locator("#segmente-tabelle thead th")).to_have_text(["Segment", "Name", "Länge (km)"])
-    # Spalten (Segmente 52): unter „Öffentlichkeit & Zielmonitor“ für die Strecke, ein Speichern
+    # Spalten: unter „Öffentlichkeit & Zielmonitor“ für die Strecke, ein Speichern
     einstellungen(a, "zielmonitor")
     spalte = a.locator("#spalten tr", has_text="Runde").locator("input[name=anzeigen]")
     expect(spalte).to_be_checked()
@@ -200,12 +200,12 @@ def test_segmente_im_admin_und_posten_link(server, browser):
     admin_seite(a, "geraete")
     expect(a.locator(".geraet[data-titel='Posten Wald'] .qr svg")).to_be_visible()
     url = a.locator(".geraet[data-titel='Posten Kreisel'] a.link").get_attribute("href")
-    assert url.endswith(f"/posten?token={TOKENS['posten']}&ort=1")  # Segmente 44: eigenes Profil
+    assert url.endswith(f"/posten?token={TOKENS['posten']}&ort=1")  # Eigenes Profil
     ctx.close()
 
 
 def test_assistent_einfach_nur_mit_bestaetigung(server, browser):
-    """Segmente 30: „mit Messpunkten“ → „einfach“ fragt nach; „Abbrechen“ stellt die Wahl zurück."""
+    """„mit Messpunkten“ → „einfach“ fragt nach; „Abbrechen“ stellt die Wahl zurück."""
     ctx = browser.new_context(viewport={"width": 1280, "height": 900}, service_workers="block")
     a = ctx.new_page()
     a.goto(f"{server.url}/admin")

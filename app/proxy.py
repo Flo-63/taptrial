@@ -1,7 +1,7 @@
 """Client-Adresse und Schema hinter Reverse-Proxys (z. B. Caddy oder eine Kette aus mehreren Proxys).
 
 `X-Forwarded-For`/`X-Forwarded-Proto` werden nur ausgewertet, wenn die Anfrage direkt von einem
-vertrauenswürdigen Proxy kommt (Standard 127.0.0.1/::1, erweiterbar per RCB_VERTRAUTE_PROXYS).
+vertrauenswürdigen Proxy kommt (Standard 127.0.0.1/::1, erweiterbar per TAPTRIAL_VERTRAUTE_PROXYS).
 In der Kette zählt die rechteste nicht vertrauenswürdige Adresse – was ein Client selbst vorne
 einträgt, kann die Erkennung nicht beeinflussen.
 """
@@ -26,7 +26,7 @@ class Netze:
                 netze.append(ipaddress.ip_network(teil, strict=False))
             except ValueError as e:
                 raise ValueError(
-                    f"RCB_VERTRAUTE_PROXYS: „{teil}“ ist keine IP-Adresse/kein Netz"
+                    f"TAPTRIAL_VERTRAUTE_PROXYS: „{teil}“ ist keine IP-Adresse/kein Netz"
                 ) from e
         return cls(tuple(netze))
 

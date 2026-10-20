@@ -1,4 +1,4 @@
-"""Strecken je Veranstaltung: Vorschlag, Speichern, Einfrieren (Phase 13)."""
+"""Strecken je Veranstaltung: Vorschlag, Speichern, Einfrieren."""
 
 from datetime import date
 
@@ -43,9 +43,7 @@ def veranstaltung(session, wertung=True):
                    geburtsjahr=1990),  # Damen 31-40
     ])  # fmt: skip
     session.commit()
-    if (
-        wertung
-    ):  # Strecken wie der Vorschlag aus A.1 (Segmente 49: legt der Satzwechsel nicht mehr an)
+    if wertung:  # Strecken wie der Vorschlag aus A.1 (legt der Satzwechsel nicht mehr an)
         st.anlegen(
             session, v, st.vorschlag(sz.regeln(session, v).klassen, sz.wertung_von(ws(session)))
         )
@@ -160,7 +158,7 @@ def _laengen(session, v):
 
 
 def test_satzwechsel_legt_keine_strecken_an(session):
-    """Segmente 49: Ein Wechsel von Klassen- oder Wertungssatz schlägt keine Strecken mehr vor –
+    """Ein Wechsel von Klassen- oder Wertungssatz schlägt keine Strecken mehr vor –
     die Strecken bleiben, neue Klassen gehen an die Strecke passender Länge bzw. die letzte."""
     v = veranstaltung(session, wertung=False)  # „Strecke 1“ mit allen Klassen
     hinweise = sz.regeln_setzen(session, v, v.klassensatz_id, ws(session).id, 20.0)
@@ -181,7 +179,7 @@ def test_satzwechsel_legt_keine_strecken_an(session):
 
 
 def test_plaetze_im_assistenten(session):
-    """Segmente 49: je Längen-Platz entscheiden – Platzhalter anlegen; die vorläufige Strecke fällt
+    """Je Längen-Platz entscheiden – Platzhalter anlegen; die vorläufige Strecke fällt
     weg, sobald sie keine Klassen mehr hat."""
     v = veranstaltung(session, wertung=False)
     v.einrichtung_schritt, v.einrichtung_json = 2, '{"plaetze": {}}'

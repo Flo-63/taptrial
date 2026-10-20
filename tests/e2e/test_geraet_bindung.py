@@ -1,4 +1,4 @@
-"""Segmente 63: Gerätedaten gehören zur Veranstaltung (und zum Token). Veranstaltung A mit Starts,
+"""Gerätedaten gehören zur Veranstaltung (und zum Token). Veranstaltung A mit Starts,
 Zieleinlauf und Durchfahrt → A gelöscht, während die Geräte geschlossen sind → Veranstaltung B mit
 denselben Startnummern → derselbe Browser öffnet die Links von B: alles beginnt leer; ein nicht
 übertragener Eintrag aus A bleibt erhalten, wird gemeldet und nicht an B gesendet."""

@@ -1,4 +1,4 @@
-"""Admin-Oberfläche (Phase 6, KONZEPT 5): serverseitig gerendert, Formulare mit Redirect.
+"""Admin-Oberfläche: serverseitig gerendert, Formulare mit Redirect.
 
 Anmeldung: Admin-Token im Formular (oder Alt-Link ?token=…) → signiertes Cookie (app/admin_auth.py).
 Fachlogik liegt in app/korrekturen.py.
@@ -79,7 +79,7 @@ ART_TEXT = {
 
 templates.env.filters["uhrzeit"] = k.uhrzeit_text
 templates.env.globals["datum_text"] = k.datum_text
-templates.env.globals["jetzt_uhrzeit"] = lambda: k.uhrzeit_text(k.jetzt_ms())[:8]  # Segmente 45
+templates.env.globals["jetzt_uhrzeit"] = lambda: k.uhrzeit_text(k.jetzt_ms())[:8]
 
 
 def abbruch_ziel(request: Request, standard: str) -> str:
@@ -315,14 +315,14 @@ def _kennzahlen(erg) -> dict:
 
 
 def freigabe_schritte(v: Veranstaltung) -> list[dict]:
-    """Fehlende Schritte bis zur Freigabe (Segmente 46) mit der Stelle, an der sie erledigt werden."""
+    """Fehlende Schritte bis zur Freigabe mit der Stelle, an der sie erledigt werden."""
     url = {"einrichtung": f"/admin/einrichtung/{v.id}/{v.einrichtung_schritt}",
            "aktiv": f"/admin/v/{v.id}/status#aktiv"}  # fmt: skip
     return [{"code": c, "text": FREIGABE_SCHRITTE[c], "url": url[c]} for c in v.freigabe_fehlt]
 
 
 def als_naechstes(session: Session, v: Veranstaltung, erg, heute: date) -> list[dict]:
-    """„Als Nächstes“ der Übersicht, aus dem Zustand abgeleitet (ADMIN-REVIEW Schritt 3).
+    """„Als Nächstes“ der Übersicht, aus dem Zustand abgeleitet.
 
     Jede Aufgabe: schluessel, titel, hinweis, knopf (Beschriftung), url.
     """
@@ -333,7 +333,7 @@ def als_naechstes(session: Session, v: Veranstaltung, erg, heute: date) -> list[
         liste.append({"schluessel": schluessel, "titel": titel, "hinweis": hinweis, "knopf": knopf,
                       "url": url})  # fmt: skip
 
-    if v.laufend and v.freigabe_fehlt:  # Segmente 46: Geräte gesperrt, Grund und Wege dorthin
+    if v.laufend and v.freigabe_fehlt:  # Geräte gesperrt, Grund und Wege dorthin
         schritte = freigabe_schritte(v)
         neu("freigabe", FREIGABE_FEHLT, "Die Geräte sind gesperrt, bis das erledigt ist: "
             + ", ".join(s["text"] for s in schritte), schritte[0]["text"], schritte[0]["url"])  # fmt: skip
@@ -358,9 +358,9 @@ def als_naechstes(session: Session, v: Veranstaltung, erg, heute: date) -> list[
                 select(GeraetUhr).where(GeraetUhr.veranstaltung_id == v.id)
             ).all()
             rollen = {u.rolle for u in uhren}
-            geraete = []  # Segmente 38: je genutztem Start-/Zielort ein Gerät, dazu die Posten
+            geraete = []  # Je genutztem Start-/Zielort ein Gerät, dazu die Posten
             for m in strecken.orte_von(session, v):
-                if m.art == "punkt":  # Segmente 70: nur genutzte Zwischenzeiten
+                if m.art == "punkt":  # Nur genutzte Zwischenzeiten
                     if strecken.genutzt(session, v, m):
                         geraete.append((f"posten-{m.id}", f"Posten {m.name}"))
                 elif strecken.strecken_am_ort(session, v, m) or (m.standard and m.id is None):
@@ -384,15 +384,21 @@ def als_naechstes(session: Session, v: Veranstaltung, erg, heute: date) -> list[
             not erg.offiziell
             and any(z.fahrzeit_ms is not None for z in erg.zeilen)
             and not k.auf_der_strecke(erg)
-        ):  # Segmente 47: alle Gestarteten durch
+        ):  # Alle Gestarteten durch
             neu("offiziell", "Ergebnis offiziell erklären", "Keine Aufgaben mehr offen",
                 "Zum Ergebnis", f"{basis}/ergebnis")  # fmt: skip
         if erg.offiziell:
             neu("abschliessen", "Veranstaltung abschließen",
                 "Nach dem Backup: danach schreibgeschützt, Gerätelinks ungültig",
                 "Status & Datenschutz", f"{basis}/status")  # fmt: skip
+        if v.aktiv and not installation.lesen(session)["vereinsname"].strip():
+            # v0.1.1: dezent, die Installation läuft auch ohne Vereinsnamen (dann neutral)
+            neu("vereinsname", "Vereinsname noch nicht eingetragen",
+                "Steht dann vorn auf Startseite, Ergebnissen, Monitor und Ausdrucken", "Eintragen",
+                "/admin/saetze/branding")  # fmt: skip
+            liste[-1]["dezent"] = True
         if v.aktiv and (fehlt := installation.rechtliches_fehlt(installation.lesen(session))):
-            # Release 3: dezent, nur solange die Veranstaltung öffentlich zu sehen ist
+            # Dezent, nur solange die Veranstaltung öffentlich zu sehen ist
             titel = (
                 f"{fehlt[0]} fehlt"
                 if len(fehlt) == 1
@@ -447,7 +453,7 @@ def vorschlaege(erg, zeit_ms: int) -> list[dict]:
 
 @router.get("/v/{vid}/aufgaben", response_class=HTMLResponse)
 def aufgaben(request: Request, vid: int, session: SessionDep, _a: AdminDep):
-    """Aufgaben vor dem offiziellen Ergebnis, jeder Fall direkt lösbar (ADMIN-REVIEW Schritt 6)."""
+    """Aufgaben vor dem offiziellen Ergebnis, jeder Fall direkt lösbar."""
     v = _veranstaltung(session, vid)
     erg = _erg(request, session, v)
     alle = {s.uuid: s for s in k.stempel(session, v)}
@@ -488,7 +494,7 @@ def ergebnis_seite(
                   heute=k.heute(), Status=Status)  # fmt: skip
 
 
-# Alte Adressen (vor der Neuordnung, ADMIN-REVIEW Schritt 2) leiten auf die neuen Seiten weiter
+# Alte Adressen (vor der Neuordnung) leiten auf die neuen Seiten weiter
 ALTE_SEITEN = {"korrekturen": "aufgaben", "rennen": "aufgaben", "stammdaten": "einstellungen",
                "klassen": "einstellungen/klassen", "zielmonitor": "einstellungen/zielmonitor"}  # fmt: skip
 
@@ -603,9 +609,7 @@ async def zielmonitor_speichern(request: Request, vid: int, session: SessionDep,
 
     v.monitor_json = json.dumps(konf, ensure_ascii=False)
     session.commit()
-    if (
-        form.get("weiter") and v.einrichtung_schritt
-    ):  # Segmente 66: Schritt „Zielmonitor“ im Assistenten
+    if form.get("weiter") and v.einrichtung_schritt:  # Schritt „Zielmonitor“ im Assistenten
         v.einrichtung_schritt = max(v.einrichtung_schritt, 5)
         session.commit()
         return _zurueck(f"/admin/einrichtung/{vid}/5")
@@ -898,7 +902,7 @@ def beispiel_csv(_a: AdminDep):
 # --- Geräte -----------------------------------------------------------------------
 
 
-UHR_GRENZE_MS = 500  # ab mehr als 0,5 s Abweichung warnen (AUSBAU A2)
+UHR_GRENZE_MS = 500  # ab mehr als 0,5 s Abweichung warnen
 
 
 def abweichung_text(ms: int) -> str:
@@ -913,7 +917,7 @@ ROLLEN_TEXT = {"start": "Start", "ziel": "Ziel", "rennleitung": "Rennleitung"}
 
 def posten_namen(session: Session, v: Veranstaltung) -> dict[str, str]:
     """Rolle eines Geräts → Name: „posten-<ID>“ → „Posten <Name>“ (Segmente), weitere Start-/Zielorte
-    „start-<ID>“ → „Start <Name>“, „ziel-<ID>“ → „Ziel <Name>“, „rennleitung-<ID>“ (Segmente 38)."""
+    „start-<ID>“ → „Start <Name>“, „ziel-<ID>“ → „Ziel <Name>“, „rennleitung-<ID>“."""
     namen = {}
     for m in strecken.orte_von(session, v):
         if m.art == "punkt":
@@ -934,7 +938,7 @@ def uhr_zeile(u: GeraetUhr, namen: dict[str, str] | None = None) -> dict:
 
 
 def geraetelinks(request: Request, v: Veranstaltung) -> list[dict]:
-    """Gerätelinks je Ort (Segmente 38): Startorte, Messpunkte (Posten), Zielorte mit Rennleitung.
+    """Gerätelinks je Ort: Startorte, Messpunkte (Posten), Zielorte mit Rennleitung.
 
     Standardorte nutzen die Tokens der Veranstaltung (bisherige Links). Jeder Link trägt „gruppe“
     (Ort) für die gruppierte Anzeige unter „Geräte“.
@@ -949,14 +953,12 @@ def geraetelinks(request: Request, v: Veranstaltung) -> list[dict]:
         namen = [liste[i].name for i in indizes]
         return ("Strecken: " if len(namen) > 1 else "Strecke: ") + ", ".join(namen) if namen else ""
 
-    # Segmente 70: Messpunkte, die keine Strecke nutzt, haben keinen Gerätelink (Token bleibt)
+    # Messpunkte, die keine Strecke nutzt, haben keinen Gerätelink (Token bleibt)
     orte = [m for m in orte if not liste or strecken.genutzt(session, v, m)]
     mehrere = {art: sum(1 for m in orte if m.art == art) > 1 for art in ("start", "ziel")}
     for m in orte:
         gruppe = strecken.messpunkt_titel(m)
-        if (
-            m.art == "punkt"
-        ):  # Segmente 12: ein Posten-Link je Messpunkt, mit den nutzenden Strecken
+        if m.art == "punkt":  # Ein Posten-Link je Messpunkt, mit den nutzenden Strecken
             links.append(
                 (
                     f"Posten {m.name}",
@@ -969,7 +971,7 @@ def geraetelinks(request: Request, v: Veranstaltung) -> list[dict]:
             continue
         rolle = m.art if m.standard else f"{m.art}-{m.id}"
         token = getattr(v, f"token_{m.art}") if m.standard else m.token
-        ort = "" if m.standard else f"&ort={m.id}"  # Segmente 44: eigenes Geräteprofil im Browser
+        ort = "" if m.standard else f"&ort={m.id}"  # Eigenes Geräteprofil im Browser
         links.append(
             (strecken.ort_bezeichnung(m), f"{basis}/{m.art}?token={token}{ort}", rolle, gruppe)
         )
@@ -1027,7 +1029,7 @@ def _druck_zurueck(zurueck: str, vid: int) -> str:
 
 @router.get("/v/{vid}/aushang", response_class=HTMLResponse)
 def aushang(request: Request, vid: int, session: SessionDep, _a: AdminDep, zurueck: str = ""):
-    """Druckbarer A4-Aushang „Live-Ergebnisse“ mit großem QR-Code (AUSBAU B11)."""
+    """Druckbarer A4-Aushang „Live-Ergebnisse“ mit großem QR-Code."""
     from app.oeffentlich import ergebnisse_url, qr_svg
 
     v = _veranstaltung(session, vid)
@@ -1040,7 +1042,7 @@ def aushang(request: Request, vid: int, session: SessionDep, _a: AdminDep, zurue
 @router.get("/v/{vid}/geraetelinks-druck", response_class=HTMLResponse)
 def geraetelinks_druck(request: Request, vid: int, session: SessionDep, _a: AdminDep,
                        zurueck: str = ""):  # fmt: skip
-    """A4-Blatt „Gerätelinks mit QR-Codes“ für die Helfer (ADMIN-REVIEW Abschnitt 4)."""
+    """A4-Blatt „Gerätelinks mit QR-Codes“ für die Helfer."""
     from app.oeffentlich import qr_svg
 
     v = _veranstaltung(session, vid)
@@ -1061,7 +1063,7 @@ def urkunde_moeglich(z) -> bool:
 @router.get("/v/{vid}/urkunden", response_class=HTMLResponse)
 def urkunden(request: Request, vid: int, session: SessionDep, _a: AdminDep, nr: int | None = None,
              zurueck: str = ""):  # fmt: skip
-    """Urkunden als Druckansicht, eine je Seite, A4 quer (AUSBAU B6)."""
+    """Urkunden als Druckansicht, eine je Seite, A4 quer."""
     from app.strecken import km_text
 
     v = _veranstaltung(session, vid)
@@ -1080,7 +1082,7 @@ def urkunden(request: Request, vid: int, session: SessionDep, _a: AdminDep, nr: 
 @router.get("/v/{vid}/papierprotokoll", response_class=HTMLResponse)
 def papierprotokoll(request: Request, vid: int, session: SessionDep, _a: AdminDep,
                     zurueck: str = ""):  # fmt: skip
-    """Start- und Zielprotokoll zum Ausdrucken (Rückfallebene ohne Handy/Netz, AUSBAU A6)."""
+    """Start- und Zielprotokoll zum Ausdrucken (Rückfallebene ohne Handy/Netz)."""
     v = _veranstaltung(session, vid)
     erg = k.ergebnis(session, v)
     zeilen = sorted(erg.zeilen, key=lambda z: z.startnummer)
@@ -1099,16 +1101,14 @@ def geraete(request: Request, vid: int, session: SessionDep, _a: AdminDep):
 
     monitor = f"{basis_url(request, request.app.state.vertraute_proxys)}/monitor"
     links = geraetelinks(request, v)
-    zuletzt: dict[str, int] = {}  # Segmente 45: Status je Karte (letzte Meldung der Rolle)
+    zuletzt: dict[str, int] = {}  # Status je Karte (letzte Meldung der Rolle)
     for u in uhren:
         zuletzt[u.rolle] = max(zuletzt.get(u.rolle, 0), u.gemessen_ms)
     ziele = {geraete_rolle(m): m for m in strecken.orte_von(session, v, "ziel")}
     for l in links:
         l["verbunden_ms"] = zuletzt.get(l["rolle"])
         m = ziele.get(l["rolle"])
-        if m is not None and not l["titel"].startswith(
-            "Rennleitung"
-        ):  # Segmente 51: Option je Ziel
+        if m is not None and not l["titel"].startswith("Rennleitung"):  # Option je Ziel
             l["ziel_ort"] = SimpleNamespace(id=m.id, name=m.name, standard=m.standard,
                                             getrennt=v.rennleitung_getrennt if m.standard else m.rennleitung_getrennt)  # fmt: skip
     return _seite(request, "admin_geraete.html", v=v, reiter="geraete",
@@ -1126,7 +1126,7 @@ def rennleitung_modus(
     bestaetigung: Annotated[str, Form()] = "", ort: Annotated[str, Form()] = "",
 ):  # fmt: skip
     v = _veranstaltung(session, vid)
-    return _ausfuehren(request, csrf, f"/admin/v/{vid}/geraete",  # Segmente 51: Option auf der Ziel-Karte
+    return _ausfuehren(request, csrf, f"/admin/v/{vid}/geraete",  # Option auf der Ziel-Karte
                        lambda: k.rennleitung_umschalten(session, v, bool(zusammen),
                                                         bool(bestaetigung), ort))  # fmt: skip
 
@@ -1192,7 +1192,7 @@ def export_ergebnis(
 ):
     v = _veranstaltung(session, vid)
     erg = _erg(request, session, v)
-    if rangliste:  # Rangliste eines Abschnitts (Segmente 15)
+    if rangliste:  # Rangliste eines Abschnitts
         from app import ranglisten
         from app.export import rangliste_csv
 
@@ -1221,10 +1221,10 @@ def _download(inhalt: bytes, dateiname: str) -> Response:
 # --- Einstellungen und Lebenszyklus -------------------------------------------------------
 
 
-# Einstellungen mit Reitern (Segmente 17): eigene Adresse, eigener Speichern-Button und Hilfe-Anker je Reiter
+# Einstellungen mit Reitern: eigene Adresse, eigener Speichern-Button und Hilfe-Anker je Reiter
 EINSTELLUNGEN_REITER = {"allgemein": ("Allgemein", "", "einstellungen"),
                         "klassen": ("Klassen & Wertung", "/klassen", "klassen-wertung"),
-                        # Segmente 60: früher „Öffentlichkeit & Zielmonitor“ unter /oeffentlichkeit
+                        # Früher „Öffentlichkeit & Zielmonitor“ unter /oeffentlichkeit
                         "zielmonitor": ("Zielmonitor und Ergebnisse", "/zielmonitor", "zielmonitor-ergebnisse")}  # fmt: skip
 
 
@@ -1254,16 +1254,16 @@ def einstellungen(request: Request, vid: int, session: SessionDep, _a: AdminDep)
 
 @router.get("/v/{vid}/einstellungen/{tab}", response_class=HTMLResponse)
 def einstellungen_reiter(request: Request, vid: int, tab: str, session: SessionDep, _a: AdminDep):
-    if tab == "strecken":  # Segmente 25: Strecken haben eine eigene Seite
+    if tab == "strecken":  # Strecken haben eine eigene Seite
         return RedirectResponse(f"/admin/v/{vid}/strecken", status_code=307)
-    if tab == "oeffentlichkeit":  # Segmente 60: jetzt „Zielmonitor und Ergebnisse“
+    if tab == "oeffentlichkeit":  # Jetzt „Zielmonitor und Ergebnisse“
         return RedirectResponse(f"/admin/v/{vid}/einstellungen/zielmonitor", status_code=307)
     if tab not in EINSTELLUNGEN_REITER or tab == "allgemein":
         raise HTTPException(404, "Unbekannter Bereich")
     return _einstellungen(request, session, vid, tab)
 
 
-# --- Seiten „Strecken“ und „Messpunkte“ (Segmente 25) -----------------------------------------
+# --- Seiten „Strecken“ und „Messpunkte“ -----------------------------------------
 
 
 @router.get("/v/{vid}/strecken", response_class=HTMLResponse)
@@ -1275,22 +1275,22 @@ def strecken_seite(request: Request, vid: int, session: SessionDep, _a: AdminDep
 
 @router.get("/v/{vid}/orte")
 def orte_seite(vid: int, _a: AdminDep):
-    return RedirectResponse(f"/admin/v/{vid}/messpunkte", status_code=303)  # Segmente 42
+    return RedirectResponse(f"/admin/v/{vid}/messpunkte", status_code=303)
 
 
 @router.get("/v/{vid}/messpunkte", response_class=HTMLResponse)
 def messpunkte_seite(request: Request, vid: int, session: SessionDep, _a: AdminDep):
-    """Messpunkte der Veranstaltung (Segmente 37/42): Start, Zwischenzeit, Ziel mit Gerätestatus."""
+    """Messpunkte der Veranstaltung: Start, Zwischenzeit, Ziel mit Gerätestatus."""
     v = _veranstaltung(session, vid)
     kontext = strecken_kontext(session, v)
-    zuletzt: dict[str, int] = {}  # Segmente 26: Gerät verbunden (letzte Meldung je Rolle)
+    zuletzt: dict[str, int] = {}  # Gerät verbunden (letzte Meldung je Rolle)
     for u in session.scalars(select(GeraetUhr).where(GeraetUhr.veranstaltung_id == v.id)):
         zuletzt[u.rolle] = max(zuletzt.get(u.rolle, 0), u.gemessen_ms)
     liste = kontext["strecken"]
     orte = []
     for m in strecken.orte_von(session, v):
         nutzer = [liste[i].name for i in strecken.strecken_am_ort(session, v, m)]
-        # Segmente 65: auch Standard-Start/-Ziel sind entfernbar, wenn sie keine Strecke nutzt
+        # Auch Standard-Start/-Ziel sind entfernbar, wenn sie keine Strecke nutzt
         grund = ("es gibt bereits Zeiten" if kontext["strecken_eingefroren"]
                  else "genutzt von " + ", ".join(nutzer) if nutzer else "")  # fmt: skip
         orte.append(SimpleNamespace(id=m.id, name=m.name, art=m.art, standard=m.standard, strecken=nutzer,
@@ -1301,7 +1301,7 @@ def messpunkte_seite(request: Request, vid: int, session: SessionDep, _a: AdminD
 
 
 def spalten_kontext(liste) -> list[SimpleNamespace]:
-    """„Ergebnistabelle“ (Segmente 52): je Strecke mit Abschnitten deren Zeilen."""
+    """„Ergebnistabelle“: je Strecke mit Abschnitten deren Zeilen."""
     art = lambda a: "Segment" if a.segment else ("Rundenblock" if a.block else "eigener Abschnitt")
     return [SimpleNamespace(id=s.id, name=s.name, zeilen=[SimpleNamespace(id=a.id, name=a.name, art=art(a),
                                                                           anzeigen=not a.aus) for a in abschnitte])
@@ -1310,7 +1310,7 @@ def spalten_kontext(liste) -> list[SimpleNamespace]:
 
 @router.post("/v/{vid}/spalten")
 async def spalten_speichern(request: Request, vid: int, session: SessionDep, _a: AdminDep):
-    """Ein Speichern für alle Strecken (Segmente 52); Felder „anzeigen“ = „Strecken-ID:Abschnitt-ID“."""
+    """Ein Speichern für alle Strecken; Felder „anzeigen“ = „Strecken-ID:Abschnitt-ID“."""
     form = await request.form()
     v = _veranstaltung(session, vid)
     ziel = f"/admin/v/{vid}/einstellungen/zielmonitor"
@@ -1342,7 +1342,7 @@ def geraete_rolle(m) -> str:
 
 @router.post("/v/{vid}/strecken/zuordnung")
 async def zuordnung_speichern(request: Request, vid: int, session: SessionDep, _a: AdminDep):
-    """Klassenzuordnung aller Strecken in einer Tabelle (Segmente 26): je Klasse eine Strecke."""
+    """Klassenzuordnung aller Strecken in einer Tabelle: je Klasse eine Strecke."""
     form = await request.form()
     v = _veranstaltung(session, vid)
 
@@ -1362,7 +1362,7 @@ async def zuordnung_speichern(request: Request, vid: int, session: SessionDep, _
     )
 
 
-# --- Strecken: Messpunkte, Strecke hinzufügen, Seite je Strecke (Segmente 18) -------------------
+# --- Strecken: Messpunkte, Strecke hinzufügen, Seite je Strecke -------------------
 
 
 def _strecken_stand(
@@ -1403,7 +1403,7 @@ def _strecke_index(session: Session, v: Veranstaltung, sid: int) -> tuple[int, o
 @router.post("/v/{vid}/orte")
 @router.post("/v/{vid}/messpunkte")
 async def orte_speichern(request: Request, vid: int, session: SessionDep, _a: AdminDep):
-    """Seite „Messpunkte“ (Segmente 37/42); die Adresse „/orte“ nimmt weiter an."""
+    """Seite „Messpunkte“; die Adresse „/orte“ nimmt weiter an."""
     form = await request.form()
     v = _veranstaltung(session, vid)
     feld = lambda name: str(form.get(name) or "")
@@ -1445,7 +1445,7 @@ def strecke_neu(request: Request, vid: int, session: SessionDep, _a: AdminDep,
     return antwort
 
 
-# --- Strecke als Datei speichern und laden (Segmente 22) ---------------------------------------
+# --- Strecke als Datei speichern und laden ---------------------------------------
 
 
 @router.get("/v/{vid}/strecken/laden", response_class=HTMLResponse)
@@ -1486,8 +1486,8 @@ def strecke_uebernehmen(request: Request, vid: int, session: SessionDep, _a: Adm
                         name: Annotated[str, Form()] = "", ziel: Annotated[str, Form()] = "",
                         modus: Annotated[str, Form()] = "", ersetzen: Annotated[str, Form()] = "",
                         platz: Annotated[str, Form()] = "", bestaetigt: Annotated[str, Form()] = ""):  # fmt: skip
-    """Strecke aus der Datei anlegen oder (Segmente 39, modus „ersetzen“) eine bestehende ersetzen.
-    Segmente 50: Gibt es eine ersetzbare Strecke, ist die Wahl Pflicht; „Ersetzen“ nur bestätigt."""
+    """Strecke aus der Datei anlegen oder (modus „ersetzen“) eine bestehende ersetzen.
+    Gibt es eine ersetzbare Strecke, ist die Wahl Pflicht; „Ersetzen“ nur bestätigt."""
     from app import strecken_datei as sd
 
     admin_auth.csrf_pruefen(request, csrf)
@@ -1510,9 +1510,7 @@ def strecke_uebernehmen(request: Request, vid: int, session: SessionDep, _a: Adm
         _, _, mit_tn, _ = _strecken_stand(session, v)
         entwurf = sd.lesen(inhalt.encode("utf-8"))
         neu = sd.uebernehmen(session, v, entwurf, name, mit_tn, ersetzen=alt)
-        if (
-            platz and v.einrichtung_schritt
-        ):  # Segmente 49: Platz im Assistenten – Klassen gleich dazu
+        if platz and v.einrichtung_schritt:  # Platz im Assistenten – Klassen gleich dazu
             platz_hinweise = strecken.platz_entscheiden(session, v, platz, neu)
             session.commit()
     except saetze.SatzFehler as e:
@@ -1525,7 +1523,7 @@ def strecke_uebernehmen(request: Request, vid: int, session: SessionDep, _a: Adm
         return _zurueck(rueck or f"/admin/einrichtung/{vid}/2", warnung=warnung,
                         ok=f"Strecke „{neu.name}“ aus der Datei geladen – sie fährt {', '.join(p.klassen)}.")  # fmt: skip
     weiter = f"/admin/v/{vid}/strecken/{neu.id}" + (f"?zurueck={rueck}" if rueck else "")
-    hinweis = " ".join(entwurf.hinweise) or None  # Segmente 52: z. B. ignorierte Darstellung
+    hinweis = " ".join(entwurf.hinweise) or None  # Z. B. ignorierte Darstellung
     if alt is not None:
         return _zurueck(
             weiter,
@@ -1552,7 +1550,7 @@ def strecke_datei(vid: int, sid: int, session: SessionDep, _a: AdminDep):
 
 @router.get("/v/{vid}/strecken/{sid}", response_class=HTMLResponse)
 def strecke_seite(request: Request, vid: int, sid: int, session: SessionDep, _a: AdminDep):
-    """Eigene Seite je Strecke: Grunddaten, Streckenverlauf, Auswertungsabschnitte (Segmente 18)."""
+    """Eigene Seite je Strecke: Grunddaten, Streckenverlauf, Auswertungsabschnitte."""
     v = _veranstaltung(session, vid)
     kontext = strecken_kontext(session, v)
     i, s = _strecke_index(session, v, sid)
@@ -1572,7 +1570,7 @@ def strecke_seite(request: Request, vid: int, sid: int, session: SessionDep, _a:
 
 
 def abschnitt_optionen(s, mps) -> dict[str, list[tuple[str, str]]]:
-    """Auswahl für Anfang und Ende eigener Abschnitte je Art (Segmente 33): Wert „Nr:Punkt-Name“."""
+    """Auswahl für Anfang und Ende eigener Abschnitte je Art: Wert „Nr:Punkt-Name“."""
     namen = {str(m.id): m.name for m in mps}
     teile = strecken.teile_von(s)
     alle = {sg.START: "Start", sg.ZIEL: "Ziel", **namen}
@@ -1585,13 +1583,13 @@ def abschnitt_optionen(s, mps) -> dict[str, list[tuple[str, str]]]:
 
 
 def abschnitt_texte(s, mps) -> dict[str, str]:
-    """Vorschau in Worten je Auswertungsabschnitt der Strecke (Segmente 29)."""
+    """Vorschau in Worten je Auswertungsabschnitt der Strecke."""
     namen, teile = {str(m.id): m.name for m in mps}, strecken.teile_von(s)
     return {a.id: sg.abschnitt_text(a, teile, namen) for a in strecken.abschnitte_von(s)}
 
 
 def verlauf_start(s, mps, eingefroren: bool) -> dict:
-    """Startdaten des Punktfolgen-Editors (Segmente 28): Punktfolge mit Messpunkt-Namen und die
+    """Startdaten des Punktfolgen-Editors: Punktfolge mit Messpunkt-Namen und die
     Angaben der abgeleiteten Segmente in Fahrreihenfolge."""
     namen = {sg.START: "Start", sg.ZIEL: "Ziel", **{str(m.id): m.name for m in mps}}
     teile = strecken.teile_von(s)
@@ -1627,9 +1625,9 @@ def _strecke_formular(form, i: int) -> dict:
         abschnitte = [{key: feld(f"ab_{key}_{j}") for key in ("segment", "block", "id", "name", "von", "nach", "art",
                                                                "von_nr", "nach_nr")}
                       | {key: bool(feld(f"ab_{key}_{j}")) for key in ("vergleich", "aus", "entfernen")
-                         if key == "entfernen" or f"ab_{key}_{j}" in form}  # Segmente 52: fehlt = bleibt
+                         if key == "entfernen" or f"ab_{key}_{j}" in form}  # Fehlt = bleibt
                       | {"strecke": str(i)} for j in range(int(feld("ab_anzahl") or 0))]  # fmt: skip
-    if "verlauf" in form:  # Punktfolge (Segmente 28) mit den abgeleiteten Segmenten sg_*_k
+    if "verlauf" in form:  # Punktfolge mit den abgeleiteten Segmenten sg_*_k
         teile, segment_zeilen = _verlauf_lesen(feld("verlauf"), feld, i)
         if abschnitte is not None:
             abschnitte = segment_zeilen + [a for a in abschnitte if not a["segment"]]
@@ -1665,13 +1663,13 @@ def _verlauf_lesen(text: str, feld, i: int) -> tuple[list[dict], list[dict]]:
                            "nach": text_von.get(s.nach, s.nach), "km": feld(f"sg_km_{k}"), "strecke": str(i)})  # fmt: skip
             segmente.append(
                 {"segment": f"{t}.{j}", "strecke": str(i)}
-            )  # anzeigen/Vergleich bleiben (Segmente 52)
+            )  # anzeigen/Vergleich bleiben
             k += 1
     return zeilen, segmente
 
 
 def _fehler_ort(e: saetze.SatzFehler) -> tuple[str, str | None]:
-    """Reiter und Feld eines Prüffehlers im Strecken-Editor (Segmente 27)."""
+    """Reiter und Feld eines Prüffehlers im Strecken-Editor."""
     bereich = getattr(e, "bereich", None)
     if bereich:
         return bereich, None
@@ -1685,7 +1683,7 @@ def _fehler_ort(e: saetze.SatzFehler) -> tuple[str, str | None]:
 async def strecke_alles_speichern(
     request: Request, vid: int, sid: int, session: SessionDep, _a: AdminDep
 ):
-    """Strecken-Editor (Segmente 27): „Alles speichern“ übernimmt Grunddaten, Verlauf und
+    """Strecken-Editor: „Alles speichern“ übernimmt Grunddaten, Verlauf und
     Auswertungsabschnitte auf einmal. Mit „Accept: application/json“ (Editor) kommt die Antwort als
     JSON mit Reiter und Feld des Fehlers, sonst als Weiterleitung."""
     form = await request.form()
@@ -1726,7 +1724,7 @@ async def strecke_alles_speichern(
 def strecke_entfernen(request: Request, vid: int, sid: int, session: SessionDep, _a: AdminDep,
                       csrf: Annotated[str, Form()] = "", zurueck: Annotated[str, Form()] = "",
                       klassen_an: Annotated[str, Form()] = ""):  # fmt: skip
-    """Strecke entfernen; hat sie Klassen, übernimmt sie die ausdrücklich gewählte Strecke (Segmente 40)."""
+    """Strecke entfernen; hat sie Klassen, übernimmt sie die ausdrücklich gewählte Strecke."""
     v = _veranstaltung(session, vid)
     i, s = _strecke_index(session, v, sid)
     rueck = _rueckweg(zurueck, "")
@@ -1778,7 +1776,7 @@ def oeffentlichkeit_speichern(request: Request, vid: int, session: SessionDep, _
 
 
 def strecken_kontext(session: Session, v: Veranstaltung) -> dict:
-    """Daten für den Formularteil „Strecken & Zuordnung“ (Reiter und Assistent, Phase 13)."""
+    """Daten für den Formularteil „Strecken & Zuordnung“ (Reiter und Assistent)."""
     strecken.sicherstellen(session, v)
     session.commit()
     r = saetze.regeln(session, v)
@@ -1803,7 +1801,7 @@ def strecken_kontext(session: Session, v: Veranstaltung) -> dict:
 
 
 def abschnitt_zeilen(liste, mps) -> list[SimpleNamespace]:
-    """Formularzeilen der Auswertungsabschnitte aller Strecken (Segment-Abschnitte zuerst, Segmente 13)."""
+    """Formularzeilen der Auswertungsabschnitte aller Strecken (Segment-Abschnitte zuerst)."""
     namen = {sg.START: "Start", sg.ZIEL: "Ziel", **{str(m.id): m.name for m in mps}}
     return [SimpleNamespace(zeile=i, id=a.id, segment=a.segment, block=a.block, name=a.name, von=namen.get(a.von, a.von),
                             nach=namen.get(a.nach, a.nach), art=a.art, von_nr=a.von_nr, nach_nr=a.nach_nr,
@@ -1819,7 +1817,7 @@ def segment_uebersicht(liste, mps, orte=()) -> list[SimpleNamespace]:
         if not teile:
             continue
         namen = {str(m.id): m.name for m in mps}
-        if orte:  # Segmente 37: Namen von Start- und Zielort statt „Start“/„Ziel“
+        if orte:  # Namen von Start- und Zielort statt „Start“/„Ziel“
             namen |= {
                 sg.START: strecken.startort_von(s, orte).name,
                 sg.ZIEL: strecken.zielort_von(s, orte).name,
@@ -1858,11 +1856,11 @@ def regeln_aus_formular(session: Session, v: Veranstaltung, form) -> tuple[list[
                        "entfernen": bool(feld(f"mp_entfernen_{j}"))}
                       for j in range(int(feld("mp_anzahl")))]  # fmt: skip
     abschnitte = None
-    if feld("ab_anzahl").isdigit():  # Auswertungsabschnitte (Segmente 13)
+    if feld("ab_anzahl").isdigit():  # Auswertungsabschnitte
         abschnitte = [{key: feld(f"ab_{key}_{j}") for key in ("strecke", "segment", "block", "id", "name", "von", "nach", "art",
                                                                "von_nr", "nach_nr")}
                       | {key: bool(feld(f"ab_{key}_{j}")) for key in ("vergleich", "aus", "entfernen")
-                         if key == "entfernen" or f"ab_{key}_{j}" in form}  # Segmente 52: fehlt = bleibt
+                         if key == "entfernen" or f"ab_{key}_{j}" in form}  # Fehlt = bleibt
                       for j in range(int(feld("ab_anzahl")))]  # fmt: skip
     if feld("tl_anzahl").isdigit():
         teile = [{key: feld(f"tl_{key}_{j}") for key in ("strecke", "block", "wdh", "name", "von", "nach", "km")}
@@ -1937,7 +1935,7 @@ def aktivieren(request: Request, vid: int, session: SessionDep, _a: AdminDep,
 @router.post("/v/{vid}/deaktivieren")
 def deaktivieren(request: Request, vid: int, session: SessionDep, _a: AdminDep,
                  csrf: Annotated[str, Form()] = ""):  # fmt: skip
-    """„Nicht mehr aktiv setzen …“ (Segmente 46): nur ohne Startzeit; die Geräte sperren sich wieder."""
+    """„Nicht mehr aktiv setzen …“: nur ohne Startzeit; die Geräte sperren sich wieder."""
     v = _veranstaltung(session, vid)
 
     def aktion():

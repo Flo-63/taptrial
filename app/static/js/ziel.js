@@ -1,4 +1,4 @@
-// Zielgerät (KONZEPT 5) mit zwei Sichten:
+// Zielgerät mit zwei Sichten:
 //  „Erfassen“: nur Kacheln (einstufig) und „Zeit ohne Nummer“, feste Reihenfolge, Entprellung.
 //  „Rennleitung“: offene Zeiten zuordnen, letzte Zieleinläufe aller Geräte umbuchen/löschen,
 //  Status DNF bzw. „DSQ vorläufig“ (mit Grund) setzen und aufheben; endgültiger DSQ nur im Admin. Auch allein auf einem eigenen Gerät nutzbar (?sicht=rennleitung).
@@ -9,15 +9,15 @@ const BESTAETIGUNG_MS = 3000;
 const ENDSTATUS = ["DNS", "DNF", "DSQ"];
 const SICHTEN = ["erfassen", "rennleitung"];
 const STUFE_TEXT = { GOLD: "Gold", SILBER: "Silber", BRONZE: "Bronze" };
-// Schnellkorrektur (Phase 14a): je Tipp ±1 s, Summe je Stempel höchstens ±5 s
+// Schnellkorrektur: je Tipp ±1 s, Summe je Stempel höchstens ±5 s
 const KORREKTUR_MS = 1000;
 const MAX_KORREKTUR_MS = 5000;
 let korrekturHinweis = null; // uuid des Stempels, an dem die Grenze erreicht wurde
-// Erwartete Fahrer (AUSBAU A8): Rahmen ab 2 min vor der nach Median erwarteten Ankunft
+// Erwartete Fahrer: Rahmen ab 2 min vor der nach Median erwarteten Ankunft
 const ERWARTET_VORLAUF_MS = 2 * 60 * 1000;
 
 // Eigener Rennleitungs-Link (/rennleitung, Ziel und Rennleitung getrennt): eigene Rolle und
-// eigener Speicher; der Ziel-Link zeigt dann nur „Erfassen“ (Test 08.10.).
+// eigener Speicher; der Ziel-Link zeigt dann nur „Erfassen“.
 const ROLLE = document.body.classList.contains("geraet-rennleitung") ? "rennleitung" : "ziel";
 const g = new Geraet(ROLLE);
 const $ = (id) => document.getElementById(id);
@@ -27,7 +27,7 @@ let zuordnen = null; // { uuid, titel } während eine Zeit zugeordnet/umgebucht 
 let statusFahrer = null; // Startnummer, deren Status gerade geändert wird
 let bestaetigen = null; // Schlüssel der Aktion, die auf den zweiten Tipp wartet
 let bestaetigungsTimer = null;
-let aufgeklappt = null; // uuid der einzigen aufgeklappten Zeile in „Letzte Einläufe“ (AUSBAU A4)
+let aufgeklappt = null; // uuid der einzigen aufgeklappten Zeile in „Letzte Einläufe“
 // Reiter der Rennleitung: genau ein Bereich sichtbar. null = noch nicht gewählt; dann beim ersten Öffnen der Rennleitung mit
 // bekanntem Stand „Offene Zeiten“, wenn es welche gibt, sonst „Letzte Einläufe“; danach fest.
 const BEREICHE = ["offen", "letzte", "status"];
@@ -111,7 +111,7 @@ function zustand() {
   });
   // Erfassen: feste Reihenfolge nach Startnummer; DNS/DNF/DSQ ausgeblendet,
   // nicht gestartete ausgegraut an ihrem Platz, angetippte bleiben 1 s stehen.
-  // Zielort (Segmente 38): „Erfassen“ und Endzustand nur mit Fahrern der Strecken, die hier enden
+  // Zielort: „Erfassen“ und Endzustand nur mit Fahrern der Strecken, die hier enden
   const hier = (t) => !s.ort || s.ort.strecken.includes(t.strecke ?? 0);
   const erfassen = teilnehmer
     .filter(hier)
@@ -160,7 +160,7 @@ function zustand() {
   return { erfassen, zuordenbar, alle, offeneZeiten, letzte: letzteMitVorbehalt, nachNr, info, fertig, eigener, stempel };
 }
 
-// Zuordnen/Umbuchen (Segmente 38): Fahrer der Strecken, die am Zielort des Stempels enden, zuerst
+// Zuordnen/Umbuchen: Fahrer der Strecken, die am Zielort des Stempels enden, zuerst
 function bevorzugt(z, fahrer) {
   const s = g.stand || {};
   const st = zuordnen && z.stempel.get(zuordnen.uuid);
@@ -227,7 +227,7 @@ function kachel(t, beiTipp, mitStatus = false) {
     b.dataset.strecke = marke.textContent;
   }
   if (mitStatus && t.erledigt) {
-    // Status-/Auswahl-Kacheln: „im Ziel“ dezent mit Text statt grüner Fläche (Test 08.10.)
+    // Status-/Auswahl-Kacheln: „im Ziel“ dezent mit Text statt grüner Fläche
     b.classList.remove("erledigt");
     b.classList.add("im-ziel");
     const z = document.createElement("span");

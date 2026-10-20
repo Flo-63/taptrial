@@ -1,4 +1,4 @@
-"""Streckenfarben (AUSBAU A3): ohne Rot/Orange/Gelb, kein Grün, gut unterscheidbar, Kontrast WCAG AA."""
+"""Streckenfarben: ohne Rot/Orange/Gelb, kein Grün, gut unterscheidbar, Kontrast WCAG AA."""
 
 import colorsys
 import itertools

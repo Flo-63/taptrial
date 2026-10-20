@@ -1,4 +1,4 @@
-"""Release 1: Nach außen heißt die App „TapTrial – Zeitnahme per Handy“; der Vereinsname kommt aus
+"""Nach außen heißt die App „TapTrial – Zeitnahme per Handy“; der Vereinsname kommt aus
 dem Branding (global), eine frische Installation ist neutral (kein RCB). Interne Namen bleiben."""
 
 import re
@@ -55,9 +55,7 @@ def test_druckansichten_mit_fusszeile():
 
 def test_interne_namen_bleiben():
     """Bestehende Installationen und Geräte dürfen nicht brechen: Umgebungsvariablen, Gerätespeicher."""
-    assert "RCB_TOKEN_ADMIN" in (APP / "einstellungen.py").read_text(
-        encoding="utf-8"
-    ) or "RCB_" in (APP / "einstellungen.py").read_text(encoding="utf-8")
+    assert 'ALT = "RCB_"' in (APP / "umgebung.py").read_text(encoding="utf-8")  # Rückfall
     assert 'DB_NAME = "rcb-zeitfahren"' in (APP / "static/js/geraet.js").read_text(encoding="utf-8")
 
 

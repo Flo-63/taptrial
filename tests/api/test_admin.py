@@ -1,4 +1,4 @@
-"""Admin-Oberfläche über den TestClient (Phase 6)."""
+"""Admin-Oberfläche über den TestClient."""
 
 import re
 import uuid

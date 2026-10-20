@@ -1,4 +1,4 @@
-"""Nacharbeit mit Segmenten messen (Segmente 10/15): Fälle und Abweichungen bei vergessenen Tipps.
+"""Nacharbeit mit Segmenten messen: Fälle und Abweichungen bei vergessenen Tipps.
 
 Simuliert 50 Fahrer auf der Beispielstrecke (Start→P1, Rundenblock P1→P2→P1 ×2, P1→Ziel) mit
 15 % vergessenen und 2 % doppelten Tipps über viele Seeds und zählt Fälle und Abweichungen; dazu

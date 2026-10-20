@@ -1,11 +1,12 @@
 {% if not d %}
+{% if vereinsname(request) %}<header class="ergebnis-kopf"><h1><span class="kopf-verein" id="kopf-verein">{{ vereinsname(request) }}</span></h1></header>{% endif %}
 <p class="leer">Derzeit keine Ergebnisse.</p>
 {% elif d.keine_ergebnisse %}
-<header class="ergebnis-kopf"><h1>{{ d.veranstaltung.name }} <span class="datum">{{ d.veranstaltung.datum }}</span></h1></header>
+<header class="ergebnis-kopf"><h1>{% if vereinsname(request) %}<span class="kopf-verein" id="kopf-verein">{{ vereinsname(request) }}</span> · {% endif %}{{ d.veranstaltung.name }} <span class="datum">{{ d.veranstaltung.datum }}</span></h1></header>
 <p class="leer" id="keine-ergebnisse">{{ d.keine_ergebnisse }}</p>
 {% else %}
 <header class="ergebnis-kopf">
-  <h1>{{ d.veranstaltung.name }} <span class="datum">{{ d.veranstaltung.datum }}</span></h1>
+  <h1>{% if vereinsname(request) %}<span class="kopf-verein" id="kopf-verein">{{ vereinsname(request) }}</span> · {% endif %}{{ d.veranstaltung.name }} <span class="datum">{{ d.veranstaltung.datum }}</span></h1>
   <p class="ergebnisstatus {{ 'offiziell' if d.offiziell else 'vorlaeufig' }}" id="ergebnisstatus">{{ d.kopf }}</p>
   {% if d.wertung %}<p class="wertung">Leistungswertung: {{ d.wertung }}</p>{% endif %}
   <p class="zaehlung" id="zaehlung">{{ d.zaehlung.gestartet }} gestartet · {{ d.zaehlung.unterwegs }} auf der Strecke ·

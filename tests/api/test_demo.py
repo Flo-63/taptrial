@@ -1,4 +1,4 @@
-"""Segmente 68: Demo-Veranstaltung über die normale App-Logik – Skript gegen leere DB, alle
+"""Demo-Veranstaltung über die normale App-Logik – Skript gegen leere DB, alle
 Ergebnisansichten fehlerfrei, abgeschlossen und nicht aktiv, wiederholbar (--ersetzen)."""
 
 import csv
@@ -239,7 +239,7 @@ def test_aktive_veranstaltung_bleibt_aktiv_laufende_blockiert(db, capsys):
 def test_verwaltung_demo(db, monkeypatch):
     from app import verwaltung
 
-    monkeypatch.setenv("RCB_DB_PFAD", db)
+    monkeypatch.setenv("TAPTRIAL_DB_PFAD", db)
     assert verwaltung.main(["demo"]) == 0
     assert verwaltung.main(["demo"]) == 1
     assert verwaltung.main(["demo", "--ersetzen"]) == 0

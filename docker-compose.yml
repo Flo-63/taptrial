@@ -1,7 +1,7 @@
 # TapTrial mit dem fertigen Image (ohne HTTPS). Für den Einsatz am Rennen HTTPS verwenden:
 # docker-compose.caddy.yml – ohne HTTPS gibt es keinen Offline-Betrieb und keine App (PWA) auf den Handys.
 #
-#   cp .env.example .env    # RCB_TOKEN_ADMIN eintragen
+#   cp .env.example .env    # TAPTRIAL_TOKEN_ADMIN eintragen
 #   docker compose up -d    # http://localhost:8000
 services:
   app:

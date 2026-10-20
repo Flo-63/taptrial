@@ -1,4 +1,4 @@
-"""E2E: Rennleitung übersichtlicher (AUSBAU A4, Test 08.10.): Reiter, kompakte aufklappbare Zeilen, „im Ziel“."""
+"""E2E: Rennleitung übersichtlicher: Reiter, kompakte aufklappbare Zeilen, „im Ziel“."""
 
 import re
 

@@ -1,4 +1,4 @@
-"""Demo-Veranstaltung „Demo-Zeitfahren Kottenforst“ (Segmente 68).
+"""Demo-Veranstaltung „Demo-Zeitfahren Kottenforst“.
 
     uv run python scripts/demo.py --db data/zeitfahren.sqlite3 [--ersetzen]
     uv run python -m app.verwaltung demo [--ersetzen]          # im Container: docker compose exec app …
@@ -14,7 +14,6 @@ wieder.
 
 import argparse
 import json
-import os
 import random
 import sys
 import uuid
@@ -27,7 +26,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app import api, saetze, strecken
+from app import api, saetze, strecken, umgebung
 from app import korrekturen as k
 from app import monitor_konfig as mk
 from app import segmente as sg
@@ -333,11 +332,9 @@ def erzeugen(session: Session, ersetzen: bool = False, klassen_datei: str = STAN
 def main(argv: list[str] | None = None, db_pfad: str | None = None) -> int:
     from app.db import erzeuge_engine, erzeuge_sessionmaker, tabellen_anlegen
 
-    parser = argparse.ArgumentParser(description="Demo-Veranstaltung anlegen (Segmente 68)")
+    parser = argparse.ArgumentParser(description="Demo-Veranstaltung anlegen")
     if db_pfad is None:
-        parser.add_argument(
-            "--db", default=os.environ.get("RCB_DB_PFAD") or "data/zeitfahren.sqlite3"
-        )
+        parser.add_argument("--db", default=umgebung.wert("db_pfad", "data/zeitfahren.sqlite3"))
     parser.add_argument("--ersetzen", action="store_true", help="vorhandene Demo vorher löschen")
     args = parser.parse_args(argv)
     pfad = db_pfad or args.db
@@ -347,8 +344,8 @@ def main(argv: list[str] | None = None, db_pfad: str | None = None) -> int:
         with erzeuge_sessionmaker(engine)() as session:
             try:
                 v = erzeugen(session, args.ersetzen,
-                             os.environ.get("RCB_KLASSEN_DATEI") or STANDARD_KLASSEN_DATEI,
-                             os.environ.get("RCB_WERTUNGEN_VERZEICHNIS") or STANDARD_WERTUNGEN)  # fmt: skip
+                             umgebung.wert("klassen_datei", STANDARD_KLASSEN_DATEI),
+                             umgebung.wert("wertungen_verzeichnis", STANDARD_WERTUNGEN))  # fmt: skip
             except DemoFehler as e:
                 session.rollback()
                 print(e, file=sys.stderr)

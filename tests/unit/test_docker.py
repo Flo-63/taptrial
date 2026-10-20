@@ -1,4 +1,4 @@
-"""Release 5: Docker-Image (Nicht-root, Healthcheck /up, Daten unter /data, OCI-Labels), Compose mit
+"""Docker-Image (Nicht-root, Healthcheck /up, Daten unter /data, OCI-Labels), Compose mit
 fertigem Image, Variante mit Caddy (automatisches HTTPS) und .env.example mit allen Variablen."""
 
 import dataclasses
@@ -21,7 +21,7 @@ def test_dockerfile():
     d = lesen("Dockerfile")
     assert re.search(r"^USER zeitfahren$", d, re.MULTILINE)  # nicht root
     assert "HEALTHCHECK" in d and "http://127.0.0.1:8000/up" in d
-    assert 'VOLUME ["/data"]' in d and "RCB_DB_PFAD=/data/zeitfahren.sqlite3" in d
+    assert 'VOLUME ["/data"]' in d and "TAPTRIAL_DB_PFAD=/data/zeitfahren.sqlite3" in d
     for label, wert in (("title", '"TapTrial"'), ("version", '"${VERSION}"'),
                         ("licenses", '"PolyForm-Noncommercial-1.0.0"'),
                         ("source", '"https://github.com/Flo-63/taptrial"')):  # fmt: skip
@@ -51,8 +51,8 @@ def test_compose_mit_caddy():
 def test_env_example_vollstaendig():
     text = lesen(".env.example")
     for feld in dataclasses.fields(Einstellungen):
-        assert f"RCB_{feld.name.upper()}" in text, feld.name
+        assert f"TAPTRIAL_{feld.name.upper()}" in text, feld.name
     for name in ("TAPTRIAL_DOMAIN", "TAPTRIAL_VERSION", "TAPTRIAL_PORT"):
         assert name in text
-    assert re.search(r"^RCB_TOKEN_ADMIN=", text, re.MULTILINE)
-    assert not re.search(r"^RCB_DB_PFAD=", text, re.MULTILINE)  # im Image fest auf /data
+    assert re.search(r"^TAPTRIAL_TOKEN_ADMIN=", text, re.MULTILINE)
+    assert not re.search(r"^TAPTRIAL_DB_PFAD=", text, re.MULTILINE)  # im Image fest auf /data

@@ -1,7 +1,7 @@
 # TapTrial mit Caddy davor: automatisches HTTPS (Let's Encrypt). Voraussetzung: Die Domain zeigt auf
 # diesen Rechner, Ports 80 und 443 sind von außen erreichbar.
 #
-#   cp .env.example .env    # RCB_TOKEN_ADMIN und TAPTRIAL_DOMAIN eintragen
+#   cp .env.example .env    # TAPTRIAL_TOKEN_ADMIN und TAPTRIAL_DOMAIN eintragen
 #   docker compose -f docker-compose.caddy.yml up -d
 #
 # Caddy teilt sich das Netz mit der App (network_mode) und spricht sie über 127.0.0.1 an – damit

@@ -13,8 +13,8 @@ FIXTURE = Path(__file__).resolve().parents[2] / "config" / "teilnehmer_beispiel.
 @pytest.fixture
 def db(tmp_path, monkeypatch):
     pfad = str(tmp_path / "v.sqlite3")
-    monkeypatch.setenv("RCB_DB_PFAD", pfad)
-    monkeypatch.setenv("RCB_TOKEN_ADMIN", "a1")
+    monkeypatch.setenv("TAPTRIAL_DB_PFAD", pfad)
+    monkeypatch.setenv("TAPTRIAL_TOKEN_ADMIN", "a1")
     return pfad
 
 
@@ -68,7 +68,7 @@ def test_links_ohne_veranstaltung(db, capsys):
 
 
 def test_veranstaltung_ohne_tokens_moeglich(db, monkeypatch):
-    for name in ("RCB_TOKEN_ADMIN",):
+    for name in ("TAPTRIAL_TOKEN_ADMIN",):
         monkeypatch.delenv(name)
     assert main(["veranstaltung", "Probe", "2026-09-01"]) == 0
 
@@ -100,7 +100,7 @@ def test_wertung_setzen_und_ausschalten(db, capsys):
     assert main(["wertung", "radsportabzeichen-a1-flach.toml", "20,0"]) == 0
     v = _alle(db, Veranstaltung)[0]
     assert v.wertungssatz_id is not None  # bisheriger Dateiname geht weiter
-    # Segmente 49: keine Strecken still angelegt – die eine Strecke bekommt die Länge
+    # Keine Strecken still angelegt – die eine Strecke bekommt die Länge
     assert "Strecken: Strecke 1 (20,0 km)" in capsys.readouterr().out
     assert main(["wertung", "DRA A.2 Berg Straße", "4,0"]) == 0
     assert "Strecken: Strecke 1 (4,0 km)" in capsys.readouterr().out
@@ -114,7 +114,7 @@ def test_wertung_setzen_und_ausschalten(db, capsys):
 
 
 def test_cli_verdraengt_keine_laufende_veranstaltung(db, capsys):
-    """Segmente 55: „veranstaltung“ legt keine neue aktive an, solange die aktive Startzeiten hat."""
+    """„veranstaltung“ legt keine neue aktive an, solange die aktive Startzeiten hat."""
     main(["veranstaltung", "Kottenforst", "2026-10-10"])
     from app.db import erzeuge_engine, erzeuge_sessionmaker
     from app.models import Ereignis

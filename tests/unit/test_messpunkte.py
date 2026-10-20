@@ -1,4 +1,4 @@
-"""Messpunkte der Veranstaltung und Segmente je Strecke speichern, prüfen, einfrieren (Segmente 7/12)."""
+"""Messpunkte der Veranstaltung und Segmente je Strecke speichern, prüfen, einfrieren."""
 
 import pytest
 
@@ -47,7 +47,7 @@ def test_beispielstrecke_speichern(session):
         ("Runde", 2, 2),
         ("", 1, 1),
     ]
-    assert teile[1].segmente[0].km == 3.5  # „Vergleich“ gehört jetzt zum Abschnitt (Segmente 13)
+    assert teile[1].segmente[0].km == 3.5  # „Vergleich“ gehört jetzt zum Abschnitt
     assert teile[0].segmente[0].name == "Start→P1"  # ohne Namen: „von→nach“
     assert len({m.token for m in mps(session, v)}) == 2
     defs = st.auswertungs_strecken(session, v)
@@ -124,7 +124,7 @@ def test_einfrieren(session):
 
 
 def test_gemeinsamer_messpunkt_fuer_zwei_strecken(session):
-    """Segmente 12: P1 nutzen beide Strecken, P2 nur die lange."""
+    """P1 nutzen beide Strecken, P2 nur die lange."""
     v = veranstaltung(session)  # 5 km (Zeile 0) und 20 km (Zeile 1)
     kurz = [tl("Start", "P1", strecke="0"), tl("P1", "Ziel", strecke="0")]
     mit_segmenten(session, v, [mp("P1"), mp("P2")], kurz + BEISPIEL)
@@ -157,7 +157,7 @@ def ab(
 
 
 def test_auswertungsabschnitte_speichern(session):
-    """Segmente 13: Segment-Abschnitte ausblendbar mit Vergleich, eigener Abschnitt „Runde“."""
+    """Segment-Abschnitte ausblendbar mit Vergleich, eigener Abschnitt „Runde“."""
     v = veranstaltung(session)
     zeilen, zuordnung = formular(session, v)
     abschnitte = [ab(segment="1.0", vergleich=True), ab(segment="2.0", aus=True),
@@ -183,7 +183,7 @@ def test_auswertungsabschnitte_speichern(session):
 
 
 def test_ungenutzter_messpunkt_nur_hinweis_genutzter_nicht_entfernbar(session):
-    """Segmente 18: Messpunkte entstehen im Reiter „Strecken“ vor ihrer Nutzung – ungenutzt ist ein Hinweis."""
+    """Messpunkte entstehen im Reiter „Strecken“ vor ihrer Nutzung – ungenutzt ist ein Hinweis."""
     v = veranstaltung(session)
     hinweise = mit_segmenten(
         session, v, [mp("P1"), mp("P2")], [tl("Start", "P1"), tl("P1", "Ziel")]

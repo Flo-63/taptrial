@@ -1,6 +1,6 @@
-"""Füllt eine lokale Instanz mit einem simulierten Rennen (für Gate C ohne Handys).
+"""Füllt eine lokale Instanz mit einem simulierten Rennen (zum Ausprobieren ohne Handys).
 
-    uv run python scripts/simulieren.py                 # DB aus RCB_DB_PFAD bzw. data/zeitfahren.sqlite3
+    uv run python scripts/simulieren.py                 # DB aus TAPTRIAL_DB_PFAD bzw. data/zeitfahren.sqlite3
     uv run python scripts/simulieren.py --db /tmp/sim.sqlite3 --seed 7 --ohne-wertung
 
 Legt eine neue, aktive Veranstaltung „Simulation …“ mit 50 Fahrern an und schreibt das Rennen
@@ -10,7 +10,7 @@ Nummer“ und Zuordnung), 1 DNS, 1 DNF. Zwei Strecken wie der Vorschlag aus DRA 
 (Jugendklassen, fünf Jugendliche) und „20 km“ (alle anderen). Zusätzlich ein vorläufiger DSQ und –
 wenn nicht abgeschaltet – die Leistungswertung A.1. Danach Server starten und ansehen:
 
-    RCB_TOKEN_ADMIN=admin uv run uvicorn app.main:app
+    TAPTRIAL_TOKEN_ADMIN=admin uv run uvicorn app.main:app
     http://localhost:8000/ergebnisse   ·   /monitor   ·   /admin (Admin-Token „admin“)
 """
 
@@ -40,7 +40,9 @@ def ereignis(v, art, zeit, geraet, **felder) -> Ereignis:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--db", default=os.environ.get("RCB_DB_PFAD") or "data/zeitfahren.sqlite3")
+    parser.add_argument(
+        "--db", default=os.environ.get("TAPTRIAL_DB_PFAD") or "data/zeitfahren.sqlite3"
+    )
     parser.add_argument("--seed", type=int, default=2026)
     parser.add_argument("--ohne-wertung", action="store_true")
     args = parser.parse_args(argv)

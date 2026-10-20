@@ -1,4 +1,4 @@
-"""Segmente 72 (ersetzt Segmente 69/A175): Zielmonitor mit gemeinsamem Raster. „Auf der Strecke“,
+"""Zielmonitor mit gemeinsamem Raster. „Auf der Strecke“,
 „Letzte Zieleinläufe“ und das Ergebnis stehen untereinander in voller Breite, die Spalten stehen in
 allen Bereichen exakt untereinander. Alle sichtbaren Zeilen teilen sich die Höhe (Zeilenhöhe 4–6 % der
 Fensterhöhe), die Schrift folgt der Zeilenhöhe; geblättert wird erst, wenn die Mindesthöhe nicht
@@ -190,8 +190,8 @@ def test_leere_bereiche_ausgeblendet(browser, server):
 @pytest.mark.parametrize("breite,hoehe", [(1920, 1080), (1100, 800), (360, 740)])
 def test_ergebnis_beste_abschnittszeit_und_schmale_fenster(browser, server, breite, hoehe):
     """Ergebnis nach Klasse gruppiert, Spalte Abschnitt = beste Zeit des ersten gewählten Felds mit
-    mehreren Durchfahrten (A178); unter 1200 px ohne Klasse, unter 900 px Abschnitt unter dem Namen
-    (A179)."""
+        mehreren Durchfahrten; unter 1200 px ohne Klasse, unter 900 px Abschnitt unter dem Namen
+    ."""
     rennen(server, 2, im_ziel=0)  # Nr. 1: Kreisel→Berg 5:00, dann 4:00
     t = int(time.time() * 1000)
     server.senden([{"uuid": str(uuid.uuid4()), "art": "ZIEL", "startnummer": 1, "zeit_ms": t, "erstellt_ms": t,

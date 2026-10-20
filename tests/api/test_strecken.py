@@ -1,4 +1,4 @@
-"""Mehrere Strecken: Admin, Geräte-API, öffentliche Listen, CSV, Druck (Phase 13)."""
+"""Mehrere Strecken: Admin, Geräte-API, öffentliche Listen, CSV, Druck."""
 
 import re
 from datetime import date
@@ -30,7 +30,7 @@ def v(client):
                              nachname=f"Nach{nr}", geschlecht=g, geburtsjahr=j, abzeichen=True))  # fmt: skip
         s.commit()
         a1 = saetze.nach_name(s, Wertungssatz, "DRA A.1 flach")
-        # Strecken wie der Vorschlag aus A.1 (Segmente 49: der Satzwechsel legt sie nicht mehr an)
+        # Strecken wie der Vorschlag aus A.1 (der Satzwechsel legt sie nicht mehr an)
         st.anlegen(s, v, st.vorschlag(saetze.regeln(s, v).klassen, saetze.wertung_von(a1)))
         saetze.regeln_setzen(s, v, v.klassensatz_id, a1.id, None)
         return v
@@ -54,7 +54,7 @@ def rennen(client):
 
 
 def test_strecken_liste_und_seite_je_strecke(admin, v):
-    """Segmente 18/25: Seite „Strecken“ mit Kurzinfo und „Öffnen“; Seite je Strecke speichert ihre Grunddaten."""
+    """Seite „Strecken“ mit Kurzinfo und „Öffnen“; Seite je Strecke speichert ihre Grunddaten."""
     html = admin.get(f"/admin/v/{v.id}/strecken").text
     assert 'id="messpunkte-karte"' not in html and 'id="strecken-liste"' in html
     assert 'data-strecke="5 km"' in html and "20,0 km" in html and "Start · Ziel" in html
@@ -70,7 +70,7 @@ def test_strecken_liste_und_seite_je_strecke(admin, v):
         "zurueck-strecken",
     ):
         assert f'id="{teil}"' in seite, teil
-    assert 'name="klasse"' not in seite and '#strecke"' in seite  # Segmente 26: Zuordnung zentral
+    assert 'name="klasse"' not in seite and '#strecke"' in seite  # Zuordnung zentral
     # Grunddaten: Name und Länge
     r = admin.post(f"/admin/v/{v.id}/strecken/{ids[0]}", data={
         "csrf": admin.csrf, "name": "Jugend", "laenge": "5,2"})  # fmt: skip
@@ -93,7 +93,7 @@ def test_strecken_liste_und_seite_je_strecke(admin, v):
         kurz, lang = st.strecken_von(s, s.get(Veranstaltung, v.id))
         assert "Damen 31-40" in {k.klasse for k in kurz.klassen}
         assert "Herren 31-40" in {k.klasse for k in lang.klassen}  # nicht übermittelt: bleibt
-    # Strecke mit Klassen: nur mit ausdrücklich gewählter Strecke für die Klassen (Segmente 40)
+    # Strecke mit Klassen: nur mit ausdrücklich gewählter Strecke für die Klassen
     seite = admin.get(f"/admin/v/{v.id}/strecken/{ids[0]}").text
     assert 'id="entfernen-dialog"' in seite and "Die Klassen von ‚Jugend‘ übernimmt:" in seite
     r = admin.post(f"/admin/v/{v.id}/strecken/{ids[0]}/entfernen", data={"csrf": admin.csrf})
@@ -267,7 +267,7 @@ def test_wertung_und_laenge_in_einem_formular(admin, client):
 
 
 def test_satzwechsel_laesst_strecken_stehen(admin, v):
-    """Segmente 49: Wertung aus legt keine Strecke „Strecke 1“ mehr an – die Strecken bleiben samt
+    """Wertung aus legt keine Strecke „Strecke 1“ mehr an – die Strecken bleiben samt
     gemessener Längen, ohne Rückfrage."""
     html = admin.get(f"/admin/v/{v.id}/klassen").text
     assert 'name="laengen_verwerfen"' not in html and "Die Strecken bleiben" in html
@@ -280,10 +280,10 @@ def test_satzwechsel_laesst_strecken_stehen(admin, v):
 
 
 def test_abbrechen_fuehrt_zur_aufrufenden_seite(admin, v):
-    """Segmente 21: „Abbrechen“ ohne Speichern zurück – zur aufrufenden Seite (?zurueck=) oder zum Standard."""
+    """„Abbrechen“ ohne Speichern zurück – zur aufrufenden Seite (?zurueck=) oder zum Standard."""
     with admin.app.state.sessionmaker() as s:
         sid = st.strecken_von(s, s.get(Veranstaltung, v.id))[0].id
-    # Strecken-Editor (Segmente 27): „Zurück“ in der Aktionsleiste, „Abbrechen“ verwirft auf der Seite
+    # Strecken-Editor: „Zurück“ in der Aktionsleiste, „Abbrechen“ verwirft auf der Seite
     standard = f'href="/admin/v/{v.id}/strecken" id="zurueck-strecken"'
     seite = admin.get(f"/admin/v/{v.id}/strecken/{sid}").text
     assert standard in seite and 'id="aenderungen-verwerfen"' in seite
@@ -303,7 +303,7 @@ def test_abbrechen_fuehrt_zur_aufrufenden_seite(admin, v):
 
 
 def test_alles_speichern_atomar_mit_reiter_und_feld(admin, v):
-    """Segmente 27: „Alles speichern“ übernimmt alle Reiter auf einmal; ein Prüffehler speichert nichts
+    """„Alles speichern“ übernimmt alle Reiter auf einmal; ein Prüffehler speichert nichts
     und nennt Reiter und Feld (JSON für den Editor)."""
     with admin.app.state.sessionmaker() as s:
         sid = st.strecken_von(s, s.get(Veranstaltung, v.id))[0].id

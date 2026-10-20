@@ -1,4 +1,4 @@
-"""Leistungswertung Deutsches Radsportabzeichen (KONZEPT 7a, Phase 7)."""
+"""Leistungswertung Deutsches Radsportabzeichen."""
 
 from pathlib import Path
 
@@ -92,7 +92,7 @@ def test_kaputte_datei_verhindert_laden(tmp_path, klassen):
     ("fahrzeit_ms", "erwartet"),
     [
         (38 * MIN, "GOLD"),  # genau auf der Schwelle
-        (38 * MIN + 99, "GOLD"),  # 38:00,099 → abgeschnitten 38:00,0 (A33)
+        (38 * MIN + 99, "GOLD"),  # 38:00,099 → abgeschnitten 38:00,0
         (38 * MIN + 100, "SILBER"),  # 38:00,1
         (43 * MIN, "SILBER"),
         (43 * MIN + 100, "BRONZE"),
@@ -106,7 +106,7 @@ def test_gesamtzeit_schwellen(wertungen, fahrzeit_ms, erwartet):
 
 @pytest.mark.parametrize(("strecke", "erwartet"), [(199, None), (200, "GOLD"), (202, "GOLD")])
 def test_gesamtzeit_streckenlaenge_mindestens(wertungen, strecke, erwartet):
-    # A34: Streckenlänge der Veranstaltung >= strecke_km der Stufe, keine Toleranz nach unten
+    # Streckenlänge der Veranstaltung >= strecke_km der Stufe, keine Toleranz nach unten
     assert stufe_berechnen(wertungen[A1], "Herren 31-40", 30 * MIN, strecke) == erwartet
 
 

@@ -1,4 +1,4 @@
-# Release 6: bei jedem Push auf main ruff und pytest (ohne E2E – die brauchen Browser und Zeit;
+# Bei jedem Push auf main ruff und pytest (ohne E2E – die brauchen Browser und Zeit;
 # lokal: uv run pytest -q tests/e2e).
 name: Tests
 
@@ -11,10 +11,10 @@ permissions:
 
 jobs:
   tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
         with:
           python-version: "3.12"
       - name: Abhängigkeiten

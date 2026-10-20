@@ -7,7 +7,7 @@
 ![Startseite](bilder/startseite.png)
 
 1. Die Adresse eurer Installation öffnen (z. B. **https://zeitnahme.example.org**). Die Startseite zeigt die aktive Veranstaltung und drei Knöpfe: **Ergebnisse**, **Zielmonitor** und **Anmeldung Admin**. Gerätelinks stehen dort bewusst nicht (die gibt es nur im Admin).
-2. „Anmeldung Admin“ wählen, die **Admin-Passphrase** eingeben (beim Einrichten als `RCB_TOKEN_ADMIN` festgelegt) und „Anmelden“.
+2. „Anmeldung Admin“ wählen, die **Admin-Passphrase** eingeben (beim Einrichten als `TAPTRIAL_TOKEN_ADMIN` festgelegt, bei älteren Installationen `RCB_TOKEN_ADMIN`) und „Anmelden“.
 3. Die Anmeldung gilt 12 Stunden. Oben rechts „Abmelden“, wenn du fertig bist.
 
 > Nach 5 falschen Eingaben ist die Anmeldung für 15 Minuten gesperrt.
@@ -20,7 +20,7 @@ Unter dem Anmeldefeld führt „Zu den Ergebnissen“ zur öffentlichen Ergebnis
 
 Die **Kopfzeile** hat immer dieselben Knöpfe: **Veranstaltungen** (Liste aller Veranstaltungen), **Vorlagen** (Klassen- und Wertungssätze, Abschnitt 12), **Hilfe** und **Abmelden**. „Hilfe“ öffnet dieses Handbuch im selben Fenster direkt beim Abschnitt zur aktuellen Seite; „Zurück zum Admin“ in der Kopfzeile der Hilfe führt zurück.
 
-In einer geöffneten Veranstaltung steht links die **Seitenleiste** mit allen Seiten, nach Themen gruppiert. Kopfzeile und Seitenleiste bleiben beim Scrollen stehen. Auf dem Handy bleibt nur die Kopfzeile stehen; der Knopf „**Menü**“ darin klappt die Seitenleiste auf. Alle Punkte sind immer sichtbar; was im aktuellen Zustand nicht geht, ist auf der Seite gesperrt und nennt den Grund.
+In einer geöffneten Veranstaltung steht links die **Seitenleiste** mit allen Seiten, nach Themen gruppiert. Kopfzeile und Seitenleiste bleiben beim Scrollen stehen. Auf dem Handy bleibt nur die Kopfzeile stehen; der Knopf „**Menü**“ darin klappt die Seitenleiste auf. Ganz unten in der Seitenleiste steht klein die Version der App (auf dem Handy unten im aufgeklappten Menü); auf den öffentlichen Seiten und in der Hilfe steht sie klein rechts in der Fußzeile neben Impressum und Datenschutz. Alle Punkte sind immer sichtbar; was im aktuellen Zustand nicht geht, ist auf der Seite gesperrt und nennt den Grund.
 
 | Gruppe | Seite | Inhalt |
 |---|---|---|
@@ -353,7 +353,7 @@ Als Grundlage für eure eigene Datenschutzerklärung – sachlich, keine Rechtsb
 
 ![Vorlagen](bilder/admin-saetze.png)
 
-Oben im Admin „**Vorlagen**“. Links steht eine Seitenleiste wie in einer Veranstaltung: Gruppe *Wertung* mit **Klassensätze** und **Wertungssätze**, Gruppe *Gestaltung* mit **Branding** (Vereinsname der Installation, gilt für alle Veranstaltungen; steht auf der Startseite, leer steht dort „TapTrial“ – Logo und Farben folgen später) und **Urkunden-Vorlagen** (noch ohne Funktion). Mitgeliefert sind „DRA 2026“ (Altersklassen) und die Wertungssätze „DRA A.1 flach“, „DRA A.2 Berg Straße“ und „DRA A.3 Berg Gelände“. Je Satz: „Bearbeiten“, „Kopieren“, Export als „TOML“ oder „CSV“ und – wenn nicht verwendet – „Löschen“ (mit Bestätigungsdialog). Ein Klick auf die Zeile öffnet den Satz.
+Oben im Admin „**Vorlagen**“. Links steht eine Seitenleiste wie in einer Veranstaltung: Gruppe *Wertung* mit **Klassensätze** und **Wertungssätze**, Gruppe *Gestaltung* mit **Branding** (Vereinsname, siehe unten) und **Urkunden-Vorlagen** (noch ohne Funktion). Mitgeliefert sind „DRA 2026“ (Altersklassen) und die Wertungssätze „DRA A.1 flach“, „DRA A.2 Berg Straße“ und „DRA A.3 Berg Gelände“. Je Satz: „Bearbeiten“, „Kopieren“, Export als „TOML“ oder „CSV“ und – wenn nicht verwendet – „Löschen“ (mit Bestätigungsdialog). Ein Klick auf die Zeile öffnet den Satz.
 
 - **Neu / Bearbeiten:** „Neuer Klassensatz“ bzw. „Neuer Wertungssatz“ oben auf der jeweiligen Liste. Die Klassen bzw. Stufen stehen als Tabelle; Zeilen ändern, „Entfernen“ ankreuzen, „Speichern“. Im Klassensatz unten leere Zeilen ausfüllen.
 - **Wertungssatz:** gehört fest zu **einem Klassensatz** (Pflichtfeld). Die Klasse je Zeile wählt man aus einer Liste, die nur Klassen ohne Eintrag anbietet; „Zeile hinzufügen“ ergänzt eine Zeile. Haben alle Klassen einen Eintrag, ist der Knopf grau und es erscheint „Alle Klassen haben einen Eintrag“.
@@ -368,5 +368,9 @@ Beim Speichern wird geprüft:
 - Wertungssatz: Gold < Silber < Bronze je Klasse, Art „Gesamtzeit“ (H:MM:SS, je Klasse Streckenlänge) oder „Zeit pro km“ (M:SS, Strecke min–max). Die Klassen müssen im zugeordneten Klassensatz vorkommen (sonst Fehler, auch beim Speichern der Veranstaltung und beim Einfrieren). Klassen ohne Stufen werden als Hinweis genannt. Der Klassensatz eines Wertungssatzes lässt sich nicht wechseln, solange eine noch nicht eingefrorene Veranstaltung ihn mit dem alten Klassensatz nutzt.
 
 ![Wertungssatz bearbeiten](bilder/admin-wertungssatz.png)
+
+### Branding: Vereinsname {#branding}
+
+„**Vorlagen**“ → *Gestaltung* → „**Branding**“. Ein Feld „Vereinsname“ für die ganze Installation (gilt für alle Veranstaltungen, einmal eintragen). Ist er gesetzt, steht er **vorn**: Startseite (groß über der Veranstaltung), Kopf der öffentlichen Ergebnisse („Verein · Veranstaltung“), Admin-Kopf (Kürzel und Name, „TapTrial“ klein darunter), Zielmonitor-Kopfleiste, Druckansichten (Ergebnisliste, Aushang, Start-/Zielprotokoll, Gerätelinks), Urkunden (statt des Logo-Platzhalters) und Seitentitel im Browser-Tab. „TapTrial“ steht dann nur noch klein in Fußzeilen und als Zusatz im Seitentitel. Leer: überall neutral „TapTrial“. Die Änderung gilt sofort nach „Speichern“ – auch ein offener Zielmonitor übernimmt sie beim nächsten Abruf. Solange eine Veranstaltung aktiv ist und kein Vereinsname eingetragen ist, erinnert die Übersicht dezent unter „Als Nächstes“ daran. Ein Logo lässt sich noch nicht hochladen (Roadmap).
 
 Änderungen an einem Satz wirken auf alle Veranstaltungen, die ihn nutzen und **noch keine Zeiten** haben. Veranstaltungen mit Zeiten behalten ihre eingefrorene Kopie.

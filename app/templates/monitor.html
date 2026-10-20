@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Zielmonitor – {{ APP_NAME }}</title>
+  <title>Zielmonitor – {{ titel_zusatz(request) }}</title>
   <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/css/basis.css?v={{ version }}">
   <link rel="stylesheet" href="/static/css/oeffentlich.css?v={{ version }}">
@@ -12,6 +12,7 @@
   <header class="mon-kopf">
     <div class="mon-kopf-info">
       <div class="mon-kopf-links">
+        <span id="mon-verein" class="mon-verein">{{ vereinsname(request) }}</span>
         <span id="mon-titel" class="mon-titel">Zielmonitor</span>
         <span id="mon-status" class="mon-status"></span>
         <span id="mon-stand" class="stand" hidden></span>
@@ -23,7 +24,7 @@
     </a>
   </header>
   <p id="mon-keine-ergebnisse" class="mon-keine-ergebnisse" hidden></p>
-  {# Segmente 72: eine Spaltenkopfzeile, ein gemeinsames Raster für alle Bereiche #}
+  {# Eine Spaltenkopfzeile, ein gemeinsames Raster für alle Bereiche #}
   <div class="mon-zeile mon-spaltenkopf" id="mon-spaltenkopf" aria-hidden="true">
     <span class="rang">Platz</span><span class="nr">Nr.</span><span class="name">Name</span><span class="klasse">Klasse</span>
     <span class="abschnitt">Abschnitt</span><span class="zeit">Zeit</span><span class="status" id="mon-kopf-status">Abz./Status</span>

@@ -339,7 +339,7 @@ def test_dnf_dsq_am_start_nicht_aenderbar(server, neues_geraet):
 
 
 def test_endzustand_mit_dns_bleibt_aufhebbar(server, neues_geraet):
-    """Segmente 35: Alle gestartet oder DNS – die DNS-Kacheln bleiben unter „Nummer wählen“
+    """Alle gestartet oder DNS – die DNS-Kacheln bleiben unter „Nummer wählen“
     sichtbar; nach „DNS aufheben“ ist der Fahrer wieder „Nächster“ und startet. Auch offline."""
     ctx = neues_geraet()
     page = oeffnen(ctx, server, "start")

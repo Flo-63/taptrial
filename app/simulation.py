@@ -1,8 +1,8 @@
-"""Rennplan für Simulationstest und Testdaten-Skript (KONZEPT 9, Phase 8).
+"""Rennplan für Simulationstest und Testdaten-Skript.
 
 Erzeugt reproduzierbar (Seed) ein Rennen mit 50 Fahrern: zufällige Startabstände,
 3 Überholungen, 2 fast gleichzeitige Zieleinläufe, 1 DNS, 1 DNF und zwei Zeitfenster für
-Funklöcher. Fünf Jugendliche fahren die kurze Strecke (5 km, Phase 13), alle anderen 20 km. `sollergebnis` berechnet die erwarteten Werte unabhängig von `app.auswertung`.
+Funklöcher. Fünf Jugendliche fahren die kurze Strecke (5 km), alle anderen 20 km. `sollergebnis` berechnet die erwarteten Werte unabhängig von `app.auswertung`.
 """
 
 import random
@@ -188,14 +188,14 @@ def strecken_dra_a1(klassen: list[Klasse]) -> dict[str, str]:
     return zuordnung
 
 
-# --- Segmente: Beispielstrecke (AUSBAU C1) ---------------------------------------------------
+# --- Segmente: Beispielstrecke ---------------------------------------------------
 
 # Messpunkte der Beispielstrecke: (Schlüssel, Name)
 BEISPIEL_MESSPUNKTE = (("P1", "Kreisel"), ("P2", "Berg"))
 
 
 def beispiel_teile(ids: dict[str, str] | None = None, namen: dict[str, str] | None = None) -> tuple:
-    """Beispiel aus dem Feedback (Längen sind Platzhalter): Startsegment Start→P1 1,5 km;
+    """Beispiel mit Kreisel, Berg und Runden (Längen sind Platzhalter): Startsegment Start→P1 1,5 km;
     Rundenblock „Runde“ = P1→P2 3,5 km (mit Vergleich), P2→P1 3,5 km, ×2; Zielsegment P1→Ziel 0,5 km.
     ids/namen: Schlüssel → Messpunkt-ID bzw. -Name (Standard: Schlüssel bzw. BEISPIEL_MESSPUNKTE)."""
     from app.segmente import START, ZIEL, SegmentDef, TeilDef
@@ -307,7 +307,7 @@ def nacharbeit_rundkurs(
 ) -> Nacharbeit:
     """50 Fahrer (Rennplan) auf der Beispielstrecke, mit und ohne Fehler ausgewertet.
 
-    zwei_strecken (Segmente 12–15): die Jugend fährt eine kurze Strecke Start → Kreisel → Ziel (der
+    zwei_strecken: die Jugend fährt eine kurze Strecke Start → Kreisel → Ziel (der
     Kreisel ist gemeinsamer Messpunkt), alle anderen die Beispielstrecke mit dem Abschnitt „Runde“
     (Kreisel bis nächster Kreisel, wiederkehrend, Vergleich an). Geprüft werden Segment- und
     Abschnittszeiten.

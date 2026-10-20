@@ -1,4 +1,4 @@
-"""Abnahme Phase 7 im Browser: Ergebnisse, Druckansicht, Zielmonitor, Abzeichen in der Rennleitung."""
+"""Im Browser: Ergebnisse, Druckansicht, Zielmonitor, Abzeichen in der Rennleitung."""
 
 import re
 import time
@@ -38,7 +38,7 @@ def test_monitor_live_ohne_token(server, bildschirm):
     unterwegs = page.locator("#mon-unterwegs tr[data-nr]")
     expect(unterwegs).to_have_count(3)
     assert unterwegs.evaluate_all("rs => rs.map(r => r.dataset.nr)") == ["1", "2", "3"]
-    # Segmente 72: Kennzahlen in der Kopfleiste, leere Angaben entfallen, nächste drei Nummern
+    # Kennzahlen in der Kopfleiste, leere Angaben entfallen, nächste drei Nummern
     expect(page.locator("#mon-zaehlung")).to_have_text(
         "3 gestartet · 3 auf der Strecke · 7 noch nicht gestartet · nächste 4, 5, 6"
     )
@@ -156,9 +156,7 @@ def test_rennleitung_zeigt_abzeichen_erfassen_nicht(server, bildschirm, neues_ge
     admin.fill("input[name=token]", TOKENS["admin"])
     admin.click("#anmelden button")
     admin.click("#veranstaltungen a")
-    admin_seite(
-        admin, "strecken"
-    )  # Segmente 49: gemessene Länge zuerst (A.1 legt keine Strecken an)
+    admin_seite(admin, "strecken")  # Gemessene Länge zuerst (A.1 legt keine Strecken an)
     admin.click("#strecke-oeffnen-0")
     admin.fill("#s-laenge", "20,0")
     admin.click("#alles-speichern")

@@ -1,4 +1,4 @@
-"""Start- und Zielprotokoll auf Papier (AUSBAU A6)."""
+"""Start- und Zielprotokoll auf Papier."""
 
 import re
 

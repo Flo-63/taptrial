@@ -1,4 +1,4 @@
-"""Segmente 37: Orte mit drei Arten (Startort, Messpunkt, Zielort), Standardorte, Start-/Zielort je Strecke."""
+"""Orte mit drei Arten (Startort, Messpunkt, Zielort), Standardorte, Start-/Zielort je Strecke."""
 
 from datetime import date
 
@@ -60,7 +60,7 @@ def test_migration_vorher_gleich_nachher(tmp_path):
     pfad = str(tmp_path / "alt.sqlite3")
     engine = erzeuge_engine(pfad)
     tabellen_anlegen(engine)
-    with engine.begin() as conn:  # Schema vor Segmente 37 nachbauen
+    with engine.begin() as conn:  # Schema vor den Start-/Zielorten nachbauen
         for spalte in ("art", "standard", "rennleitung_getrennt", "token_rennleitung"):
             conn.exec_driver_sql(f"ALTER TABLE messpunkt DROP COLUMN {spalte}")
         conn.exec_driver_sql("DROP TABLE strecke_klasse")
@@ -162,7 +162,7 @@ def test_orte_pruefungen(session, neu, meldung):
 
 
 def test_genutzte_orte_nicht_entfernbar(session):
-    """Segmente 65: genutzt (auch der Standard) = gesperrt; ungenutzt entfernbar, auch der Standard."""
+    """Genutzt (auch der Standard) = gesperrt; ungenutzt entfernbar, auch der Standard."""
     v = veranstaltung(session)
     orte_anlegen(session, v, ("Nord", "start"))
     with pytest.raises(SatzFehler, match="genutzt"):
@@ -175,7 +175,7 @@ def test_genutzte_orte_nicht_entfernbar(session):
 
 
 def test_standard_entfernen_und_wieder_anlegen(session):
-    """Segmente 65: Beide Strecken starten an eigenen Startorten → „Start“ (Standard) lässt sich
+    """Beide Strecken starten an eigenen Startorten → „Start“ (Standard) lässt sich
     entfernen; er bleibt als Zeile (Tokens der Veranstaltung, alte Links), erscheint aber nirgends.
     Eine neue Strecke beginnt am ersten Start; gibt es keinen mehr, kommt der Standard zurück."""
     v = veranstaltung(session)  # Strecken „5 km“ und „20 km“
@@ -338,7 +338,7 @@ def test_strecke_mit_startort_bleibt_loeschbar(session):
 
 
 def test_ort_id_migration_vorher_gleich_nachher(tmp_path):
-    """Segmente 43: Bisher stand der Ort eines Start-/Zielgeräts in „wert“ (A144). Beim Nachrüsten
+    """Bisher stand der Ort eines Start-/Zielgeräts in „wert“. Beim Nachrüsten
     von „ereignis.ort_id“ wird er übernommen – nur für weitere Orte passender Art; „wert“ bleibt."""
     pfad = str(tmp_path / "alt.sqlite3")
     engine = erzeuge_engine(pfad)
@@ -353,7 +353,7 @@ def test_ort_id_migration_vorher_gleich_nachher(tmp_path):
         s.commit()
         o = {m.name: m.id for m in st.orte_von(s, v)}
         vid = v.id
-    with engine.begin() as conn:  # Stand vor Segmente 43: Ort in „wert“, keine Spalte ort_id
+    with engine.begin() as conn:  # älterer Stand: Ort in „wert“, keine Spalte ort_id
         conn.exec_driver_sql("ALTER TABLE ereignis DROP COLUMN ort_id")
         zeilen = [("s", "START", 0, 7, o["Nord"]), ("z", "ZIEL", 31, 7, o["Hof"]),
                   ("o", "ZIEL", 40, None, o["Hof"]), ("x", "ZIEL", 41, None, o["Kreisel"]),

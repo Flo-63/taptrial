@@ -1,4 +1,4 @@
-"""E2E: Ziel und Rennleitung getrennt (Test 08.10., Jetzt 14)."""
+"""E2E: Ziel und Rennleitung getrennt."""
 
 import re
 
@@ -15,7 +15,7 @@ def _trennen(server) -> str:
         c.post("/admin/anmelden", data={"token": TOKENS["admin"]})
         csrf = re.search(r'name="csrf" value="([0-9a-f]+)"', c.get("/admin").text).group(1)
         r = c.post("/admin/v/1/rennleitung", data={"csrf": csrf, "bestaetigung": "1"})
-        assert r.url.path == "/admin/v/1/geraete" and "getrennt" in r.text  # Segmente 51
+        assert r.url.path == "/admin/v/1/geraete" and "getrennt" in r.text
         html = c.get("/admin/v/1/geraete").text
     return re.search(r'href="(http[^"]*/rennleitung\?token=[^"]+)"', html).group(1)
 

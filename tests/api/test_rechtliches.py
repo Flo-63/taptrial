@@ -1,4 +1,4 @@
-"""Release 3: Impressum und Datenschutz global als Link (https) oder Text; Links in der Fußzeile der
+"""Impressum und Datenschutz global als Link (https) oder Text; Links in der Fußzeile der
 öffentlichen Seiten und der Hilfe (nicht auf dem Zielmonitor); fehlen sie, meldet „Als Nächstes“ es
 dezent, sobald eine Veranstaltung aktiv ist."""
 

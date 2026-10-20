@@ -21,13 +21,16 @@ GERAETE = {"start": "Start", "ziel": "Ziel", "rennleitung": "Rennleitung", "post
 SEITE = {"start": "start", "ziel": "ziel", "rennleitung": "ziel", "posten": "posten"}
 
 templates = Jinja2Templates(directory=TEMPLATE_DIR)
-# Release 1: Name nach außen und globale Einstellungen (Vereinsname) in allen Vorlagen
+# Name nach außen und globale Einstellungen (Vereinsname) in allen Vorlagen
 templates.env.globals["APP_NAME"] = marke.NAME
 templates.env.globals["APP_UNTERTITEL"] = marke.UNTERTITEL
 templates.env.globals["HINWEIS_GENEHMIGUNG"] = marke.HINWEIS_GENEHMIGUNG
 templates.env.globals["installation"] = installation.fuer_vorlage
-templates.env.globals["rechtliches_links"] = installation.rechtliches_links  # Release 3
-templates.env.globals["APP_RELEASE"] = VERSION  # Release 2 (APP_VERSION ist der Cache-Hash)
+templates.env.globals["vereinsname"] = installation.vereinsname  # v0.1.1: Verein vorn
+templates.env.globals["titel_zusatz"] = installation.titel_zusatz
+templates.env.globals["kuerzel"] = installation.kuerzel
+templates.env.globals["rechtliches_links"] = installation.rechtliches_links
+templates.env.globals["APP_RELEASE"] = VERSION  # APP_VERSION ist der Cache-Hash
 router = APIRouter()
 
 
@@ -54,7 +57,7 @@ def _gueltiger_token(request: Request, rolle: str) -> str | None:
 
 
 def _profil_parameter(request: Request, token: str | None) -> str:
-    """„&ort=…“ und „&sicht=rennleitung“ aus dem Gerätelink für das Manifest (Segmente 44: der
+    """„&ort=…“ und „&sicht=rennleitung“ aus dem Gerätelink für das Manifest (der
     Startbildschirm öffnet dasselbe Geräteprofil)."""
     if not token:
         return ""

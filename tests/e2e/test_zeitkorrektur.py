@@ -1,4 +1,4 @@
-"""Phase 14a im Browser: Schnellkorrektur ±0,2 s am Ziel (Erfassen und Rennleitung)."""
+"""Im Browser: Schnellkorrektur ±0,2 s am Ziel (Erfassen und Rennleitung)."""
 
 import uuid
 
@@ -73,7 +73,7 @@ def test_rennleitung_korrigiert_einlauf_eines_anderen_geraets(server, neues_gera
     rennleitung(ziel)
     eintrag = ziel.locator("#letzte li").first
     expect(eintrag).to_contain_text("Nr. 2")
-    eintrag.locator(".letzte-text").click()  # Zeile aufklappen (AUSBAU A4)
+    eintrag.locator(".letzte-text").click()  # Zeile aufklappen
     eintrag.locator(".btn-korrektur-minus").click()
     expect(ziel.locator("#letzte li").first).to_contain_text("korrigiert −1,0 s")
     jetzt_synchronisieren(ziel)

@@ -1,4 +1,4 @@
-"""Klassen- und Wertungssätze in der Datenbank (Phase 12).
+"""Klassen- und Wertungssätze in der Datenbank.
 
 - Beim ersten Start werden die Dateien aus config/ als Sätze angelegt (Standardsätze).
 - Jede Veranstaltung nutzt einen Klassensatz (ohne Angabe: Standardsatz) und optional einen
@@ -582,7 +582,7 @@ def regeln_setzen(session: Session, v: Veranstaltung, klassensatz_id: int | None
 
     abschliessen=False: nur flush, ohne Prüfung der Streckenlängen – der Aufrufer speichert danach
     die Strecken aus dem Formular (prüft dabei die Längen) und committet. laengen_verwerfen ist ohne
-    Wirkung (Segmente 49: Strecken werden nicht mehr neu vorgeschlagen, nichts geht verloren).
+    Wirkung (Strecken werden nicht mehr neu vorgeschlagen, nichts geht verloren).
 
     Ein Wertungssatz gehört fest zu einem Klassensatz. Wird der Klassensatz gewechselt (nicht
     eingefroren), setzt das eine nicht mehr passende Wertung mit Hinweis zurück; eine ausdrücklich
@@ -629,7 +629,7 @@ def regeln_setzen(session: Session, v: Veranstaltung, klassensatz_id: int | None
             r.wertungssatz, r.wertung = (ws.name, wertung_von(ws)) if ws else (None, None)
             _speichern_json(v, r)
         elif not v.regeln_json and (klassensatz_gewechselt or wertung_neu):
-            # Segmente 49: keine Strecken still neu anlegen – Strecken bleiben, die Zuordnung passt
+            # Keine Strecken still neu anlegen – Strecken bleiben, die Zuordnung passt
             # sich an; im Assistenten entscheidet der Admin je Längen-Platz
             hinweise += strecken.zuordnung_anpassen(session, v)
         if strecke_km is not None:
@@ -639,7 +639,7 @@ def regeln_setzen(session: Session, v: Veranstaltung, klassensatz_id: int | None
     except SatzFehler:
         session.rollback()
         raise
-    v.strecke_km = None  # seit Phase 13 gelten die Längen der Strecken
+    v.strecke_km = None  # es gelten die Längen der Strecken
     if abschliessen:
         session.commit()
     else:

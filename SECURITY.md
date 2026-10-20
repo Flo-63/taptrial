@@ -13,6 +13,6 @@ Sicherheitskorrekturen gibt es nur für die jeweils neueste Version.
 
 ## Betrieb
 
-- Admin-Passphrase (`RCB_TOKEN_ADMIN`) lang und zufällig wählen, nie weitergeben; `.env` nicht veröffentlichen.
+- Admin-Passphrase (`TAPTRIAL_TOKEN_ADMIN`) lang und zufällig wählen, nie weitergeben; `.env` nicht veröffentlichen.
 - Nur über HTTPS betreiben (z. B. `docker-compose.caddy.yml`).
 - Gerätelinks enthalten Zugangstoken: nicht aushängen; bei Verlust im Admin unter „Geräte“ „Zugang sperren“.

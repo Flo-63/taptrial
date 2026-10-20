@@ -1,4 +1,4 @@
-"""Segmente 48: Löschen einer Veranstaltung restlos – keine Zeile in irgendeiner Tabelle verweist
+"""Löschen einer Veranstaltung restlos – keine Zeile in irgendeiner Tabelle verweist
 danach noch auf sie; eine zweite Veranstaltung bleibt unverändert."""
 
 import json
@@ -26,7 +26,7 @@ AUSNAHMEN = {
     "wertungssatz": "Vorlage, gilt für alle Veranstaltungen",
     "wertungssatz_stufe": "Teil der Vorlage Wertungssatz",
     "app_einstellung": "globale Einstellungen der Installation (Vereinsname, Impressum, Datenschutz), "
-    "ohne Bezug zu einer Veranstaltung (Release 1/3)",
+    "ohne Bezug zu einer Veranstaltung",
 }
 
 
@@ -134,7 +134,7 @@ def stand(admin, wid):
 
 
 def test_loeschen_restlos(admin, v):
-    # zweite Veranstaltung mit eigenen Zeiten (zuerst: eine laufende verdrängt man nicht, Segmente 55)
+    # zweite Veranstaltung mit eigenen Zeiten (zuerst: eine laufende verdrängt man nicht)
     wid = zweite(admin)
     with admin.app.state.sessionmaker() as s:
         w = s.get(Veranstaltung, wid)

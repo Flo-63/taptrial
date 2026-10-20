@@ -1,5 +1,5 @@
-{# Zielmonitor-Konfiguration (Segmente 14), eingebunden unter Einstellungen → Zielmonitor und Ergebnisse
-   und als Schritt 4 im Assistenten (Segmente 66, assistent = true) #}
+{# Zielmonitor-Konfiguration, eingebunden unter Einstellungen → Zielmonitor und Ergebnisse
+   und als Schritt 4 im Assistenten (assistent = true) #}
 {% from "_admin.html" import abbrechen %}
 <form method="post" action="/admin/v/{{ v.id }}/zielmonitor" class="stapel" id="zielmonitor-form">
   <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="ziel" value="{{ monitor_ziel }}">
@@ -52,7 +52,7 @@
     <p class="hint">Keine Abschnitte – erst unter „Strecken“ → Strecke öffnen → „Verlauf“ bzw. „Auswertungsabschnitte“ anlegen.</p>
     {% endfor %}
   </section>
-  {% if assistent %}{# Segmente 66: Schritt im Assistenten – „Weiter“ speichert und geht zur Zusammenfassung #}
+  {% if assistent %}{# Schritt im Assistenten – „Weiter“ speichert und geht zur Zusammenfassung #}
   <div class="btn-reihe"><a class="btn btn-quiet" href="/admin/einrichtung/{{ v.id }}/3" id="zurueck">Zurück</a><button type="submit" name="weiter" value="1" class="btn btn-primary" id="weiter">Weiter</button> {{ abbrechen("/admin") }}</div>
   {% else %}
   <div><button type="submit" name="aktion" value="speichern" class="btn btn-primary" id="zielmonitor-speichern">Speichern</button> {{ abbrechen(abbruch_ziel(request, "/admin/v/" ~ v.id)) }}</div>

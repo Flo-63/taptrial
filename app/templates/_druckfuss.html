@@ -1,2 +1,2 @@
-{# Release 1: kleine Fußzeile jeder Druckansicht #}
+{# Kleine Fußzeile jeder Druckansicht #}
 <p class="druck-fuss" id="druck-fuss">erstellt mit {{ APP_NAME }} {{ APP_RELEASE }}{% if mit_rechtlichem %}{% for t, url in rechtliches_links(installation(request)) %} · {{ t }}: {{ url if url.startswith('https://') else request.base_url ~ url.lstrip('/') }}{% endfor %}{% endif %}</p>

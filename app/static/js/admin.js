@@ -8,12 +8,12 @@
     });
   });
   // Umkehrbare Aktionen: Bestätigungsdialog (data-bestaetigen="Frage", data-bestaetigen-knopf="Aktion")
-  // (delegiert: gilt auch für Formulare, die die Live-Aktualisierung neu einsetzt, Segmente 45)
+  // (delegiert: gilt auch für Formulare, die die Live-Aktualisierung neu einsetzt)
   const dialog = document.getElementById("bestaetigung-dialog");
   document.addEventListener("submit", (ev) => {
     const form = ev.target.closest && ev.target.closest("form[data-bestaetigen]");
     if (!form) return;
-    // nur unter einer Bedingung nachfragen, z. B. „Ersetzen“ gewählt (Segmente 50)
+    // nur unter einer Bedingung nachfragen, z. B. „Ersetzen“ gewählt
     if (form.dataset.bestaetigenWenn && !form.querySelector(form.dataset.bestaetigenWenn)) return;
     {
       if (!dialog || form.dataset.bestaetigt === "1") return;
@@ -32,13 +32,13 @@
       dialog.showModal();
     }
   });
-  // Strecke mit Klassen entfernen (Segmente 40): Dialog „Die Klassen von … übernimmt“
+  // Strecke mit Klassen entfernen: Dialog „Die Klassen von … übernimmt“
   const entfernenDialog = document.getElementById("entfernen-dialog");
   if (entfernenDialog) {
     document.getElementById("entfernen-oeffnen").addEventListener("click", () => entfernenDialog.showModal());
     document.getElementById("entfernen-abbrechen").addEventListener("click", () => entfernenDialog.close());
   }
-  // Strecke aus Datei laden (Segmente 39): beim Ersetzen ist kein neuer Name nötig
+  // Strecke aus Datei laden: beim Ersetzen ist kein neuer Name nötig
   const ladenModus = document.getElementById("laden-modus");
   if (ladenModus) {
     const nameFeld = document.getElementById("laden-name-feld");
@@ -50,7 +50,7 @@
     ladenModus.addEventListener("change", umschalten);
     umschalten();
   }
-  // „Ergebnistabelle“ (Segmente 52): Auswahl der Strecke zeigt deren Tabelle, nichts geht verloren
+  // „Ergebnistabelle“: Auswahl der Strecke zeigt deren Tabelle, nichts geht verloren
   const spaltenWahl = document.getElementById("spalten-strecke");
   if (spaltenWahl) {
     const zeigen = () => document.querySelectorAll(".spalten-strecke").forEach((t) => {
@@ -59,7 +59,7 @@
     spaltenWahl.addEventListener("change", zeigen);
     zeigen();
   }
-  // Zielmonitor gespeichert: offene Vorschau im selben Browser lädt sofort neu (Segmente 34)
+  // Zielmonitor gespeichert: offene Vorschau im selben Browser lädt sofort neu
   if (document.getElementById("zielmonitor-gespeichert")) {
     try {
       new BroadcastChannel("rcb-zielmonitor").postMessage("gespeichert");
@@ -78,7 +78,7 @@
     }
     setTimeout(() => (knopf.textContent = alt), 1500);
   });
-  // Übersicht und Geräte aktualisieren sich selbst (Segmente 45): alle 10 s die Seite im
+  // Übersicht und Geräte aktualisieren sich selbst: alle 10 s die Seite im
   // Hintergrund holen und die Bereiche mit data-live austauschen – außer, dort ist gerade etwas
   // geöffnet, fokussiert oder geändert. Im Hintergrund-Tab Pause, beim Zurückkehren sofort.
   const LIVE_MS = 10000;
@@ -190,7 +190,7 @@
     aktualisieren();
   }
 
-  // Strecken & Zuordnung (Phase 13): Strecke hinzufügen, Namen live in die Auswahl übernehmen
+  // Strecken & Zuordnung: Strecke hinzufügen, Namen live in die Auswahl übernehmen
   const bereich = document.getElementById("strecken-bereich");
   if (bereich) {
     const tbody = document.querySelector("#strecken-tabelle tbody");
@@ -247,7 +247,7 @@
     if (ksWahl && !ksWahl.disabled) ksWahl.addEventListener("change", () => setTimeout(satzGeaendert));
     if (wsWahl) wsWahl.addEventListener("change", satzGeaendert);
   }
-  // Zeilen-Editoren (Segmente 12/13/18): Messpunkte (Seite „Messpunkte“) und
+  // Zeilen-Editoren: Messpunkte (Seite „Messpunkte“) und
   // Auswertungsabschnitte (Seite der Strecke). Neue Zeilen tragen die Strecke aus data-strecke.
   function neueZeile(tabelle, anzahlName, html) {
     const anzahl = document.querySelector(`input[name="${anzahlName}"]`);
@@ -261,7 +261,7 @@
     anzahl.value = String(j + 1);
     return { tr, vorige, j };
   }
-  // Seite „Messpunkte“ (Segmente 37/42): neue Zeile mit der gewählten Art (Start, Zwischenzeit, Ziel)
+  // Seite „Messpunkte“: neue Zeile mit der gewählten Art (Start, Zwischenzeit, Ziel)
   document.getElementById("messpunkt-neu")?.addEventListener("click", () => {
     const artWahl = document.getElementById("ort-neu-art");
     const art = artWahl ? artWahl.value : "punkt";
@@ -274,7 +274,7 @@
     tr.dataset.art = art;
     tr.querySelector(`input[name="mp_name_${j}"]`).focus();
   });
-  // Verlauf als Punktfolge (Segmente 28): Start · Punkte und Rundenblöcke · Ziel. Daraus abgeleitet
+  // Verlauf als Punktfolge: Start · Punkte und Rundenblöcke · Ziel. Daraus abgeleitet
   // die Segmente (Name, Länge, anzeigen, Vergleich), die Abfolge und die Durchfahrten je Messpunkt.
   const vStart = document.getElementById("verlauf-start");
   if (vStart) {
@@ -345,7 +345,7 @@
       );
       return box;
     }
-    // Start- und Zielort (Segmente 37): Name im ersten bzw. letzten Punkt der Folge
+    // Start- und Zielort: Name im ersten bzw. letzten Punkt der Folge
     const ortName = (id, standard) => document.getElementById(id)?.selectedOptions[0]?.textContent || standard;
     for (const id of ["s-startort", "s-zielort"]) document.getElementById(id)?.addEventListener("change", () => neu());
     function zeichnen() {
@@ -385,7 +385,7 @@
         const titel = `${s.von || "?"} → ${s.nach || "?"}`;
         const name = el("input", { name: `sg_name_${k}`, value: w.name, maxlength: 100, class: "eingabe", placeholder: titel, "aria-label": `Name (${titel})` });
         const km = el("input", { name: `sg_km_${k}`, value: w.km, inputmode: "decimal", class: "eingabe eingabe-schmal mono", "aria-label": `Länge km (${titel})` });
-        // Segmente 52: „anzeigen“ und „Vergleich“ stehen nicht mehr hier (Zielmonitor und Ergebnisse)
+        // „anzeigen“ und „Vergleich“ stehen nicht mehr hier (Zielmonitor und Ergebnisse)
         name.addEventListener("input", () => (w.name = name.value));
         km.addEventListener("input", () => (w.km = km.value));
         tabelle.append(el("tr", { "data-segment": s.key },
@@ -406,7 +406,7 @@
       document.querySelector("#verlauf-vorschau .durchfahrten").textContent =
         zahl.size ? "Durchfahrten je Zwischenzeit: " + [...zahl].map(([p, n]) => `${p} ${n}×`).join(", ") : "Keine Zwischenzeiten – Zeitnahme nur an Start und Ziel.";
       window.streckenAbfolge = punkte;
-      // Auswahl für Anfang/Ende eigener Abschnitte (Segmente 33), wie segmente.durchfahrt_optionen
+      // Auswahl für Anfang/Ende eigener Abschnitte, wie segmente.durchfahrt_optionen
       const einmalig = [{ wert: "1:Start", text: "Start" }];
       const zaehler = new Map();
       for (const t of teile.filter(Boolean)) {
@@ -455,7 +455,7 @@
     tr.classList.add("ab-zeile");
     tr.querySelector(`input[name="ab_name_${j}"]`).focus();
   });
-  // Auswertungsabschnitte (Segmente 29/33): Anfang und Ende als Auswahl aus der Abfolge – bei „eine
+  // Auswertungsabschnitte: Anfang und Ende als Auswahl aus der Abfolge – bei „eine
   // bestimmte Durchfahrt“ je Durchfahrt, bei „jede Durchfahrt“ je Punkt; Vorschau wie segmente.abschnitt_text
   const abTabelle = document.getElementById("abschnitte");
   if (abTabelle) {
@@ -532,7 +532,7 @@
     window.addEventListener("abfolge-geaendert", abAktualisieren);
     abAktualisieren();
   }
-  // Strecken-Editor (Segmente 27): Reiter ohne Speichern wechseln, „Alles speichern“ per fetch mit
+  // Strecken-Editor: Reiter ohne Speichern wechseln, „Alles speichern“ per fetch mit
   // Fehlern am Feld und am Reiter, „Abbrechen“ verwirft, „Zurück“ warnt bei ungespeicherten Änderungen
   const editor = document.getElementById("strecke-form");
   if (editor) {
@@ -621,7 +621,7 @@
       }
     });
   }
-  // „Abbrechen“ in Aufklapp-Formularen (Segmente 21): Eingaben verwerfen und zuklappen
+  // „Abbrechen“ in Aufklapp-Formularen: Eingaben verwerfen und zuklappen
   document.addEventListener("click", (e) => {
     const knopf = e.target.closest("[data-zuklappen]");
     if (!knopf) return;
@@ -629,14 +629,14 @@
     const details = knopf.closest("details");
     if (details) details.open = false;
   });
-  // Assistent (Segmente 23): „mit Messpunkten“ zeigt „Messpunkte einrichten“
+  // Assistent: „mit Messpunkten“ zeigt „Messpunkte einrichten“
   document.addEventListener("change", (e) => {
     const radio = e.target.closest('input[type=radio][name^="strecke_art_"]');
     if (!radio) return;
     const td = radio.closest("td");
     const knopf = td.querySelector(".messpunkte-einrichten");
     if (knopf) knopf.hidden = radio.value !== "messpunkte";
-    // Segmente 30: Wechsel von „mit Messpunkten“ auf „einfach“ nur nach Bestätigung
+    // Wechsel von „mit Messpunkten“ auf „einfach“ nur nach Bestätigung
     const tr = radio.closest("tr");
     const bestaetigt = td.querySelector(".art-bestaetigt");
     if (radio.value === "messpunkte" && bestaetigt) bestaetigt.value = "";
@@ -656,8 +656,8 @@
     };
     dialog.showModal();
   });
-  // Zielmonitor (Segmente 71): „mit Pfeil und Differenz“ folgt dem Feld – abgewählt und gesperrt,
-  // solange der Abschnitt nicht gewählt ist; beim Anwählen wieder frei mit der Vorgabe (Segmente 66)
+  // Zielmonitor: „mit Pfeil und Differenz“ folgt dem Feld – abgewählt und gesperrt,
+  // solange der Abschnitt nicht gewählt ist; beim Anwählen wieder frei mit der Vorgabe
   document.addEventListener("change", (e) => {
     const feld = e.target.closest && e.target.closest(".live-feld input[name=live_abschnitt]");
     if (!feld) return;
