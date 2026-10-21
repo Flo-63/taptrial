@@ -2,6 +2,7 @@
 Seiten und in der Hilfe, unter /version und als Image-Label; CHANGELOG mit Eintrag zur Version."""
 
 import re
+import subprocess
 import tomllib
 from pathlib import Path
 
@@ -12,11 +13,47 @@ PROJEKT = Path(__file__).resolve().parents[2]
 
 
 def test_eine_quelle():
+    """Die Nummer steht nur in pyproject.toml (und im daraus erzeugten uv.lock); Dockerfile,
+    eigener Deploy und Workflows bekommen sie als Build-Argument."""
     pyproject = tomllib.loads((PROJEKT / "pyproject.toml").read_text(encoding="utf-8"))
-    assert VERSION == pyproject["project"]["version"] == "0.1.2"
+    assert VERSION == pyproject["project"]["version"]
+    lock = tomllib.loads((PROJEKT / "uv.lock").read_text(encoding="utf-8"))
+    (projekt,) = [p for p in lock["package"] if p["name"] == pyproject["project"]["name"]]
+    assert projekt["version"] == VERSION, "uv.lock veraltet – uv lock ausführen"
     docker = (PROJEKT / "Dockerfile").read_text(encoding="utf-8")
-    assert f"ARG VERSION={VERSION}" in docker  # Vorgabe im Image = pyproject
+    assert re.search(r"^ARG VERSION$", docker, re.MULTILINE)  # ohne Vorgabe
+    assert not re.search(r"^ARG VERSION=", docker, re.MULTILINE)
+    assert 'test -n "$VERSION"' in docker  # ohne Build-Argument bricht der Build ab
     assert 'org.opencontainers.image.version="${VERSION}"' in docker
+    workflow = (PROJEKT / ".github" / "workflows" / "image.yml").read_text(encoding="utf-8")
+    assert "build-args: VERSION=${{ steps.version.outputs.version }}" in workflow
+    for skript in ("container_e2e.sh", "release-check.sh"):
+        assert '--build-arg "VERSION=$version"' in (PROJEKT / "scripts" / skript).read_text(), (
+            skript
+        )
+    deploy = PROJEKT / "config" / "deploy.yml"  # nicht im Export
+    if deploy.exists():
+        import yaml
+
+        args = yaml.safe_load(deploy.read_text(encoding="utf-8"))["builder"]["args"]
+        assert args == {"VERSION": '<%= File.read("pyproject.toml")[/^version = "([^"]+)"/, 1] %>'}
+
+
+def test_anleitungen_bauen_mit_version():
+    """Jedes „docker build“ in den öffentlichen Anleitungen übergibt VERSION – sonst bricht der
+    Build ab; der Befehl aus der README ergibt die Version aus pyproject.toml."""
+    dateien = [PROJEKT / "README.md", PROJEKT / "docs" / "BETRIEB.md",
+               *(PROJEKT / "docs" / "handbuch").glob("*.md")]  # fmt: skip
+    befehle = [z.strip() for d in dateien for z in d.read_text(encoding="utf-8").splitlines()
+               if re.match(r"\s*docker build\b", z)]  # fmt: skip
+    assert befehle
+    for befehl in befehle:
+        assert "--build-arg VERSION=" in befehl, befehl
+    (readme,) = [b for b in befehle if b.endswith("-t taptrial .")]
+    arg = readme.split("--build-arg ", 1)[1].rsplit(" -t ", 1)[0]
+    r = subprocess.run(["bash", "-c", f"printf '%s' {arg}"], cwd=PROJEKT, capture_output=True,
+                       text=True, check=True)  # fmt: skip
+    assert r.stdout == f"VERSION={VERSION}"
 
 
 def test_version_json(client):

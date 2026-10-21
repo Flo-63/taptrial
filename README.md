@@ -49,8 +49,10 @@ Danach im Browser `/admin` öffnen, mit der Admin-Passphrase anmelden und „Neu
 ## Selbst bauen
 
 ```bash
-docker build -t taptrial .
+docker build --build-arg VERSION="$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)" -t taptrial .
 ```
+
+Die Version kommt aus `pyproject.toml` und wird als Build-Argument `VERSION` übergeben; ohne sie bricht der Build mit einer Meldung ab.
 
 Ohne Docker (Entwicklung): Python 3.12 und [uv](https://docs.astral.sh/uv/), dann
 

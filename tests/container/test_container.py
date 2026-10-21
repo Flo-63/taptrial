@@ -34,9 +34,26 @@ def docker(*args: str, **kw) -> subprocess.CompletedProcess:
 
 @pytest.fixture(scope="module")
 def image() -> str:
-    r = docker("build", "-t", IMAGE, str(PROJEKT), timeout=900)
+    from app.version import VERSION
+
+    r = docker("build", "--build-arg", f"VERSION={VERSION}", "-t", IMAGE, str(PROJEKT), timeout=900)
     assert r.returncode == 0, r.stderr[-3000:]
     return IMAGE
+
+
+def test_build_ohne_version_bricht_ab(image):
+    """Die Version kommt nur als Build-Argument aus pyproject.toml – ohne bricht der Build ab."""
+    r = docker("build", "-t", f"{IMAGE}-ohne-version", str(PROJEKT), timeout=900)
+    assert r.returncode != 0 and "Build-Argument VERSION fehlt" in r.stdout + r.stderr
+
+
+def test_image_label_ist_die_version(image):
+    from app.version import VERSION
+
+    r = docker(
+        "inspect", "-f", '{{index .Config.Labels "org.opencontainers.image.version"}}', image
+    )
+    assert r.stdout.strip() == VERSION
 
 
 @pytest.fixture

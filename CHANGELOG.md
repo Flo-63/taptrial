@@ -4,6 +4,11 @@ Alle nennenswerten Änderungen an TapTrial. Format nach [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [0.1.3] – 2026-10-21
+
+### Geändert
+- **Version nur noch an einer Stelle:** Die Versionsnummer steht nur noch in `pyproject.toml`. Das Docker-Image bekommt sie als Build-Argument `VERSION` (Label `org.opencontainers.image.version`); ohne Build-Argument bricht `docker build` mit einer klaren Meldung ab, statt still eine veraltete Nummer einzutragen. Selbst bauen: siehe README („Selbst bauen“).
+
 ## [0.1.2] – 2026-10-21
 
 ### Behoben

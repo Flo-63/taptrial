@@ -1,8 +1,10 @@
 # TapTrial – Zeitnahme per Handy. Ein Prozess (uvicorn), Port 8000, Healthcheck /up, Daten in /data.
 FROM python:3.12-slim
 
-# Version aus pyproject.toml; der Release-Workflow übergibt sie als --build-arg
-ARG VERSION=0.1.2
+# Version nur aus pyproject.toml, immer als Build-Argument (Release-Workflow, eigener Deploy,
+# release-check.sh, container_e2e.sh) – hier steht bewusst keine Nummer, damit es nur eine Stelle gibt
+ARG VERSION
+RUN test -n "$VERSION" || { echo "Build-Argument VERSION fehlt (--build-arg VERSION=<version aus pyproject.toml>)" >&2; exit 1; }
 LABEL org.opencontainers.image.title="TapTrial" \
       org.opencontainers.image.description="TapTrial – Zeitnahme per Handy für Einzelzeitfahren" \
       org.opencontainers.image.version="${VERSION}" \
