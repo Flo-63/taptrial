@@ -44,6 +44,15 @@ km = 10
 """
 
 
+def zur_zusammenfassung(admin, v, ks, ws):  # noqa: F811
+    """Schritte 2–4 des Assistenten bestätigen (die Zusammenfassung gibt es erst danach)."""
+    post(admin, f"/admin/einrichtung/{v.id}/2", klassensatz_id=str(ks), wertungssatz_id=str(ws))
+    post(admin, f"/admin/einrichtung/{v.id}/3")
+    r = post(admin, f"/admin/v/{v.id}/zielmonitor", weiter="1", seite_an_0="1", seite_dauer_0="10",
+             ziel=f"/admin/einrichtung/{v.id}/4")  # fmt: skip
+    assert 'id="zusammenfassung"' in r.text
+
+
 def zeile(html, name):
     return re.search(rf'<tr [^>]*data-ort="{re.escape(name)}"[^>]*>.*?</tr>', html, re.DOTALL)
 
@@ -70,6 +79,7 @@ def test_assistent_strecken_laden_blendet_standard_aus(admin):  # noqa: F811
     geraete = admin.get(f"/admin/v/{v.id}/geraete").text
     assert f"/start?token={v.token_start}" not in geraete
     assert "Start Start 5k" in geraete and "Posten P1" in geraete
+    zur_zusammenfassung(admin, v, ks, ws)
     assert f"/start?token={v.token_start}" not in admin.get(f"/admin/einrichtung/{v.id}/5").text
 
 
@@ -95,6 +105,7 @@ def test_ungenutzte_zwischenzeit_ohne_geraetelink(admin):  # noqa: F811
     assert "von keiner Strecke genutzt" in p9_zeile and "kein Gerätelink" in p9_zeile
     assert "disabled" not in p9_zeile.split("mp_entfernen")[1]  # „Entfernen“ möglich
     assert "von keiner Strecke genutzt" not in zeile(html, "P1").group(0)
+    zur_zusammenfassung(admin, v, ks, ws)
     for url in (
         f"/admin/v/{v.id}/geraete",
         f"/admin/v/{v.id}/geraetelinks-druck",

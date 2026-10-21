@@ -12,12 +12,10 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from sqlalchemy import update
-
 from app import saetze, strecken, umgebung
 from app.db import erzeuge_engine, erzeuge_sessionmaker, tabellen_anlegen
 from app.einstellungen import STANDARD_KLASSEN_DATEI, STANDARD_WERTUNGEN
-from app.models import Veranstaltung, Wertungssatz, aktive_veranstaltung
+from app.models import Wertungssatz, aktive_veranstaltung
 from app.teilnehmer_import import ImportFehler, importiere_teilnehmer
 
 
@@ -62,19 +60,14 @@ def main(argv: list[str] | None = None) -> int:
             if args.befehl == "veranstaltung":
                 from app import korrekturen
 
-                laufend = korrekturen.laufende_andere(session)
-                if laufend is not None:
-                    print(korrekturen.verdraengen_text(laufend), file=sys.stderr)
-                    return 1
                 saetze.standardsaetze_anlegen(session, klassen_datei, wertungen_verzeichnis)
-                session.execute(update(Veranstaltung).values(aktiv=False))
-                session.flush()
-                v = Veranstaltung(name=args.name, datum=args.datum, aktiv=True,
-                                  klassensatz_id=saetze.standard_klassensatz(session).id)  # fmt: skip
-                session.add(v)
-                session.flush()
-                strecken.sicherstellen(session, v)
-                session.commit()
+                try:  # Ohne Assistent angelegt gilt als eingerichtet; aktiv über die zentrale Prüfung
+                    v = korrekturen.veranstaltung_anlegen(
+                        session, args.name, args.datum, aktivieren=True
+                    )
+                except korrekturen.KorrekturFehler as e:
+                    print(e, file=sys.stderr)
+                    return 1
                 print(f"Veranstaltung {v.id} „{v.name}“ am {v.datum:%d.%m.%Y} angelegt (aktiv)")
                 return 0
 

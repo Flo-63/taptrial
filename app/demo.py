@@ -318,12 +318,12 @@ def erzeugen(session: Session, ersetzen: bool = False, klassen_datei: str = STAN
         if v is not None:
             k.loeschen(session, session.get(Veranstaltung, v.id))
         if vorher is not None:
-            k.aktiv_setzen(session, vorher)
+            k.aktiv_wiederherstellen(session, vorher)
         if isinstance(e, (DemoFehler, k.KorrekturFehler, saetze.SatzFehler)):
             raise DemoFehler(f"{e} – Demo nicht angelegt.") from e
         raise
     if vorher is not None:
-        k.aktiv_setzen(session, vorher)  # die bisher aktive Veranstaltung bleibt aktiv
+        k.aktiv_wiederherstellen(session, vorher)  # die bisher aktive bleibt aktiv, wie sie war
     else:
         k.aktiv_beenden(session, v)
     return v

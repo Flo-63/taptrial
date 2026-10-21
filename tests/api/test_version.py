@@ -13,7 +13,7 @@ PROJEKT = Path(__file__).resolve().parents[2]
 
 def test_eine_quelle():
     pyproject = tomllib.loads((PROJEKT / "pyproject.toml").read_text(encoding="utf-8"))
-    assert VERSION == pyproject["project"]["version"] == "0.1.1"
+    assert VERSION == pyproject["project"]["version"] == "0.1.2"
     docker = (PROJEKT / "Dockerfile").read_text(encoding="utf-8")
     assert f"ARG VERSION={VERSION}" in docker  # Vorgabe im Image = pyproject
     assert 'org.opencontainers.image.version="${VERSION}"' in docker

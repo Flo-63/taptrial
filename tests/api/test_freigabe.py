@@ -98,10 +98,11 @@ def test_admin_nennt_den_grund_mit_knoepfen(admin, v):
     assert f'href="/admin/v/{v.id}/status#aktiv" data-schritt="aktiv"' in geraete
     # „Aktiv setzen“ gesperrt, solange die Einrichtung offen ist
     status = admin.get(f"/admin/v/{v.id}/status").text
-    assert re.search(r'id="aktivieren" disabled', status)
-    assert "Gesperrt: Erst die Einrichtung abschließen (Schritt 3 von 5 ist offen)." in status
+    assert 'id="aktivieren"' not in status
+    assert ("Aktivieren erst möglich, wenn die Einrichtung abgeschlossen ist (Schritt 3 von 5 ist offen)."
+            in status)  # fmt: skip
     r = post(admin, f"/admin/v/{v.id}/aktivieren")
-    assert "Erst die Einrichtung abschließen" in r.text
+    assert "Aktivieren erst möglich, wenn die Einrichtung abgeschlossen ist" in r.text
     setzen(admin, v, einrichtung_schritt=None)
     assert "ist jetzt die aktive Veranstaltung" in post(admin, f"/admin/v/{v.id}/aktivieren").text
     assert 'data-aufgabe="freigabe"' not in admin.get(f"/admin/v/{v.id}").text

@@ -4,6 +4,13 @@ Alle nennenswerten Änderungen an TapTrial. Format nach [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [0.1.2] – 2026-10-21
+
+### Behoben
+- **Aktiv setzen erst nach abgeschlossener Einrichtung:** Über die Adresse des letzten Assistenten-Schritts ließ sich eine Veranstaltung mitten in der Einrichtung abschließen und aktiv setzen. Jetzt geht kein Schritt des Assistenten vor dem offenen; unter „Status & Datenschutz“ steht bei offener Einrichtung „Aktivieren erst möglich, wenn die Einrichtung abgeschlossen ist“ mit „Einrichtung fortsetzen“. Hinweise aus „Als Nächstes“ sperren nicht.
+- Eine schon aktive Veranstaltung mit offener Einrichtung bleibt unverändert; „Als Nächstes“ führt zur Einrichtung. Die Demo bricht in diesem Fall nicht mehr ab und lässt sie aktiv.
+- Das CLI `veranstaltung` setzt über dieselbe Prüfung aktiv wie der Admin.
+
 ## [0.1.1] – 2026-10-19
 
 ### Behoben

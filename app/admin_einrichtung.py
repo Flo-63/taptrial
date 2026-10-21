@@ -103,7 +103,10 @@ def neu_anlegen(request: Request, session: SessionDep, _a: AdminDep, csrf: Annot
 def schritt_anzeigen(request: Request, vid: int, schritt: int, session: SessionDep, _a: AdminDep):
     if schritt not in range(1, len(SCHRITTE) + 1):
         raise HTTPException(404)
-    return _seite_schritt(request, session, _veranstaltung(session, vid), schritt)
+    v = _veranstaltung(session, vid)
+    if k.einrichtung_vorgriff(v, schritt):  # Spätere Schritte erst, wenn die davor erledigt sind
+        return _zurueck(f"/admin/einrichtung/{vid}/{v.einrichtung_schritt}")
+    return _seite_schritt(request, session, v, schritt)
 
 
 @router.post("/{vid}/1")
@@ -211,6 +214,8 @@ def schritt3(
 ):
     admin_auth.csrf_pruefen(request, csrf)
     v = _veranstaltung(session, vid)
+    if grund := k.einrichtung_vorgriff(v, 3):
+        return _zurueck(f"/admin/einrichtung/{vid}/{v.einrichtung_schritt}", fehler=grund)
     _weiter(session, v, 4)
     warnung = (
         None
@@ -225,6 +230,8 @@ def abschliessen(request: Request, vid: int, session: SessionDep, _a: AdminDep,
                  csrf: Annotated[str, Form()] = "", aktivieren: Annotated[str, Form()] = ""):  # fmt: skip
     admin_auth.csrf_pruefen(request, csrf)
     v = _veranstaltung(session, vid)
+    if grund := k.einrichtung_vorgriff(v, 5):  # Abgeschlossen erst im letzten Schritt
+        return _zurueck(f"/admin/einrichtung/{vid}/{v.einrichtung_schritt}", fehler=grund)
     v.einrichtung_schritt = None
     session.commit()
     if aktivieren:

@@ -113,10 +113,26 @@ def test_assistent_komplett(admin):
 def test_assistent_ohne_aktivieren_und_ohne_teilnehmer(admin):
     post(admin, "/admin/einrichtung/neu", name="Probe", datum="2026-10-10")
     v = veranstaltung(admin)
-    post(admin, f"/admin/einrichtung/{v.id}/2", klassensatz_id=str(satz(admin, Klassensatz, "DRA 2026")),
-         wertungssatz_id="", strecke_km="")  # fmt: skip
+    ks = satz(admin, Klassensatz, "DRA 2026")
+    post(
+        admin,
+        f"/admin/einrichtung/{v.id}/2",
+        klassensatz_id=str(ks),
+        wertungssatz_id="",
+        strecke_km="",
+    )
+    platz(admin, v, ks, None, "Strecke 1", "Strecke 1")
+    post(
+        admin,
+        f"/admin/einrichtung/{v.id}/2",
+        klassensatz_id=str(ks),
+        wertungssatz_id="",
+        strecke_km="",
+    )
     r = post(admin, f"/admin/einrichtung/{v.id}/3")
     assert "Noch keine Teilnehmer" in r.text
+    post(admin, f"/admin/v/{v.id}/zielmonitor", weiter="1", seite_an_0="1", seite_dauer_0="10",
+         ziel=f"/admin/einrichtung/{v.id}/4")  # fmt: skip
     r = post(admin, f"/admin/einrichtung/{v.id}/5")
     assert "eingerichtet (nicht aktiv)" in r.text and not veranstaltung(admin).aktiv
     assert admin.get(f"/admin/einrichtung/{v.id}/9").status_code == 404
@@ -269,8 +285,15 @@ def test_assistent_schritt_zielmonitor_mit_vorgaben(admin):
 
     post(admin, "/admin/einrichtung/neu", name="Rund", datum="2026-10-13")
     v = veranstaltung(admin)
-    post(admin, f"/admin/einrichtung/{v.id}/2", klassensatz_id=str(satz(admin, Klassensatz, "DRA 2026")),
-         wertungssatz_id="", strecke_km="")  # fmt: skip
+    ks = satz(admin, Klassensatz, "DRA 2026")
+    platz(admin, v, ks, None, "Strecke 1", "Strecke 1")
+    post(
+        admin,
+        f"/admin/einrichtung/{v.id}/2",
+        klassensatz_id=str(ks),
+        wertungssatz_id="",
+        strecke_km="",
+    )
     with admin.app.state.sessionmaker() as s:
         w = s.get(Veranstaltung, v.id)
         mps = [

@@ -19,9 +19,8 @@
       <input type="hidden" name="csrf" value="{{ csrf }}">
       <button type="submit" class="btn btn-quiet" id="deaktivieren">Nicht mehr aktiv setzen …</button>
     </form>{% endif %}</div>
-  {% elif v.einrichtung_schritt %}<div class="btn-reihe"><button type="button" class="btn btn-secondary" id="aktivieren" disabled>Als aktive Veranstaltung setzen …</button>
-    <span class="hint" id="aktivieren-grund">Gesperrt: {{ aktiv_sperrgrund }}</span>
-    <a class="btn btn-quiet btn-sm" href="/admin/einrichtung/{{ v.id }}/{{ v.einrichtung_schritt }}">Einrichtung fortsetzen</a></div>
+  {% elif v.einrichtung_schritt %}<div class="btn-reihe"><span class="hint" id="aktivieren-grund">{{ aktiv_sperrgrund }}</span>
+    <a class="btn btn-secondary btn-sm" href="/admin/einrichtung/{{ v.id }}/{{ v.einrichtung_schritt }}" id="einrichtung-fortsetzen">Einrichtung fortsetzen</a></div>
   {% elif laufende %}<div class="btn-reihe"><button type="button" class="btn btn-secondary" id="aktivieren" disabled>Als aktive Veranstaltung setzen …</button>
     <span class="hint" id="aktivieren-grund">Gesperrt: {{ verdraengen_text(laufende) }}</span>
     <a class="btn btn-quiet btn-sm" href="/admin/v/{{ laufende.id }}/status" id="zur-laufenden">Zu „{{ laufende.name }}“</a></div>

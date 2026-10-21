@@ -610,6 +610,8 @@ async def zielmonitor_speichern(request: Request, vid: int, session: SessionDep,
     v.monitor_json = json.dumps(konf, ensure_ascii=False)
     session.commit()
     if form.get("weiter") and v.einrichtung_schritt:  # Schritt „Zielmonitor“ im Assistenten
+        if grund := k.einrichtung_vorgriff(v, 4):
+            return _zurueck(f"/admin/einrichtung/{vid}/{v.einrichtung_schritt}", fehler=grund)
         v.einrichtung_schritt = max(v.einrichtung_schritt, 5)
         session.commit()
         return _zurueck(f"/admin/einrichtung/{vid}/5")

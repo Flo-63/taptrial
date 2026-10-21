@@ -2,7 +2,7 @@
 FROM python:3.12-slim
 
 # Version aus pyproject.toml; der Release-Workflow übergibt sie als --build-arg
-ARG VERSION=0.1.1
+ARG VERSION=0.1.2
 LABEL org.opencontainers.image.title="TapTrial" \
       org.opencontainers.image.description="TapTrial – Zeitnahme per Handy für Einzelzeitfahren" \
       org.opencontainers.image.version="${VERSION}" \

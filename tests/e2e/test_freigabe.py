@@ -70,3 +70,21 @@ def test_laufende_veranstaltung_nicht_verdraengen(server, browser):
     expect(a.locator("h1")).to_have_text("Status & Datenschutz")
     assert a.url.endswith("/admin/v/1/status")
     ctx.close()
+
+
+def test_aktivieren_erst_nach_der_einrichtung(server, browser):
+    """Bei offener Einrichtung steht statt des Knopfs der Hinweis mit „Einrichtung fortsetzen“
+    (zum offenen Schritt des Assistenten)."""
+    from tests.e2e.test_import_vorschau import anmelden
+
+    server.admin_post("/admin/einrichtung/neu", name="Herbst", datum="2026-11-01")
+    ctx, a = anmelden(browser, server)
+    a.goto(f"{server.url}/admin/v/2/status")
+    expect(a.locator("#aktivieren")).to_have_count(0)
+    expect(a.locator("#aktivieren-grund")).to_have_text(
+        "Aktivieren erst möglich, wenn die Einrichtung abgeschlossen ist (Schritt 2 von 5 ist offen)."
+    )
+    a.click("#einrichtung-fortsetzen")
+    assert a.url.endswith("/admin/einrichtung/2/2")
+    expect(a.locator("#fortschritt li.aktuell")).to_contain_text("2.")
+    ctx.close()

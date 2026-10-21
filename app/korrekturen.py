@@ -418,8 +418,22 @@ def verdraengen_text(a: Veranstaltung) -> str:
     return f"‚{a.name}‘ läuft (Startzeiten vorhanden). Erst abschließen."
 
 
+AKTIV_GESPERRT = "Aktivieren erst möglich, wenn die Einrichtung abgeschlossen ist"
+
+
 def aktiv_sperrgrund(v: Veranstaltung) -> str:
-    return f"Erst die Einrichtung abschließen (Schritt {v.einrichtung_schritt} von 5 ist offen)."
+    return f"{AKTIV_GESPERRT} (Schritt {v.einrichtung_schritt} von 5 ist offen)."
+
+
+def einrichtung_vorgriff(v: Veranstaltung, schritt: int) -> str | None:
+    """Grund, warum ein Schritt des Assistenten noch nicht dran ist (sonst None).
+
+    Eingerichtet ist eine Veranstaltung erst nach dem letzten Schritt; ein Schritt hinter dem
+    offenen (z. B. „Einrichtung abschließen“ per Adresse) darf sie nicht vorzeitig dafür erklären.
+    """
+    if v.einrichtung_schritt and schritt > v.einrichtung_schritt:
+        return f"Erst Schritt {v.einrichtung_schritt} abschließen (Schritt {v.einrichtung_schritt} von 5 ist offen)."
+    return None
 
 
 def aktiv_beenden(session: Session, v: Veranstaltung) -> None:
@@ -443,13 +457,27 @@ def aktiv_setzen(session: Session, v: Veranstaltung) -> None:
     """In einer Transaktion: alle anderen deaktivieren, dann diese aktivieren.
 
     Die Datenbank erzwingt zusätzlich höchstens eine aktive Veranstaltung (partieller Unique-Index).
-    Erst nach abgeschlossener Einrichtung.
+    Die eine Prüfung für alle Wege (Admin-Knopf, Assistent, Anlegen, CLI, Demo): erst nach
+    abgeschlossener Einrichtung, und keine laufende Veranstaltung verdrängen.
     """
     if v.einrichtung_schritt:
         raise KorrekturFehler(aktiv_sperrgrund(v))
     laufend = laufende_andere(session, v)
     if laufend is not None:  # Keine laufende Veranstaltung verdrängen
         raise KorrekturFehler(verdraengen_text(laufend))
+    _allein_aktiv(session, v)
+
+
+def aktiv_wiederherstellen(session: Session, v: Veranstaltung) -> None:
+    """Die vorher aktive Veranstaltung wieder aktiv setzen (z. B. nach der Demo).
+
+    Keine neue Aktivierung: Der Stand vorher wird unverändert zurückgeholt – auch eine aktive
+    Veranstaltung mit offener Einrichtung aus älteren Versionen bleibt so, wie sie war.
+    """
+    _allein_aktiv(session, v)
+
+
+def _allein_aktiv(session: Session, v: Veranstaltung) -> None:
     try:
         session.execute(update(Veranstaltung).where(Veranstaltung.id != v.id).values(aktiv=False))
         session.flush()
