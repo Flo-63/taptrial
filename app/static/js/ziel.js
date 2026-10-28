@@ -55,7 +55,8 @@ function zustand() {
   // Zielstempel: uuid -> { uuid, zeit_ms, nr }
   const stempel = new Map();
   for (const z of s.letzte_ziele || [])
-    stempel.set(z.uuid, { uuid: z.uuid, zeit_ms: z.zeit_ms, nr: z.startnummer, korrektur: z.korrektur_ms || 0 });
+    stempel.set(z.uuid, { uuid: z.uuid, zeit_ms: z.zeit_ms, nr: z.startnummer, korrektur: z.korrektur_ms || 0,
+      durchfahrt: !!z.durchfahrt, ortName: z.ort_name || "" });
   for (const o of s.offene_ziele || [])
     stempel.set(o.uuid, { uuid: o.uuid, zeit_ms: o.zeit_ms, nr: null, korrektur: o.korrektur_ms || 0, ort: o.ort });
 
@@ -452,6 +453,13 @@ function zeichneLetzten(eintrag) {
     k.textContent = ` · korrigiert ${korrekturText(eintrag.korrektur)}`;
     text.append(k);
   }
+  if (eintrag.durchfahrt) {
+    // Ziel an einer Zwischenzeit: vom Posten erfasst, nicht umbuchbar
+    const p = document.createElement("span");
+    p.className = "ziel-posten-text";
+    p.textContent = ` · Ziel ${eintrag.ortName || "Zwischenzeit"} (Posten)`;
+    text.append(p);
+  }
   if (korrekturHinweis === eintrag.uuid) {
     const h = document.createElement("span");
     h.className = "korrektur-hinweis";
@@ -487,7 +495,9 @@ function zeichneLetzten(eintrag) {
   const aktionen = document.createElement("div");
   aktionen.className = "letzte-aktionen";
   aktionen.hidden = !offen;
-  aktionen.append(minus, plus, umbuchen, rueck);
+  // Eine Durchfahrt hat keine Zuordnung: falscher Fahrer → Rückgängig und neu tippen (Posten)
+  if (eintrag.durchfahrt) aktionen.append(minus, plus, rueck);
+  else aktionen.append(minus, plus, umbuchen, rueck);
   li.append(text);
   const zwischen = zwischenText(eintrag.t);
   if (zwischen) {

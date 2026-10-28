@@ -4,6 +4,14 @@ Alle nennenswerten Änderungen an TapTrial. Format nach [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [0.1.4] – 2026-10-27
+
+### Neu
+- **Ziel einer Strecke an einer Zwischenzeit:** Als „Ziel (letzter Punkt)“ einer Strecke lässt sich auch eine Zwischenzeit wählen – z. B. wenn eine kurze Strecke am Posten einer langen endet und dort nur ein Gerät steht. Das Posten-Gerät zeigt die Fahrer aller Strecken, die dort vorbeikommen oder enden; wer dort das Ziel hat, trägt „Ziel“, sein Tipp ist die Zielzeit (Gesamtzeit, Rang, Wertung, Zielmonitor, Ergebnis, Druck, CSV, Urkunden), danach ist er fertig. Für die anderen Strecken bleibt es eine Zwischenzeit. Kommt die Zwischenzeit im Verlauf der Strecke schon vorher vor, lehnt der Editor das mit Meldung ab. In der Rennleitung stehen solche Zieleinläufe unter „Letzte Einläufe“ (Korrektur und Rückgängig, kein Umbuchen). Eine andere Streckenzuordnung wertet alle Tipps neu. Streckendateien kennen dafür `zielort_art = "zwischenzeit"`.
+
+### Behoben
+- Der GitHub-Lauf „Tests“ zu 0.1.3 war rot: ein Test las eine Datei, die nicht zum veröffentlichten Stand gehört.
+
 ## [0.1.3] – 2026-10-21
 
 ### Geändert

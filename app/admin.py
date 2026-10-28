@@ -779,11 +779,18 @@ def protokoll_von(session: Session, v: Veranstaltung, nr: int | None = None):
     return ereignisse, gueltig
 
 
+def messpunkt_namen(erg) -> dict[str, str]:
+    """Messpunkt-ID → Name: Zwischenzeiten der Strecken und Ziele an einer Zwischenzeit."""
+    namen = {m.id: m.name for st in erg.strecken for m in st.messpunkte}
+    return namen | {st.ziel_messpunkt: st.zielort.name for st in erg.strecken if st.ziel_messpunkt}
+
+
 def durchfahrten_von(erg, z) -> list[SimpleNamespace]:
     """Fahrer-Seite (Segmente): alle Durchfahrten des Fahrers mit Herkunft (Gerät) und Zuordnung zur
     erwarteten Abfolge, dazu fehlende Positionen; chronologisch bzw. an ihrer Stelle."""
-    namen = {m.id: m.name for st in erg.strecken for m in st.messpunkte}
+    namen = messpunkt_namen(erg)
     platz = {d.uuid: d for d in z.durchfahrten if d.uuid}
+    am_ziel = {s.uuid for s in erg.zieldurchfahrten}  # Ziel an einer Zwischenzeit
     liste = []
     for s in sorted(
         (s for s in erg.durchfahrtstempel if s.startnummer == z.startnummer),
@@ -792,7 +799,8 @@ def durchfahrten_von(erg, z) -> list[SimpleNamespace]:
         d = platz.get(s.uuid)
         liste.append(SimpleNamespace(uuid=s.uuid, zeit_ms=s.zeit_ms, messpunkt=namen.get(s.ort, s.ort),
                                      seit_start=s.zeit_ms - z.start_ms if z.start_ms else None, geraet=s.geraet,
-                                     korrektur_ms=s.korrektur_ms, zuordnung=d.label if d else None,
+                                     korrektur_ms=s.korrektur_ms,
+                                     zuordnung=d.label if d else ("Ziel" if s.uuid in am_ziel else None),
                                      position=d.position + 1 if d else None,
                                      grund=erg.nicht_gezaehlt.get(s.uuid)))  # fmt: skip
     for d in z.durchfahrten:  # erwartet, aber nicht erfasst
@@ -1178,7 +1186,7 @@ def protokoll(request: Request, vid: int, session: SessionDep, _a: AdminDep, nr:
             if s.korrektur_ms
         },
         nicht_gezaehlt=erg.nicht_gezaehlt,
-        mp_namen={m.id: m.name for st in erg.strecken for m in st.messpunkte},
+        mp_namen=messpunkt_namen(erg),
         hier=f"/admin/v/{v.id}/protokoll" + (f"?nr={nr}&art={art}" if nr or art else ""),
         ereignisse=ereignisse,
         gueltig=gueltig,
@@ -1560,6 +1568,7 @@ def strecke_seite(request: Request, vid: int, sid: int, session: SessionDep, _a:
     orte = strecken.orte_von(session, v)
     return _seite(request, "admin_strecke.html", v=v, reiter="strecken", hilfe="strecke", s=s, index=i,
                   startorte=[m for m in orte if m.art == "start"], zielorte=[m for m in orte if m.art == "ziel"],
+                  zielpunkte=[m for m in orte if m.art == "punkt"],
                   startort=strecken.startort_von(s, orte), zielort=strecken.zielort_von(s, orte),
                   klassen_hier=[kl for kl, j in kontext["zuordnung"].items() if j == i],
                   andere=[x for x in liste if x.id != s.id],

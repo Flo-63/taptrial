@@ -215,6 +215,18 @@ def _seed(
                 ]
                 kurz.klassen = [*(sk for sk in kurz.klassen if not sk.klasse.startswith("Damen")),
                                 *(StreckeKlasse(klasse=k) for k in damen)]  # fmt: skip
+            if rundkurs == "ziel_berg":  # 5 km (Damen): Start · Kreisel · Berg, Ziel am Posten Berg
+                from app.models import StreckeKlasse
+
+                kurz = strecken.strecken_von(s, v)[0]
+                kurz.teile_json = segmente.nach_json(segmente.teile_aus_verlauf([ids["P1"]]))
+                kurz.zielort_id = mps[1].id
+                damen = [sk.klasse for sk in strecke.klassen if sk.klasse.startswith("Damen")]
+                strecke.klassen = [
+                    sk for sk in strecke.klassen if not sk.klasse.startswith("Damen")
+                ]
+                kurz.klassen = [*(sk for sk in kurz.klassen if not sk.klasse.startswith("Damen")),
+                                *(StreckeKlasse(klasse=k) for k in damen)]  # fmt: skip
             if rundkurs == "eigen":  # Dazu ein eigener Abschnitt Berg→Kreisel
                 import json
 
@@ -278,7 +290,9 @@ def rundkurs() -> str | None:
     Abschnitt „Abfahrt“ Berg→Kreisel) oder „gemeinsam“ (mit
     zwei_strecken: Kreisel auch auf der kurzen Strecke der Damen), „orte“ bzw. „zielorte“
     (mit zwei_strecken: Damen auf der kurzen Strecke mit Startort „Nord“ bzw. Zielort „Hof“),
-    „nord“ (mit zwei_strecken: Klassen wie vorgeschlagen, die kurze Strecke startet in „Nord“)."""
+    „nord“ (mit zwei_strecken: Klassen wie vorgeschlagen, die kurze Strecke startet in „Nord“),
+    „ziel_berg“ (mit zwei_strecken: Damen auf der kurzen Strecke Start · Kreisel · Berg mit dem Ziel
+    am Posten Berg)."""
     return None
 
 

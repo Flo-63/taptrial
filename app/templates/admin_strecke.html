@@ -43,7 +43,8 @@
       <div class="field"><label for="s-startort">Start (erster Punkt)</label>
         <select name="startort" id="s-startort" {{ 'disabled' if strecken_eingefroren }}>{% for m in startorte %}<option value="{{ m.id }}" {{ 'selected' if m.id == startort.id }}>{{ m.name }}</option>{% endfor %}</select></div>
       <div class="field"><label for="s-zielort">Ziel (letzter Punkt)</label>
-        <select name="zielort" id="s-zielort" {{ 'disabled' if strecken_eingefroren }}>{% for m in zielorte %}<option value="{{ m.id }}" {{ 'selected' if m.id == zielort.id }}>{{ m.name }}</option>{% endfor %}</select></div>
+        <select name="zielort" id="s-zielort" {{ 'disabled' if strecken_eingefroren }}{{ ' aria-describedby=s-zielort-hinweis' if zielpunkte }}>{% if zielpunkte %}<optgroup label="Ziel">{% endif %}{% for m in zielorte %}<option value="{{ m.id }}" {{ 'selected' if m.id == zielort.id }}>{{ m.name }}</option>{% endfor %}{% if zielpunkte %}</optgroup><optgroup label="Zwischenzeit">{% for m in zielpunkte %}<option value="{{ m.id }}" {{ 'selected' if m.id == zielort.id }}>{{ m.name }}</option>{% endfor %}</optgroup>{% endif %}</select>
+        {% if zielpunkte %}<span class="hint" id="s-zielort-hinweis">Endet die Strecke an einer Zwischenzeit, nimmt deren Posten-Gerät die Zielzeit (die Zwischenzeit darf dann nicht schon vorher im Verlauf vorkommen).</span>{% endif %}</div>
     </div>
     <datalist id="punkte-liste"><option value="Start"></option><option value="Ziel"></option>{% for m in messpunkte %}<option value="{{ m.name }}"></option>{% endfor %}</datalist>
     <script type="application/json" id="verlauf-start">{{ verlauf_start|tojson }}</script>

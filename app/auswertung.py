@@ -103,6 +103,8 @@ class StreckenDef:
     abschnitte: tuple = ()  # tuple[segmente.AbschnittDef, ...] (inkl. ausgeblendeter)
     startort: MesspunktDef | None = None  # Erster Punkt (None = Standard „Start“)
     zielort: MesspunktDef | None = None  # letzter Punkt (None = Standard „Ziel“)
+    # Ziel an einer Zwischenzeit: deren Messpunkt-ID; jede Durchfahrt dort ist ein Zielstempel
+    ziel_messpunkt: str | None = None
 
     @property
     def sichtbare_abschnitte(self) -> tuple:
@@ -250,6 +252,8 @@ class Ergebnis:
     durchfahrtstempel: list[Zielstempel] = field(default_factory=list)
     # Segmente: Tipps, die die Auswertung nicht zählt (Grund je UUID, im Protokoll sichtbar)
     nicht_gezaehlt: dict[str, str] = field(default_factory=dict)
+    # Zielstempel aus Durchfahrten am Ziel-Messpunkt einer Strecke (ort = Messpunkt-ID)
+    zieldurchfahrten: list[Zielstempel] = field(default_factory=list)
 
     @property
     def mit_durchfahrten(self) -> bool:
@@ -422,6 +426,11 @@ def auswerten(
                 Konflikt(KonfliktArt.KEINE_KLASSE, f"Nr. {t.startnummer}: {err}", t.startnummer)
             )
     strecke_von = {nr: strecke_je_klasse.get(kl, 0) for nr, kl in klasse_von.items()}
+    ziel_tipps, ziel_doppelt = _zieldurchfahrten(
+        strecken, strecke_von, durchfahrten, zeit, runde_wert
+    )
+    for e in ziel_tipps:
+        ziele[e.startnummer].append(e)
 
     def start_von(nr: int) -> int | None:
         if nr in manuell_start:
@@ -433,8 +442,11 @@ def auswerten(
             return manuell_ziel[nr].zeit_ms
         return zeit[ziele[nr][0].uuid] if len(ziele[nr]) == 1 else None
 
-    runden = _segmente_auswerten(strecken, strecke_von, start_von, ziel_von, durchfahrten, zeit,
+    am_ziel = {e.uuid for e in ziel_tipps} | set(ziel_doppelt)
+    runden = _segmente_auswerten(strecken, strecke_von, start_von, ziel_von,
+                                 [e for e in durchfahrten if e.uuid not in am_ziel], zeit,
                                  korrektur, runde_wert, bekannte)  # fmt: skip
+    runden.nicht_gezaehlt.update(ziel_doppelt)
 
     zeilen: list[ErgebnisZeile] = []
     for t in teilnehmer:
@@ -513,6 +525,10 @@ def auswerten(
         elif z.start_ms is not None or z.ziel_ms is not None:
             z.status = Status.UNVOLLSTAENDIG
 
+    for z in zeilen:  # Posten am Ziel-Messpunkt: einmal erwartet, danach fertig
+        mp = strecken[z.strecke].ziel_messpunkt if z.strecke < len(strecken) else None
+        if mp is not None:
+            z.naechste_runde = {**z.naechste_runde, mp: 2 if z.ziel_ms is not None else 1}
     gewertet = [z for z in zeilen if z.status == Status.OK]
     if config.wertung is not None:
         # Stufe nur für Abzeichen-Teilnehmer; keine bei DNF/DSQ/DNS/Konflikt/unvollständig.
@@ -547,6 +563,12 @@ def auswerten(
         wertung=config.wertung,
         strecken=strecken,
         nicht_gezaehlt=runden.nicht_gezaehlt,
+        zieldurchfahrten=[
+            Zielstempel(
+                e.uuid, zeit[e.uuid], e.geraet, e.startnummer, korrektur.get(e.uuid, 0), str(e.wert)
+            )
+            for e in ziel_tipps
+        ],
         durchfahrtstempel=[
             Zielstempel(
                 e.uuid, zeit[e.uuid], e.geraet, e.startnummer, korrektur.get(e.uuid, 0), str(e.wert)
@@ -561,6 +583,31 @@ ZIEL_TOLERANZ_MS = 10_000  # Messpunkt auf der Ziellinie: Tipp um die Zielzeit z
 DOPPELTIPP = "Doppeltipp"
 AM_ZIEL = "am Ziel"
 OHNE_PLATZ = "nicht in der Abfolge"
+
+
+def _zieldurchfahrten(strecken, strecke_von, durchfahrten, zeit, runde_wert):
+    """Durchfahrten am Ziel-Messpunkt der eigenen Strecke (Ziel an einer Zwischenzeit) →
+    (Zielstempel, {UUID: Grund} der Doppeltipps). Doppeltipp wie an jedem Posten: gleiches Gerät,
+    unter 10 s nach dem letzten gezählten Tipp (RUNDE „GILT“ nimmt das zurück). Die Strecke kommt
+    aus der Klasse – nach einem Wechsel werden die Tipps neu bewertet."""
+    ziel_mp = {i: s.ziel_messpunkt for i, s in enumerate(strecken) if s.ziel_messpunkt}
+    if not ziel_mp:
+        return [], {}
+    tipps, doppelt, letzte = [], {}, {}
+    for e in sorted(durchfahrten, key=lambda e: (zeit[e.uuid], e.uuid)):
+        nr = e.startnummer
+        if nr not in strecke_von or ziel_mp.get(strecke_von[nr]) != str(e.wert):
+            continue
+        if runde_wert.get(e.uuid) == "VERWORFEN":
+            continue
+        schluessel = (nr, e.geraet)
+        if (schluessel in letzte and zeit[e.uuid] - letzte[schluessel] < DOPPELTIPP_MS
+                and runde_wert.get(e.uuid) != "GILT"):  # fmt: skip
+            doppelt[e.uuid] = DOPPELTIPP
+            continue
+        letzte[schluessel] = zeit[e.uuid]
+        tipps.append(e)
+    return tipps, doppelt
 
 
 @dataclass

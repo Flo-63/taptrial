@@ -77,7 +77,9 @@ function zustand() {
   const mitInfo = (t) => {
     const naechste = ((t.naechste_runde || {})[String(mp && mp.id)] || 1) + (offen.get(t.startnummer) || 0);
     const runden = erwartetVon(t);
-    return { ...t, naechste: Math.max(1, naechste), runden, aktiv: !startBekannt || gestartet.has(t.startnummer), erledigt: naechste > runden };
+    // Ziel an diesem Messpunkt: der Tipp ist die Zielzeit, danach ist der Fahrer hier fertig
+    const ziel = !!mp && (mp.ziel_strecken || []).includes(t.strecke);
+    return { ...t, naechste: Math.max(1, naechste), runden, ziel, aktiv: !startBekannt || gestartet.has(t.startnummer), erledigt: naechste > runden };
   };
   const kacheln = alle
     .map(mitInfo)
@@ -124,6 +126,12 @@ function kachel(t) {
     r.className = "kachel-runde";
     r.textContent = `${Math.min(t.naechste, runden)}. von ${runden} Durchfahrten`;
     b.append(r);
+  }
+  if (t.ziel && !(t.erledigt && alleAn())) {
+    const z = document.createElement("span");
+    z.className = "kachel-runde kachel-ziel";
+    z.textContent = "Ziel";
+    b.append(z);
   }
   const marke = streckeMarke(g.stand, t);
   if (marke) {

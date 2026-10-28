@@ -28,9 +28,10 @@ def test_eine_quelle():
     workflow = (PROJEKT / ".github" / "workflows" / "image.yml").read_text(encoding="utf-8")
     assert "build-args: VERSION=${{ steps.version.outputs.version }}" in workflow
     for skript in ("container_e2e.sh", "release-check.sh"):
-        assert '--build-arg "VERSION=$version"' in (PROJEKT / "scripts" / skript).read_text(), (
-            skript
-        )
+        pfad = PROJEKT / "scripts" / skript
+        if skript == "release-check.sh" and not pfad.exists():
+            continue  # nicht im Export
+        assert '--build-arg "VERSION=$version"' in pfad.read_text(), skript
     deploy = PROJEKT / "config" / "deploy.yml"  # nicht im Export
     if deploy.exists():
         import yaml

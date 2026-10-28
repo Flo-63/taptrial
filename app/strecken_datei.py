@@ -41,6 +41,7 @@ from app.models import Messpunkt, Strecke, Veranstaltung
 from app.saetze import SatzFehler, _dekodieren, _klein, _toml_text
 
 VERSION = 1
+ZIELORT_ZWISCHENZEIT = "zwischenzeit"  # zielort_art: Ziel an einem Zwischen-Messpunkt
 KOMOOT_MAX = 500
 
 
@@ -85,6 +86,9 @@ def strecke_toml(session: Session, v: Veranstaltung, s: Strecke) -> str:
     orte = st.orte_von(session, v)  # Start- und Zielort über ihre Namen
     zeilen.append(f"startort = {_toml_text(st.startort_von(s, orte).name)}")
     zeilen.append(f"zielort = {_toml_text(st.zielort_von(s, orte).name)}")
+    # Ziel an einer Zwischenzeit (deren Posten nimmt die Zielzeit)
+    if st.zielpunkt_von(s, orte) is not None:
+        zeilen.append(f"zielort_art = {_toml_text(ZIELORT_ZWISCHENZEIT)}")
     zeilen.append(f"messpunkte = [{', '.join(_toml_text(n) for n in benutzt)}]")
     for t in teile:
         zeilen += ["", "[[teil]]", f"name = {_toml_text(t.name)}", f"wdh = {t.wdh}"]
@@ -117,6 +121,7 @@ class Entwurf:
     messpunkte: list[str] = field(default_factory=list)
     startort: str = ""  # Name des Startorts (leer = Standard „Start“)
     zielort: str = ""
+    ziel_zwischenzeit: bool = False  # zielort_art = "zwischenzeit"
     teile: tuple = ()  # TeilDef mit Messpunkt-NAMEN statt IDs
     abschnitte: list[dict] = field(default_factory=list)
     fehler: list[str] = field(default_factory=list)
@@ -161,9 +166,20 @@ def lesen(inhalt: bytes) -> Entwurf:
     e.messpunkte = [str(n).strip()[:100] for n in daten.get("messpunkte") or [] if str(n).strip()]
     e.startort = str(daten.get("startort") or "").strip()[:100]
     e.zielort = str(daten.get("zielort") or "").strip()[:100]
+    zielart = str(daten.get("zielort_art") or "").strip().lower()
+    if zielart not in ("", "ziel", ZIELORT_ZWISCHENZEIT):
+        e.fehler.append(
+            f"Unbekannte Art des Zielorts „{zielart}“ (erlaubt: „ziel“, „zwischenzeit“)."
+        )
+    e.ziel_zwischenzeit = zielart == ZIELORT_ZWISCHENZEIT
+    if e.ziel_zwischenzeit and (not e.zielort or e.zielort.lower() == "ziel"):
+        e.fehler.append("Ziel an einer Zwischenzeit: Name des Zielorts fehlt.")
     bekannt = {n.lower(): n for n in e.messpunkte}
     for wort, n in (("start", e.startort), ("ziel", e.zielort)):
-        if n.lower() in bekannt:
+        if n.lower() in bekannt and wort == "ziel" and e.ziel_zwischenzeit:
+            e.fehler.append(f"Das Ziel „{n}“ kommt im Verlauf schon vorher vor. Als Ziel geht nur "
+                            "eine Zwischenzeit, die die Strecke sonst nicht durchfährt.")  # fmt: skip
+        elif n.lower() in bekannt:
             e.fehler.append(
                 f"„{n}“ ist Zwischenzeit und {'Start' if wort == 'start' else 'Ziel'} zugleich."
             )
@@ -257,7 +273,7 @@ def ersetzen_verlust(s: Strecke) -> str:
 def _benoetigte_orte(e: Entwurf) -> list[tuple[str, str]]:
     """(Name, Art) aller Orte der Datei: Startort, Messpunkte, Zielort."""
     return [(e.startort or "Start", "start"), *((n, "punkt") for n in e.messpunkte),
-            (e.zielort or "Ziel", "ziel")]  # fmt: skip
+            (e.zielort or "Ziel", "punkt" if e.ziel_zwischenzeit else "ziel")]  # fmt: skip
 
 
 def vorschau(
@@ -410,6 +426,7 @@ def _inhalt_setzen(
                                        ensure_ascii=False)  # fmt: skip
     s.beschreibung, s.komoot_url = e.beschreibung or None, e.komoot
     st.strecke_orte_setzen(session, v, s, str(start_id), str(ziel_id))
+    st.ziel_pruefen(s, st.orte_von(session, v))
     st.unbenutzte_standards_ausblenden(session, v)  # Auch direkt nach dem Laden
 
 

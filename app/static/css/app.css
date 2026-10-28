@@ -211,4 +211,5 @@ body.gesperrt main { display: none; }
 .posten-titel { text-align: center; font-size: 1.5rem; font-weight: 800; color: var(--gelb); }
 .kachel-runde { font-size: 0.8rem; font-weight: 800; color: var(--gelb); }
 .kachel.erledigt .kachel-runde { color: #000; }
+.kachel-ziel { padding: 0 0.4em; border-radius: 4px; background: var(--gelb); color: #000; }
 .letzte .letzte-zwischen { font-size: 0.8rem; color: #aaa; padding: 0 4px 6px; }

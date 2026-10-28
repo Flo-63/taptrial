@@ -185,7 +185,16 @@ def startort_von(s: Strecke, orte: list[Messpunkt]) -> Messpunkt:
 
 
 def zielort_von(s: Strecke, orte: list[Messpunkt]) -> Messpunkt:
-    return _ort_von(s.zielort_id, "ziel", orte)
+    """Zielort der Strecke: ein Ziel oder eine Zwischenzeit (Ziel an einem Zwischen-Messpunkt,
+    dort nimmt das Posten-Gerät die Zielzeit)."""
+    return zielpunkt_von(s, orte) or _ort_von(s.zielort_id, "ziel", orte)
+
+
+def zielpunkt_von(s: Strecke, orte: list[Messpunkt]) -> Messpunkt | None:
+    """Die Zwischenzeit, an der die Strecke endet, sonst None (Ziel ist ein Ziel-Ort)."""
+    if s.zielort_id is None:
+        return None
+    return next((m for m in orte if m.art == "punkt" and m.id == s.zielort_id), None)
 
 
 def _ort_von(oid: int | None, art: str, orte: list[Messpunkt]) -> Messpunkt:
@@ -241,8 +250,25 @@ def unbenutzte_standards_ausblenden(session: Session, v: Veranstaltung) -> None:
 
 
 def nutzende_strecken(liste: list[Strecke], messpunkt_id) -> list[int]:
-    """Indizes der Strecken, deren Segmente am Messpunkt vorbeiführen."""
-    return [i for i, s in enumerate(liste) if str(messpunkt_id) in sg.innere_punkte(teile_von(s))]
+    """Indizes der Strecken, deren Segmente am Messpunkt vorbeiführen oder die dort enden."""
+    return [i for i, s in enumerate(liste) if str(messpunkt_id) in genutzte_punkte(s)]
+
+
+def genutzte_punkte(s: Strecke) -> set[str]:
+    """IDs der Zwischenzeiten im Verlauf, dazu der Zielort (auch eine Zwischenzeit)."""
+    return set(sg.innere_punkte(teile_von(s))) | ({str(s.zielort_id)} if s.zielort_id else set())
+
+
+def ziel_pruefen(s: Strecke, orte: list[Messpunkt]) -> None:
+    """Ziel an einer Zwischenzeit nur, wenn die Strecke sie nicht schon vorher durchfährt –
+    sonst hinge die Zielzeit an der Zuordnung der Durchfahrten (Abstandsregel)."""
+    p = zielpunkt_von(s, orte)
+    if p is not None and str(p.id) in sg.innere_punkte(teile_von(s)):
+        raise StreckenFehler(
+            f"Strecke „{s.name}“: Das Ziel „{p.name}“ kommt im Verlauf schon vorher vor. Als Ziel "
+            "geht nur eine Zwischenzeit, die die Strecke sonst nicht durchfährt.",
+            "verlauf",
+        )
 
 
 def auswertungs_strecken(session: Session, v: Veranstaltung) -> tuple[StreckenDef, ...]:
@@ -259,7 +285,8 @@ def auswertungs_strecken(session: Session, v: Veranstaltung) -> tuple[StreckenDe
                                  abschnitte=tuple(abschnitte_von(s)),
                                  messpunkte=tuple(MesspunktDef(str(m.id), m.name) for m in mps if str(m.id) in genutzt),
                                  teile=teile, startort=MesspunktDef(str(start.id), start.name),
-                                 zielort=MesspunktDef(str(ziel.id), ziel.name)))  # fmt: skip
+                                 zielort=MesspunktDef(str(ziel.id), ziel.name),
+                                 ziel_messpunkt=str(ziel.id) if ziel.art == "punkt" else None))  # fmt: skip
     return tuple(liste)
 
 
@@ -733,7 +760,7 @@ def strecken_speichern(session: Session, v: Veranstaltung, zeilen: list[dict],
                       if teile_neu is None or (nur is not None and i not in nur)]  # fmt: skip
         for m in vorhanden.values():
             if str(m.id) not in {x["id"] for x in mp_neu}:
-                nutzer = [s.name for s in bleibt_alt if str(m.id) in sg.innere_punkte(teile_von(s))]
+                nutzer = [s.name for s in bleibt_alt if str(m.id) in genutzte_punkte(s)]
                 if nutzer:
                     raise StreckenFehler(f"Zwischenzeit „{m.name}“ wird noch von {', '.join(nutzer)} genutzt – "
                                          "erst im Streckenverlauf entfernen.")  # fmt: skip
@@ -765,9 +792,12 @@ def strecken_speichern(session: Session, v: Veranstaltung, zeilen: list[dict],
                 "abschnitte", _abschnitte_bauen, eigene, s, ids, d["name"], alle_mps
             )
     if teile_neu is not None or mp_neu is not None:
-        genutzt = {p for s in strecken_von(session, v) for p in sg.innere_punkte(teile_von(s))}
+        genutzt = {p for s in strecken_von(session, v) for p in genutzte_punkte(s)}
         hinweise_mp = [f"Zwischenzeit „{m.name}“ kommt noch in keiner Strecke vor." for m in alle_mps
                        if str(m.id) not in genutzt]  # fmt: skip
+    orte = orte_von(session, v)
+    for s in strecken_von(session, v):
+        ziel_pruefen(s, orte)
     unbenutzte_standards_ausblenden(session, v)
     session.commit()
     return [f"Strecke „{d['name']}“ hat keine Klasse." for i, d in sorted(behalten.items())
@@ -856,7 +886,7 @@ def orte_speichern(session: Session, v: Veranstaltung, zeilen: list[dict]) -> li
             session.add(m)
         m.position, m.name = pos, name
     session.flush()
-    genutzt = {p for st in strecken_von(session, v) for p in sg.innere_punkte(teile_von(st))}
+    genutzt = {p for st in strecken_von(session, v) for p in genutzte_punkte(st)}
     hinweise = [f"Zwischenzeit „{m.name}“ kommt noch in keiner Strecke vor."
                 for m in messpunkte_von(session, v) if str(m.id) not in genutzt]  # fmt: skip
     for m in orte_von(session, v):
@@ -873,10 +903,11 @@ def strecke_orte_setzen(session: Session, v: Veranstaltung, s: Strecke, start: s
     orte = orte_von(session, v)
     alt = (startort_von(s, orte).id, zielort_von(s, orte).id)
     neu = list(alt)
-    for k, (wert, art) in enumerate(((start, "start"), (ziel, "ziel"))):
+    for k, (wert, arten) in enumerate(((start, ("start",)), (ziel, ("ziel", "punkt")))):
         if wert is None:
             continue
-        m = next((m for m in orte if str(m.id) == str(wert) and m.art == art), None)
+        art = arten[0]
+        m = next((m for m in orte if str(m.id) == str(wert) and m.art in arten), None)
         if m is None:
             raise StreckenFehler(f"Unbekannter Messpunkt für „{ORTSARTEN[art]}“.", "verlauf")
         neu[k] = m.id

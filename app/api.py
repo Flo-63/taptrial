@@ -322,13 +322,17 @@ def stand(
 
         m = zugang.messpunkt
         # Gemeinsamer Messpunkt – Strecken, die vorbeiführen, und Durchfahrten je Strecke
+        # Strecken, die hier enden (Ziel an einer Zwischenzeit): eine Durchfahrt, die Zielzeit
+        ziel = [i for i, sd in enumerate(erg.strecken) if sd.ziel_messpunkt == str(m.id)]
         erwartet = {
-            i: segmente.erwartete_anzahl(sd.teile).get(str(m.id), 0)
+            i: segmente.erwartete_anzahl(sd.teile).get(str(m.id), 0) + (i in ziel)
             for i, sd in enumerate(erg.strecken)
         }
         erwartet = {i: n for i, n in erwartet.items() if n}
         daten["messpunkt"] = {"id": m.id, "name": m.name, "strecken": sorted(erwartet),
                               "erwartet": {str(i): n for i, n in erwartet.items()}}  # fmt: skip
+        if ziel:
+            daten["messpunkt"]["ziel_strecken"] = ziel
         hier = [d for d in erg.durchfahrtstempel if d.ort == str(m.id)]
         daten["durchfahrten"] = [
             {"uuid": d.uuid, "zeit_ms": d.zeit_ms, "startnummer": d.startnummer,
@@ -363,6 +367,7 @@ def _ort_daten(session: Session, v: Veranstaltung, erg: Ergebnis, daten: dict, o
 
 
 def _stand(erg: Ergebnis, v: Veranstaltung, zeilen) -> dict:
+    ziel_namen = {sd.ziel_messpunkt: sd.zielort.name for sd in erg.strecken if sd.ziel_messpunkt}
     return {
         "veranstaltung": {"id": v.id, "name": v.name, "datum": v.datum.isoformat()},
         "teilnehmer": [
@@ -405,6 +410,8 @@ def _stand(erg: Ergebnis, v: Veranstaltung, zeilen) -> dict:
             }
             for o in erg.offene_ziele
         ],
+        # Zielstempel aller Zielgeräte, dazu Zieldurchfahrten an einer Zwischenzeit (Kennzeichen
+        # „durchfahrt“: kein Umbuchen, eine Durchfahrt hat keine Zuordnung)
         "letzte_ziele": [
             {
                 "uuid": z.uuid,
@@ -413,7 +420,16 @@ def _stand(erg: Ergebnis, v: Veranstaltung, zeilen) -> dict:
                 "startnummer": z.startnummer,
                 "korrektur_ms": z.korrektur_ms,
             }
-            for z in sorted(erg.zielstempel, key=lambda z: z.zeit_ms, reverse=True)[:LETZTE_ZIELE]
+            | (
+                {"durchfahrt": True, "ort": z.ort, "ort_name": ziel_namen.get(z.ort, "")}
+                if durch
+                else {}
+            )
+            for z, durch in sorted(
+                [(z, False) for z in erg.zielstempel] + [(z, True) for z in erg.zieldurchfahrten],
+                key=lambda x: x[0].zeit_ms,
+                reverse=True,
+            )[:LETZTE_ZIELE]
         ],
         "konflikte": len(erg.konflikte),
         "rennleitung_getrennt": bool(v.rennleitung_getrennt),
