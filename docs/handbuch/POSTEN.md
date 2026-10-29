@@ -11,11 +11,11 @@
 - Jeder erwartete Fahrer (aller Strecken, die hier vorbeiführen; bei mehreren mit Streckenkennzeichen) hat eine **Kachel** mit Startnummer und – wenn er mehrmals vorbeikommt – z. B. „**2. von 3 Durchfahrten**“: die Durchfahrt, die hier als Nächstes kommt. Wurde ein Klick vergessen (auch an einem anderen Posten), springt die Anzeige weiter, sobald seine nächste Zeit eingeht. Umschalter „**Durchfahrten anzeigen**“ (Standard an): aus = nur die Nummer; das Handy merkt sich die Stellung.
 - Fährt er vorbei: **Kachel einmal antippen**. Die Kachel zeigt danach die nächste Durchfahrt und verschwindet nach der letzten.
 - **„Ziel“ auf der Kachel:** Dein Posten ist das **Ziel seiner Strecke** – dein Tipp ist seine **Zielzeit**, also genau beim Überfahren der Linie tippen. Danach ist er hier fertig; Fahrer anderer Strecken bleiben bis zu ihrer letzten Durchfahrt.
-- Darunter steht deine **letzte Durchfahrt**: „−1 s“ / „+1 s“ (zu spät/früh getippt, höchstens ±5 s), **„Rückgängig“** (falscher Fahrer, zweimal tippen).
-- Ausgegraute Kacheln: noch nicht gestartet. Sie lassen sich trotzdem antippen.
+- Darunter steht deine **letzte Durchfahrt**: „−1 s“ / „+1 s“ (zu spät/früh getippt, höchstens ±5 s), **„Rückgängig“** (falscher Fahrer, zweimal tippen). Ist der Fahrer schon im Ziel, geht „Rückgängig“ nur noch über die Rennleitung.
+- Ausgegraute Kacheln: noch nicht gestartet, gesperrt. Kommt so ein Fahrer doch vorbei (Start noch nicht gemeldet): „**Alle Fahrer**“ einschalten.
 
 ## Sonderfälle
-- **Fahrer fehlt, kommt aber gerade:** „**Alle Fahrer**“ einschalten – dann stehen auch Fahrer da, die hier schon als vorbei gelten („gilt als vorbei“, z. B. nach einem Fehlklick an einem anderen Posten); antippen zählt normal.
+- **Fahrer fehlt oder ist gesperrt, kommt aber gerade:** „**Alle Fahrer**“ einschalten – dann stehen auch Fahrer da, die hier schon als vorbei gelten („gilt als vorbei“, z. B. nach einem Fehlklick an einem anderen Posten), und nicht gestartete sind antippbar; antippen zählt normal.
 - **Fahrer verpasst:** nicht nachtragen – eine fehlende Durchfahrt hat **keine Folgen** für die Wertung (Anzeige „–“). **Ausnahme „Ziel“:** sofort der Rennleitung melden (ungefähre Uhrzeit), sonst fehlt seine Zielzeit.
 - **Unsicher, welcher Fahrer:** lieber nicht tippen – eine fehlende Durchfahrt schadet nicht, ein falscher Tipp verfälscht Segmentzeiten.
 - **Kein Netz:** weitermachen, alles wird gespeichert und später gesendet.

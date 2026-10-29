@@ -99,7 +99,11 @@ function zustand() {
         .reduce((summe, k) => (Math.abs(summe + k.delta_ms) > MAX_KORREKTUR_MS ? summe : summe + k.delta_ms), 0);
       d = { uuid: e.uuid, zeit_ms: e.zeit_ms + korrektur, nr: e.startnummer, korrektur };
     }
-    eigener = { ...d, t: nachNr.get(d.nr) };
+    const t = nachNr.get(d.nr);
+    // schon im Ziel (anderswo erfasst): Rückgängig nur noch über die Rennleitung; ist dieser
+    // Posten selbst das Ziel seiner Strecke, war der Tipp die Zielzeit und bleibt rücknehmbar
+    const imZiel = !!t && t.ziel_ms != null && !(mp && (mp.ziel_strecken || []).includes(t.strecke));
+    eigener = { ...d, t, imZiel };
   }
   return { mp, kacheln, unterwegs, eigener, startBekannt };
 }
@@ -109,6 +113,8 @@ function kachel(t) {
   const b = document.createElement("button");
   b.className = "kachel" + (t.aktiv ? "" : " nicht-gestartet") + (t.erledigt ? " erledigt" : "");
   b.dataset.nr = t.startnummer;
+  // nicht gestartet: gesperrt gegen Fehlklicks; „Alle Fahrer“ gibt sie frei (Start noch nicht gemeldet)
+  b.disabled = !t.aktiv && !alleAn();
   const nr = document.createElement("span");
   nr.className = "kachel-nr";
   nr.textContent = t.startnummer;
@@ -153,7 +159,8 @@ function zeichnen() {
   $("durchfahrten-hinweis").hidden = !an || !z.kacheln.some((t) => t.runden > 1);
   const e = z.eigener;
   const text = $("letzter-text");
-  $("btn-minus").disabled = $("btn-plus").disabled = $("btn-einlauf-zurueck").disabled = !e;
+  $("btn-minus").disabled = $("btn-plus").disabled = !e;
+  $("btn-einlauf-zurueck").disabled = !e || e.imZiel;
   const warte = !!e && bestaetigen === `zurueck:${e.uuid}`;
   $("btn-einlauf-zurueck").textContent = warte ? "Wirklich?" : "Rückgängig";
   $("btn-einlauf-zurueck").classList.toggle("bestaetigen", warte);
@@ -170,7 +177,13 @@ function zeichnen() {
     k.textContent = ` · korrigiert ${korrekturText(e.korrektur)}`;
     text.append(k);
   }
-  if (korrekturHinweis === e.uuid) {
+  if (e.imZiel) {
+    const h = document.createElement("span");
+    h.className = "korrektur-hinweis";
+    h.id = "im-ziel-hinweis";
+    h.textContent = "Schon im Ziel – Rückgängig nur über die Rennleitung";
+    text.append(document.createElement("br"), h);
+  } else if (korrekturHinweis === e.uuid) {
     const h = document.createElement("span");
     h.className = "korrektur-hinweis";
     h.id = "korrektur-hinweis";
@@ -206,7 +219,7 @@ $("btn-minus").addEventListener("click", () => korrigieren(-KORREKTUR_MS));
 $("btn-plus").addEventListener("click", () => korrigieren(KORREKTUR_MS));
 $("btn-einlauf-zurueck").addEventListener("click", async () => {
   const e = zustand().eigener;
-  if (!e) return;
+  if (!e || e.imZiel) return;
   const schluessel = `zurueck:${e.uuid}`;
   if (bestaetigen !== schluessel) {
     bestaetigen = schluessel;

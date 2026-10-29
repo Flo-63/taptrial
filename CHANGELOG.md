@@ -4,6 +4,12 @@ Alle nennenswerten Änderungen an TapTrial. Format nach [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [0.1.5] – 2026-10-29
+
+### Behoben
+- **Posten:** Nicht gestartete Fahrer ließen sich antippen – jetzt gesperrt (ausgegraut); „Alle Fahrer“ gibt sie frei, falls der Start noch nicht gemeldet ist.
+- **Posten:** „Rückgängig“ nahm auch Zwischenzeiten von Fahrern zurück, die schon im Ziel sind – jetzt gesperrt mit Hinweis auf die Rennleitung (außer der Posten ist selbst das Ziel der Strecke).
+
 ## [0.1.4] – 2026-10-27
 
 ### Neu
