@@ -138,6 +138,11 @@ function zeichnen() {
   $("fortschritt").textContent = z.teilnehmer.length
     ? `Gestartet: ${z.anzahlGestartet} von ${z.teilnehmer.length}`
     : "";
+  const ausgelassen = z.offen.filter((t) => uebersprungen.includes(t.startnummer)).map((t) => t.startnummer);
+  $("uebersprungen-info").hidden = !ausgelassen.length;
+  $("uebersprungen-info").textContent = ausgelassen.length
+    ? `Übersprungen: Nr. ${ausgelassen.sort((a, b) => a - b).join(", ")} – unter „Nummer wählen“ weiter wählbar`
+    : "";
 
   const liste = $("warteliste");
   liste.replaceChildren(
@@ -192,7 +197,11 @@ function zeichneAuswahl(z) {
         b.classList.toggle("bestaetigen", warte);
         b.addEventListener("click", () => dnsAufhebenGetippt(t.startnummer));
       } else {
-        b.textContent = `${t.startnummer}`;
+        if (uebersprungen.includes(t.startnummer)) {
+          // übersprungen: markiert, aber wählbar (Nachzügler)
+          b.classList.add("uebersprungen");
+          b.innerHTML = `<span class="kachel-nr">${t.startnummer}</span><span class="kachel-status">übersprungen</span>`;
+        } else b.textContent = `${t.startnummer}`;
         b.addEventListener("click", () => {
           gewaehlt = t.startnummer; // erst nach Bestätigung als Nächster
           zeichnen();
@@ -229,8 +238,21 @@ $("btn-start").addEventListener("click", async () => {
   const jetzt = Date.now();
   if (jetzt - letzterDruck < ENTPRELLUNG_MS) return;
   letzterDruck = jetzt;
-  const n = zustand().naechster;
+  const z = zustand();
+  const n = z.naechster;
   if (!n) return;
+  if (uebersprungen.includes(n.startnummer)) {
+    // Nachzügler: nur er verlässt die Liste der Übersprungenen
+    uebersprungen = uebersprungen.filter((nr) => nr !== n.startnummer);
+  } else if (manuell === n.startnummer) {
+    // gewählter Fahrer: wer in der Reihe vor ihm stand, gilt als übersprungen – sonst stünde
+    // nach dem Start wieder der Ausgelassene als Nächster da (Renntag 31.10.)
+    for (const t of z.warteliste) {
+      if (t.startnummer === n.startnummer || uebersprungen.includes(t.startnummer)) break;
+      uebersprungen.push(t.startnummer);
+    }
+  }
+  speichereUebersprungen();
   wahlSetzen(null);
   dnsZuruecksetzen();
   await g.erfasse({ art: "START", startnummer: n.startnummer, zeit_ms: jetzt });

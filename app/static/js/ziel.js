@@ -2,7 +2,7 @@
 //  „Erfassen“: nur Kacheln (einstufig) und „Zeit ohne Nummer“, feste Reihenfolge, Entprellung.
 //  „Rennleitung“: offene Zeiten zuordnen, letzte Zieleinläufe aller Geräte umbuchen/löschen,
 //  Status DNF bzw. „DSQ vorläufig“ (mit Grund) setzen und aufheben; endgültiger DSQ nur im Admin. Auch allein auf einem eigenen Gerät nutzbar (?sicht=rennleitung).
-import { Geraet, formatFahrzeit, formatUhrzeit, streckeMarke } from "./geraet.js";
+import { Geraet, formatFahrzeit, formatUhrzeit, kurzname, streckeMarke } from "./geraet.js";
 
 const ENTPRELLUNG_MS = 1000;
 const BESTAETIGUNG_MS = 3000;
@@ -87,6 +87,10 @@ function zustand() {
       vorbehalt.delete(e.startnummer);
       if (e.wert === "DSQ_VORLAEUFIG") vorbehalt.set(e.startnummer, e.notiz || "");
       else if (e.wert !== "OK") status.set(e.startnummer, e.wert);
+    } else if (e.art === "START_ANNULLIERT") {
+      // wie auf dem Server: der Fahrer ist ab hier DNS
+      status.set(e.startnummer, "DNS");
+      vorbehalt.delete(e.startnummer);
     }
   }
 
@@ -219,7 +223,7 @@ function kachel(t, beiTipp, mitStatus = false) {
   nr.textContent = t.startnummer;
   const name = document.createElement("span");
   name.className = "kachel-name";
-  name.textContent = t.nachname;
+  name.textContent = kurzname(t);
   b.append(nr, name);
   const marke = streckeMarke(g.stand, t);
   if (marke) {
@@ -338,8 +342,36 @@ function zeichnen() {
       DSQ_VORLAEUFIG: !endgueltig && gewaehlt.vorbehalt == null,
       OK: !endgueltig && hatStatus,
     };
-    $("status-grund").hidden = !sichtbar.DSQ_VORLAEUFIG;
+    // Start annullieren: gestartet und nicht DNS; Grund Pflicht, Tipps danach mit Warnung
+    const tipps = gewaehlt.tipps || [];
+    const annullierbar = !endgueltig && gewaehlt.start_ms != null && gewaehlt.status !== "DNS";
+    const zuruecknehmbar = !!gewaehlt.start_annulliert && gewaehlt.start_ms == null;
+    $("status-grund").hidden = !sichtbar.DSQ_VORLAEUFIG && !annullierbar;
     const grund = $("status-grund").value.trim();
+    const warnung = annullierbar && tipps.length > 0;
+    $("annullieren-warnung").hidden = !warnung;
+    if (warnung) {
+      $("annullieren-titel").textContent =
+        `Achtung: Nr. ${gewaehlt.startnummer} hat nach dem Start schon ${tipps.length} ${tipps.length === 1 ? "Tipp" : "Tipps"}:`;
+      $("annullieren-tipps").replaceChildren(
+        ...tipps.map(([wo, ms]) => {
+          const li = document.createElement("li");
+          li.textContent = `${wo} · ${formatUhrzeit(ms)}`;
+          return li;
+        }),
+      );
+    } else $("annullieren-trotzdem").checked = false;
+    const annul = $("btn-status-annullieren");
+    annul.hidden = !annullierbar;
+    annul.disabled = !grund || (warnung && !$("annullieren-trotzdem").checked);
+    const warteA = bestaetigen === `annullieren:${gewaehlt.startnummer}`;
+    annul.classList.toggle("bestaetigen", warteA);
+    annul.textContent = warteA ? "Wirklich Start annullieren?" : "Start annullieren (DNS)";
+    const zurueck = $("btn-annullierung-zurueck");
+    zurueck.hidden = !zuruecknehmbar;
+    const warteZ = bestaetigen === `annullierung-zurueck:${gewaehlt.startnummer}`;
+    zurueck.classList.toggle("bestaetigen", warteZ);
+    zurueck.textContent = warteZ ? "Wirklich zurücknehmen?" : "Annullierung zurücknehmen";
     for (const [id, wert, label] of [
       ["btn-status-dnf", "DNF", "DNF"],
       ["btn-status-dsq", "DSQ_VORLAEUFIG", "DSQ vorläufig"],
@@ -367,7 +399,7 @@ function korrekturText(ms) {
 }
 
 function einlaufText(e) {
-  const wer = e.nr != null ? `Nr. ${e.nr}${e.t ? " " + e.t.nachname : ""}` : "Zeit ohne Nummer";
+  const wer = e.nr != null ? `Nr. ${e.nr}${e.t ? " " + kurzname(e.t) : ""}` : "Zeit ohne Nummer";
   return `${wer} · ${formatUhrzeit(e.zeit_ms)}` + (e.fahrzeit != null ? ` · ${formatFahrzeit(e.fahrzeit)}` : "");
 }
 
@@ -428,7 +460,7 @@ function zeichneLetzten(eintrag) {
     bestaetigungZuruecksetzen();
     zeichnen();
   });
-  const wer = eintrag.nr != null ? `Nr. ${eintrag.nr}${eintrag.t ? " " + eintrag.t.nachname : ""}` : "ohne Nummer";
+  const wer = eintrag.nr != null ? `Nr. ${eintrag.nr}${eintrag.t ? " " + kurzname(eintrag.t) : ""}` : "ohne Nummer";
   text.textContent =
     `${formatUhrzeit(eintrag.zeit_ms)} · ${wer}` +
     (eintrag.fahrzeit != null ? ` · ${formatFahrzeit(eintrag.fahrzeit)}` : "");
@@ -545,6 +577,7 @@ async function fahrerGewaehlt(nr) {
 function statusFahrerGewaehlt(nr) {
   statusFahrer = nr;
   $("status-grund").value = "";
+  $("annullieren-trotzdem").checked = false;
   bestaetigungZuruecksetzen();
   zeichnen();
   $("status-box").scrollIntoView({ block: "nearest" });
@@ -568,6 +601,31 @@ for (const id of ["btn-status-dnf", "btn-status-dsq", "btn-status-ok"]) {
 }
 
 $("status-grund").addEventListener("input", () => zeichnen());
+$("annullieren-trotzdem").addEventListener("change", () => zeichnen());
+
+$("btn-status-annullieren").addEventListener("click", async () => {
+  if (statusFahrer == null) return;
+  const t = zustand().alle.find((x) => x.startnummer === statusFahrer);
+  const grund = $("status-grund").value.trim();
+  if (!t || !grund || ((t.tipps || []).length && !$("annullieren-trotzdem").checked)) return;
+  if (!bestaetigungAnfordern(`annullieren:${statusFahrer}`)) return;
+  bestaetigungZuruecksetzen();
+  const nr = statusFahrer;
+  statusFahrer = null;
+  $("status-grund").value = "";
+  $("annullieren-trotzdem").checked = false;
+  await g.erfasse({ art: "START_ANNULLIERT", startnummer: nr, notiz: grund });
+});
+
+$("btn-annullierung-zurueck").addEventListener("click", async () => {
+  if (statusFahrer == null) return;
+  const t = zustand().alle.find((x) => x.startnummer === statusFahrer);
+  if (!t || !t.start_annulliert) return;
+  if (!bestaetigungAnfordern(`annullierung-zurueck:${statusFahrer}`)) return;
+  bestaetigungZuruecksetzen();
+  statusFahrer = null;
+  await g.erfasse({ art: "STORNO", bezug_uuid: t.start_annulliert, startnummer: t.startnummer });
+});
 
 $("btn-status-abbrechen").addEventListener("click", () => {
   statusFahrer = null;

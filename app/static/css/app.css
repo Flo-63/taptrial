@@ -66,6 +66,10 @@ body.gesperrt main { display: none; }
 .naechster .label { color: var(--grau); text-transform: uppercase; font-size: 0.9rem; }
 .naechster .nr { font-size: 3.4rem; font-weight: 800; color: var(--gelb); line-height: 1.1; }
 .naechster .name { font-size: 1.4rem; min-height: 1.6em; }
+/* Startgerät: der aktuelle Starter ist das größte Element, START kleiner, aber daumentauglich */
+.geraet-start .naechster .nr { font-size: clamp(4.5rem, 24vw, 8rem); line-height: 1; }
+.geraet-start .naechster .name { font-size: clamp(2rem, 8.5vw, 3.2rem); font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
+.geraet-start .btn-start { min-height: 88px; font-size: 2rem; margin: 8px 0; }
 .info { color: #ccc; margin: 6px 0; text-align: center; }
 
 .warteliste { margin: 0; padding-left: 1.4em; color: #ccc; }
@@ -198,6 +202,11 @@ body.gesperrt main { display: none; }
 .warteliste li { cursor: default; }
 /* Start: Anzeige-Umschalter (Nummer wählen / Warteliste) */
 .btn-breit { width: 100%; }
+.annullieren-warnung { border: 2px solid var(--rot); border-radius: 10px; padding: 8px 10px; margin: 8px 0; }
+.annullieren-warnung ul { margin: 6px 0; padding-left: 1.2em; }
+.annullieren-trotzdem { display: flex; gap: 8px; align-items: flex-start; font-weight: 700; }
+.annullieren-trotzdem input { width: 24px; height: 24px; flex: none; }
+#btn-status-annullieren, #btn-annullierung-zurueck { margin: 6px 0; }
 .umschalter { margin-top: 8px; }
 .durchfahrten-hinweis { margin: 6px 12px 0; }
 .btn-umschalter { font-size: 1rem; }
@@ -207,6 +216,8 @@ body.gesperrt main { display: none; }
 .auswahl .kachel.dns { opacity: 0.5; border-style: dashed; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .auswahl .kachel.dns .kachel-status { font-size: 0.8rem; color: var(--orange); }
 .auswahl .kachel.dns.bestaetigen { opacity: 1; border-color: var(--orange); }
+.auswahl .kachel.uebersprungen { border-color: var(--orange); border-style: dashed; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.uebersprungen-info { color: var(--orange); }
 /* Posten (Segmente) */
 .posten-titel { text-align: center; font-size: 1.5rem; font-weight: 800; color: var(--gelb); }
 .kachel-runde { font-size: 0.8rem; font-weight: 800; color: var(--gelb); }

@@ -42,11 +42,12 @@
       {% if f.fahrer %}<a class="btn btn-quiet btn-sm" href="/admin/v/{{ v.id }}/teilnehmer/{{ f.fahrer }}">Fahrer öffnen</a>{% endif %}</div>
     {% if x.art in ("MEHRERE_ZIELE", "MEHRERE_STARTS") %}
     <form method="post" action="/admin/v/{{ v.id }}/korrektur" class="stapel-eng">
-      {{ felder('stornieren') }}
-      <p class="sub">Den falschen Stempel stornieren (z. B. Doppeltipp):</p>
-      <div class="field feld-breit"><label for="d-{{ loop.index }}">Notiz (Pflicht)</label><input id="d-{{ loop.index }}" name="notiz" required placeholder="z. B. Doppelstempel"></div>
+      {{ felder('gilt') }}
+      {% set zeiten = f.stempel|map(attribute='zeit_ms')|list %}
+      <p class="sub">Welche Zeit gilt? Die anderen werden storniert (z. B. Doppeltipp oder zwei Geräte){% if zeiten|length > 1 %} · Abstand {{ korrektur_text(zeiten|max - zeiten|min)|replace('+', '') }}{% endif %}:</p>
+      <div class="field feld-breit"><label for="d-{{ loop.index }}">Notiz (Pflicht)</label><input id="d-{{ loop.index }}" name="notiz" required placeholder="z. B. zwei Zielgeräte"></div>
       <div class="btn-reihe">{% for s in f.stempel %}
-        <button type="submit" name="stempel" value="{{ s.uuid }}" class="btn btn-secondary btn-sm" {{ 'disabled' if gesperrt }}>{{ s.uhrzeit }} · {{ s.geraet }} stornieren</button>{% endfor %}</div>
+        <button type="submit" name="stempel" value="{{ s.uuid }}" class="btn btn-secondary btn-sm" {{ 'disabled' if gesperrt }}>{{ s.uhrzeit }} · {{ s.geraet }} – diese Zeit gilt</button>{% endfor %}</div>
     </form>
     {% elif x.art == "UNBEKANNTE_STARTNUMMER" %}
     {% for s in f.stempel %}

@@ -103,6 +103,20 @@ def test_stand_enthaelt_teilnehmer_und_veranstaltung(client, veranstaltung):
     assert isinstance(stand["server_ms"], int)
 
 
+def test_stand_mit_eindeutigem_anzeigenamen(client, veranstaltung):
+    """K 3: gleicher Nachname → Anfangsbuchstabe des Vornamens, sonst der Nachname."""
+    with client.app.state.sessionmaker() as s:
+        for t in s.query(Teilnehmer).filter(Teilnehmer.startnummer.in_([1, 2])):
+            t.nachname = "Müller"
+        s.commit()
+    stand = client.get("/api/stand", headers=START).json()
+    assert {t["startnummer"]: t["anzeigename"] for t in stand["teilnehmer"]} == {
+        1: "Müller V1",
+        2: "Müller V2",
+        3: "N3",
+    }
+
+
 # --- Token ----------------------------------------------------------------
 
 

@@ -9,7 +9,7 @@
 4. **Uhr prüfen:** Oben muss **„Uhr ±0,…“ unter 0,5 s** stehen (rot „Uhr weicht … ab“ → Veranstalter Bescheid sagen). Zusätzlich Uhrzeitvergleich mit dem Starthandy: die Sekunden müssen gleichzeitig umspringen.
 
 ## Normaler Ablauf
-- Jeder Fahrer hat eine **Kachel** mit seiner Startnummer. Kommt er ins Ziel: **Kachel einmal antippen** – genau im Moment der Zieldurchfahrt.
+- Jeder Fahrer hat eine **Kachel** mit seiner Startnummer und dem Nachnamen (bei gleichem Nachnamen mit Vornamen, z. B. „Müller A.“). Kommt er ins Ziel: **Kachel einmal antippen** – genau im Moment der Zieldurchfahrt.
 - Die Kachel wird kurz grün und verschwindet. Die anderen Kacheln bleiben an ihrem Platz.
 - Ausgegraute Kacheln: Fahrer noch nicht gestartet (oder das Handy weiß es noch nicht). Sie lassen sich trotzdem antippen.
 - **Weißer Rahmen:** Fahrer wird in etwa 2 Minuten erwartet oder ist überfällig (nach der bisherigen Medianzeit seiner Strecke). Nur ein Hinweis, kein Status.
@@ -21,7 +21,7 @@
 - **Nummer nicht erkannt oder zwei Fahrer gleichzeitig:** sofort **„Zeit ohne Nummer“** drücken – für jeden Fahrer einmal. Nummern merken und der Rennleitung zurufen. Der Reiter zeigt dann z. B. „Rennleitung (2)“.
 - **Falschen Fahrer angetippt:** Bescheid sagen – die Rennleitung bucht um.
 - **Fahrer ohne Kachel** (z. B. als DNF gemeldet) kommt doch: „Zeit ohne Nummer“.
-- **Doppeltipp** auf dieselbe Kachel wird ignoriert.
+- **Doppeltipp** auf dieselbe Kachel wird ignoriert. Tippen zwei Zielhandys denselben Fahrer, bleibt seine Kachel weg; welche Zeit gilt, entscheidet der Veranstalter unter „Aufgaben“ (empfohlen: ein tippendes Handy am Ziel).
 - **Kein Netz:** weitermachen, alles wird gespeichert und später gesendet („offline · N ausstehend“).
 - **Handy neu starten / App geschlossen:** über das Symbol öffnen – nichts geht verloren.
 

@@ -20,13 +20,14 @@ Hier stehen die letzten Einläufe **aller Zielhandys** als kompakte Zeilen (mit 
 - **−1 s / +1 s:** Zielzeit verschieben (je Tipp 1 s, höchstens ±5 s); „korrigiert“ erscheint. Mehr: Veranstalter trägt eine manuelle Zeit ein.
 
 ## Segmente (Zwischenzeiten)
-Mit Zwischenzeiten steht unter jedem der letzten Einläufe eine Zeile mit den Segmentzeiten des Fahrers. Fehlende Posten-Tipps und Doppeltipps erledigt die Auswertung selbst – es gibt dafür **nichts zu tun**.
+Mit Zwischenzeiten steht unter jedem der letzten Einläufe eine Zeile mit den Segmentzeiten des Fahrers. Fehlende Posten-Tipps und Doppeltipps (auch von einem zweiten Handy am selben Posten) erledigt die Auswertung selbst – es gibt dafür **nichts zu tun**.
 
 ## Status setzen
 Reiter **„Status“**, Fahrer antippen (Fahrer mit Zielzeit tragen „✓ im Ziel“), dann:
 - **DNF** – Fahrer hat aufgegeben (zweimal tippen).
 - **DSQ vorläufig** – Regelverstoß: erst einen **Grund** eintragen, dann zweimal tippen. Der Fahrer bleibt mit Zeit und Rang „unter Vorbehalt“ (gelb). Endgültig entscheidet der Veranstalter im Admin.
 - **Status aufheben** – bei Irrtum.
+- **Start annullieren (DNS)** – Fahrer wurde versehentlich gestartet (nicht angetreten), auch nach den 30 s am Start: **Grund** eintragen, dann zweimal tippen. Der Start zählt nicht mehr, der Fahrer ist DNS; nichts wird gelöscht. Hat er schon Tipps (Posten/Ziel), steht eine rote Warnung mit der Liste – erst „Trotzdem annullieren“ ankreuzen. Irrtum: „Annullierung zurücknehmen“ (zweimal tippen).
 Fahrer mit DNF/DSQ verschwinden auf den Zielhandys aus „Erfassen“. Kommt so ein Fahrer doch ins Ziel: dort „Zeit ohne Nummer“, hier zuordnen und den Status aufheben.
 
 ## Sonderfälle und nach dem Rennen

@@ -4,6 +4,20 @@ Alle nennenswerten Änderungen an TapTrial. Format nach [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [0.1.6] – 2026-11-01
+
+### Neu
+- **Rennleitung: Start annullieren.** Ein versehentlich gestarteter Fahrer (nicht angetreten) lässt sich auch nach den 30 s am Startgerät zurücknehmen: Reiter „Status“ → Fahrer → Grund → „Start annullieren (DNS)“. Der Start zählt nicht mehr, der Fahrer ist DNS; gelöscht wird nichts (Protokoll „Start annulliert“). Hat der Fahrer schon Tipps an Posten oder Ziel, zeigt eine Warnung die Liste und verlangt eine eigene Bestätigung. Zurücknehmbar mit „Annullierung zurücknehmen“; ein späterer echter Start zählt wieder.
+- **Gleiche Nachnamen unterscheidbar:** Haben mehrere Fahrer denselben Nachnamen, zeigen Ziel, Posten und Rennleitung den Anfangsbuchstaben des Vornamens dazu („Müller A.“), wenn nötig mehr Buchstaben oder den ganzen Vornamen. Startgerät, Zielmonitor und öffentliche Ergebnisse zeigen weiter den vollen Namen.
+- **Aufgaben: „diese Zeit gilt“.** Bei mehreren Ziel- oder Startstempeln eines Fahrers zeigt die Karte den Abstand und je Stempel „… – diese Zeit gilt“; die anderen werden storniert.
+
+### Geändert
+- **Startgerät:** Nummer und Name des nächsten Fahrers sind jetzt das größte Element; der START-Knopf ist kleiner, bleibt aber über die volle Breite gut zu treffen (hoch und quer).
+- **Zwei Geräte an einem Messpunkt:** Tippen zwei Handys am selben Posten denselben Fahrer innerhalb von 10 s, zählt der frühere Tipp, der zweite ist ein „Doppeltipp (anderes Gerät)“ – auch bei mehrfach durchfahrenen Messpunkten verschiebt sich nichts mehr. Zielhandys führen einen Fahrer schon mit einem Zielstempel als „im Ziel“, seine Kachel taucht bei zwei Zielstempeln nicht wieder auf. Gründe nicht gezählter Tipps heißen jetzt zutreffend („nicht auf der Strecke“, „mehr Tipps als Durchfahrten“).
+
+### Behoben
+- **Startgerät:** Nach dem Start eines über „Nummer wählen“ gewählten Fahrers stand wieder der übersprungene Fahrer als Nächster da – so konnte ein nicht anwesender Fahrer versehentlich gestartet werden. Jetzt geht die Reihe hinter dem gestarteten Fahrer weiter; Übersprungene sind orange markiert, unten aufgelistet und bleiben für Nachzügler wählbar.
+
 ## [0.1.5] – 2026-10-29
 
 ### Behoben

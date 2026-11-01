@@ -27,7 +27,7 @@ Die Gerätelinks und QR-Codes stehen im Admin unter „Geräte“. Sie gelten nu
 - [ ] **Start- und Zielprotokoll** (Admin → Drucken & Export → „Start- und Zielprotokoll (A4) drucken“) nach dem letzten Teilnehmer-Import drucken und an Start **und** Ziel mitnehmen (mit Kugelschreiber). Fällt ein Handy oder das Netz aus, dort Uhrzeiten von Hand notieren und hinterher im Admin als manuelle Zeit nachtragen.
 - [ ] Admin → Einstellungen (Klassen & Wertung): Wertungssatz wählen (der Assistent fragt je Längen-Platz, z. B. 5 km und 20 km bei DRA A.1: aus Datei laden oder Platzhalter anlegen, bei einem Versehen „Ändern“); Admin → Strecken: **gemessene Länge je Strecke** eintragen (bei A.1 mindestens 5,0 bzw. 20,0 km) und die Klassenzuordnung prüfen.
 - [ ] **Nur bei mehreren Starts oder Zielen:** Admin → Messpunkte: weitere Messpunkte der Art „Start“ bzw. „Ziel“ anlegen (Art wählen, „Messpunkt hinzufügen“), dann je Strecke im Reiter „Verlauf“ Start und Ziel wählen. Unter „Geräte“ hat jeder Messpunkt eigene Karten; je Messpunkt ein Handy mit dessen Link einplanen. Beispiele siehe unten („Zwei Startorte“).
-- [ ] **Nur mit Segmenten (Zwischenzeiten):** Admin → Messpunkte: Zwischenzeiten der Veranstaltung anlegen (einer kann von mehreren Strecken genutzt werden); Admin → Strecken → Strecke öffnen → Reiter „Verlauf“: Punktfolge (mit Rundenblöcken) eintragen und die angezeigte Abfolge prüfen – vor der ersten Zeit, danach ist sie eingefroren. Auswertungsabschnitte (z. B. „Runde“ = Kreisel bis nächster Kreisel) lassen sich jederzeit ergänzen. Liegt ein Messpunkt auf der Ziellinie, ist das kein Problem (sein Tipp beim Zieleinlauf zählt nicht). Je Messpunkt einen Helfer mit Handy einplanen; die Posten-Links stehen unter „Geräte“ (eine Karte je Posten), Kurzanleitung „Posten“ ausdrucken.
+- [ ] **Nur mit Segmenten (Zwischenzeiten):** Admin → Messpunkte: Zwischenzeiten der Veranstaltung anlegen (einer kann von mehreren Strecken genutzt werden); Admin → Strecken → Strecke öffnen → Reiter „Verlauf“: Punktfolge (mit Rundenblöcken) eintragen und die angezeigte Abfolge prüfen – vor der ersten Zeit, danach ist sie eingefroren. Auswertungsabschnitte (z. B. „Runde“ = Kreisel bis nächster Kreisel) lassen sich jederzeit ergänzen. Liegt ein Messpunkt auf der Ziellinie, ist das kein Problem (sein Tipp beim Zieleinlauf zählt nicht). Je Messpunkt einen Helfer mit **einem tippenden Handy** einplanen (Empfehlung; tippt doch ein zweites Handy mit, zählt derselbe Fahrer innerhalb von 10 s nur einmal, und am Ziel entscheidet „Aufgaben“ → „diese Zeit gilt“); die Posten-Links stehen unter „Geräte“ (eine Karte je Posten), Kurzanleitung „Posten“ ausdrucken.
 - [ ] Admin → Einstellungen → **Zielmonitor und Ergebnisse**: Seiten (Ergebnis, ggf. Ranglisten einzelner Abschnitte), Anzeigedauer und die Abschnittsfelder im Live-Bereich einstellen und mit „Vorschau“ prüfen (der Assistent bietet das als Schritt 4 mit Vorgaben an). Ohne Einstellung zeigt der Monitor wie bisher das Ergebnis. Ein offener Monitor lädt sich nach einem Update der App selbst neu; „Letzte Zieleinläufe“ und „Auf der Strecke“ stehen untereinander. Darunter „Zwischenzeiten öffentlich“ und die „Ergebnistabelle (Seite, Druck, CSV)“: welche Abschnitte als Spalte erscheinen.
 - [ ] Zielmonitor (Tablet/Bildschirm im Querformat) mit `https://<eure-domain>/monitor` öffnen; Ergebnisse öffentlich unter `/ergebnisse` (kein Token nötig).
 - [ ] Auf **jedem** Gerät den passenden Link öffnen, dann „Zum Startbildschirm hinzufügen“ und die App **vom Startbildschirm** einmal öffnen (füllt den Offline-Speicher). Statusleiste: „online · 0 ausstehend“, Uhrzeit des letzten Syncs.
@@ -60,8 +60,8 @@ Die Gerätelinks und QR-Codes stehen im Admin unter „Geräte“. Sie gelten nu
 ### Während des Rennens
 **Start**
 - START drücken, wenn der Fahrer losfährt. Die Anzeige springt auf den nächsten.
-- Fahrer nicht da: „Überspringen“ (kommt ans Ende der Warteliste). Fährt nicht: „DNS“ (zweimal tippen).
-- Falsch gestartet: „Rückgängig“ innerhalb von 30 s. Später nur noch über Admin/Rennleitung klären.
+- Fahrer nicht da: „Überspringen“ (kommt ans Ende der Warteliste) oder gleich den nächsten Anwesenden über „Nummer wählen“ – wer davor stand, gilt danach als übersprungen (orange, unten „Übersprungen: Nr. …“) und bleibt für Nachzügler wählbar. Fährt nicht: „DNS“ (zweimal tippen).
+- Falsch gestartet: „Rückgängig“ innerhalb von 30 s. Später: Rennleitung → Status → Fahrer → Grund → „Start annullieren (DNS)“.
 - Reihenfolge durcheinander: „Nummer wählen“.
 - Sind alle durch, zeigt das Startgerät „Alle Fahrer gestartet“.
 
@@ -79,7 +79,8 @@ Die Gerätelinks und QR-Codes stehen im Admin unter „Geräte“. Sie gelten nu
 - Reiter zeigt „Rennleitung (N)“, solange offene Zeiten existieren: Zeit antippen, Fahrer wählen.
 - Falsch angetippt: unter „Letzte Zieleinläufe“ „Umbuchen“ oder „Rückgängig“ (zweimal tippen).
 - Aufgabe/Sturz: Fahrer antippen → „DNF“ (zweimal tippen). Irrtum: „Status aufheben“.
-- Segmente: Fehlende Posten-Tipps und Doppeltipps erledigt die Auswertung selbst; es gibt keine Fälle dafür.
+- Versehentlich gestartet (Fahrer gar nicht angetreten): Fahrer antippen → Grund → „Start annullieren (DNS)“ (zweimal tippen; hat er schon Tipps, erst „Trotzdem annullieren“ ankreuzen). Nicht DNF verwenden.
+- Segmente: Fehlende Posten-Tipps und Doppeltipps (auch von zwei Handys am selben Posten) erledigt die Auswertung selbst; es gibt keine Fälle dafür.
 - Regelverstoß: Fahrer antippen → Grund eintragen → „DSQ vorläufig“ (zweimal tippen). Der Fahrer bleibt mit Zeit und Rang „unter Vorbehalt“ (gelb). Endgültig entscheidet der Veranstalter im Admin unter „Aufgaben“ (bestätigen = DSQ rot, ohne Rang; oder verwerfen, jeweils mit Notiz).
 
 **Funkloch**

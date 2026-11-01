@@ -130,7 +130,8 @@ def test_doppeltipp_startet_nur_einmal(server, neues_geraet):
 
 
 def test_nummer_manuell_waehlen(server, neues_geraet):
-    """„Nummer wählen“ ist sofort an: Kachel → Bestätigung → START; danach normale Reihenfolge."""
+    """„Nummer wählen“ ist sofort an: Kachel → Bestätigung → START; die Reihe läuft hinter dem
+    gestarteten Fahrer weiter, die davor gelten als übersprungen."""
     page = oeffnen(neues_geraet(), server, "start")
     expect(page.locator("#toggle-nummer")).to_have_attribute("aria-pressed", "true")
     expect(page.locator("#auswahl")).to_be_visible()  # Kacheln ohne weiteres Antippen sichtbar
@@ -147,7 +148,7 @@ def test_nummer_manuell_waehlen(server, neues_geraet):
     expect(page.locator("#naechster-nr")).to_have_text("4")
     expect(page.locator("#naechster-box")).to_have_class(re.compile(r"\bgewaehlt\b"))
     starten(page, 1)
-    expect(page.locator("#naechster-nr")).to_have_text("1")
+    expect(page.locator("#naechster-nr")).to_have_text("5")
     expect(page.locator("#naechster-box")).not_to_have_class(re.compile(r"\bgewaehlt\b"))
     warte_bis(lambda: gestartet(server) == [4], text="Nr. 4 gestartet")
     expect(page.locator("#auswahl button[data-nr='4']")).to_have_count(0)  # gestartet: keine Kachel
@@ -259,11 +260,11 @@ def test_gewaehlte_nummer_bleibt_nach_neuladen_und_offline(server, neues_geraet)
     offline(ctx, True)
     neu_laden(page)
     expect(page.locator("#naechster-nr")).to_have_text("5")
-    # START verbraucht die Wahl, danach normale Reihenfolge – auch nach Neuladen
+    # START verbraucht die Wahl, die Reihe läuft hinter Nr. 5 weiter – auch nach Neuladen
     page.click("#btn-start")
-    expect(page.locator("#naechster-nr")).to_have_text("1")
+    expect(page.locator("#naechster-nr")).to_have_text("6")
     neu_laden(page)
-    expect(page.locator("#naechster-nr")).to_have_text("1")
+    expect(page.locator("#naechster-nr")).to_have_text("6")
     offline(ctx, False)
 
 
@@ -376,3 +377,43 @@ def test_endzustand_mit_dns_bleibt_aufhebbar(server, neues_geraet):
     expect(page.locator("#dns-hinweis")).to_contain_text("1 Fahrer mit DNS")
     offline(ctx, False)
     warte_bis(lambda: 10 in gestartet(server), text="Nr. 10 gestartet")
+
+
+def test_gewaehlter_start_ueberspringt_die_davor_nachzuegler_waehlbar(server, neues_geraet):
+    """Renntag 31.10. (K 1): Nr. 1 fehlt, der Starter wählt Nr. 2 und startet. Danach darf nicht
+    wieder Nr. 1 angezeigt werden – auch nicht in der Wartezeit mit Sync und Neuzeichnen."""
+    page = oeffnen(neues_geraet(), server, "start")
+    waehlen(page, 2)
+    starten(page, 1)
+    warte_bis(lambda: gestartet(server) == [2], text="Nr. 2 gestartet")
+    expect(page.locator("#naechster-nr")).to_have_text("3")
+    kachel = page.locator("#auswahl button[data-nr='1']")
+    expect(kachel).to_have_class(re.compile(r"\buebersprungen\b"))
+    expect(kachel).to_contain_text("übersprungen")
+    expect(page.locator("#uebersprungen-info")).to_have_text(
+        "Übersprungen: Nr. 1 – unter „Nummer wählen“ weiter wählbar"
+    )
+    # Wartezeit: Sync und Neuzeichnen ändern nichts, eine neue Wahl bleibt bestehen
+    jetzt_synchronisieren(page)
+    page.wait_for_timeout(2_500)
+    expect(page.locator("#naechster-nr")).to_have_text("3")
+    waehlen(page, 5)
+    jetzt_synchronisieren(page)
+    page.wait_for_timeout(2_500)
+    expect(page.locator("#naechster-nr")).to_have_text("5")
+    starten(page, 1)
+    expect(page.locator("#naechster-nr")).to_have_text("6")
+    expect(page.locator("#uebersprungen-info")).to_have_text(
+        "Übersprungen: Nr. 1, 3, 4 – unter „Nummer wählen“ weiter wählbar"
+    )
+    # Nachzügler: Nr. 3 kommt doch – wählen und starten, die anderen bleiben übersprungen
+    waehlen(page, 3)
+    starten(page, 1)
+    warte_bis(lambda: sorted(gestartet(server)) == [2, 3, 5], text="Nr. 3 gestartet")
+    expect(page.locator("#naechster-nr")).to_have_text("6")
+    expect(page.locator("#uebersprungen-info")).to_have_text(
+        "Übersprungen: Nr. 1, 4 – unter „Nummer wählen“ weiter wählbar"
+    )
+    # ohne Wahl normal weiter
+    starten(page, 1)
+    expect(page.locator("#naechster-nr")).to_have_text("7")

@@ -11,6 +11,7 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
 from app import saetze
+from app.anzeigename import anzeigenamen
 from app.auswertung import (
     ERGEBNIS_WERTE,
     KORREKTUR_SCHRITT_MS,
@@ -37,7 +38,14 @@ LETZTE_ZIELE = 10
 ERLAUBTE_ARTEN = {
     "start": {Art.START, Art.STORNO, Art.STATUS},
     # STATUS: Rennleitung
-    "ziel": {Art.ZIEL, Art.ZUORDNUNG, Art.STORNO, Art.STATUS, Art.ZEITKORREKTUR},
+    "ziel": {
+        Art.ZIEL,
+        Art.ZUORDNUNG,
+        Art.STORNO,
+        Art.STATUS,
+        Art.ZEITKORREKTUR,
+        Art.START_ANNULLIERT,
+    },
     # Posten: nur Durchfahrten am eigenen Messpunkt und deren Korrektur/Rückgängig
     "posten": {Art.DURCHFAHRT, Art.ZEITKORREKTUR, Art.STORNO},
     "admin": set(Art),
@@ -94,6 +102,10 @@ class EreignisEin(BaseModel):
             raise ValueError("delta_ms nur bei ZEITKORREKTUR")
         if a == Art.STATUS and self.wert not in STATUS_WERTE:
             raise ValueError(f"STATUS: wert muss einer von {', '.join(STATUS_WERTE)} sein")
+        if a == Art.START_ANNULLIERT and (
+            self.startnummer is None or not (self.notiz or "").strip()
+        ):
+            raise ValueError("Start annullieren: startnummer und Grund (notiz) sind Pflicht")
         if a == Art.STATUS and self.wert == "DSQ_VORLAEUFIG" and not (self.notiz or "").strip():
             raise ValueError("DSQ vorläufig: Grund (notiz) ist Pflicht")
         if a == Art.MERKMAL and (self.wert not in MERKMAL_WERTE or self.startnummer is None):
@@ -368,6 +380,17 @@ def _ort_daten(session: Session, v: Veranstaltung, erg: Ergebnis, daten: dict, o
 
 def _stand(erg: Ergebnis, v: Veranstaltung, zeilen) -> dict:
     ziel_namen = {sd.ziel_messpunkt: sd.zielort.name for sd in erg.strecken if sd.ziel_messpunkt}
+    kurz = anzeigenamen((z.startnummer, z.vorname, z.nachname) for z in zeilen)
+    # Tipps je Fahrer (Durchfahrten, Ziel) – Rennleitung warnt damit vor „Start annullieren“
+    mp_namen = {m.id: m.name for sd in erg.strecken for m in sd.messpunkte} | ziel_namen
+    tipps: dict[int, list] = {}
+    for s, text in [(d, None) for d in erg.durchfahrtstempel] + [
+        (z, "Ziel") for z in erg.zielstempel
+    ]:
+        if s.startnummer is not None:
+            tipps.setdefault(s.startnummer, []).append(
+                [text or mp_namen.get(s.ort, s.ort), s.zeit_ms]
+            )
     return {
         "veranstaltung": {"id": v.id, "name": v.name, "datum": v.datum.isoformat()},
         "teilnehmer": [
@@ -375,6 +398,9 @@ def _stand(erg: Ergebnis, v: Veranstaltung, zeilen) -> dict:
                 "startnummer": z.startnummer,
                 "vorname": z.vorname,
                 "nachname": z.nachname,
+                "anzeigename": kurz[z.startnummer],  # bei gleichem Nachnamen mit Vornamen
+                "tipps": sorted(tipps.get(z.startnummer, []), key=lambda x: x[1]),
+                "start_annulliert": z.start_annulliert,
                 "verein": z.verein,
                 "klasse": z.klasse,
                 "status": z.status.value,
@@ -399,7 +425,8 @@ def _stand(erg: Ergebnis, v: Veranstaltung, zeilen) -> dict:
             for s in erg.strecken
         ],
         "gestartet": [z.startnummer for z in zeilen if z.start_ms is not None],
-        "im_ziel": [z.startnummer for z in zeilen if z.ziel_ms is not None],
+        # mit Zielstempel „im Ziel“, auch bei offenem Konflikt – die Kachel taucht nicht wieder auf
+        "im_ziel": [z.startnummer for z in zeilen if z.ziel_ms is not None or z.zielstempel],
         "offene_ziele": [
             {
                 "uuid": o.uuid,

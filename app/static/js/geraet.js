@@ -51,6 +51,12 @@ const zwei = (n) => String(n).padStart(2, "0");
 
 // Streckenkennzeichen: Name als Text plus Farbe, nur wenn es mehrere Strecken gibt.
 export const STRECKEN_FARBEN = 6;
+// Name auf Kacheln und in Listen: bei gleichem Nachnamen mit Vornamen („Müller A.“);
+// ein älterer Stand ohne Anzeigenamen zeigt den Nachnamen
+export function kurzname(t) {
+  return t.anzeigename || t.nachname;
+}
+
 export function streckeMarke(stand, t) {
   const strecken = (stand && stand.strecken) || [];
   if (strecken.length < 2 || !t || t.strecke == null || !strecken[t.strecke]) return null;

@@ -54,12 +54,20 @@
   <section id="status-box" class="status-box" hidden>
     <div id="status-text" class="status-text"></div>
     <input id="status-grund" class="status-grund" type="text" maxlength="200"
-           placeholder="Grund (Pflicht für DSQ vorläufig)" autocomplete="off">
+           placeholder="Grund (Pflicht für DSQ vorläufig und Start annullieren)" autocomplete="off">
     <div class="reihe reihe-3">
       <button id="btn-status-dnf" class="btn btn-warnung" data-wert="DNF">DNF</button>
       <button id="btn-status-dsq" class="btn btn-warnung" data-wert="DSQ_VORLAEUFIG">DSQ vorläufig</button>
       <button id="btn-status-ok" class="btn" data-wert="OK">Status aufheben</button>
     </div>
+    <div id="annullieren-warnung" class="annullieren-warnung" hidden>
+      <strong id="annullieren-titel"></strong>
+      <ul id="annullieren-tipps"></ul>
+      <label class="annullieren-trotzdem"><input type="checkbox" id="annullieren-trotzdem">
+        Trotzdem annullieren – die Tipps bleiben gespeichert, der Fahrer wird DNS</label>
+    </div>
+    <button id="btn-status-annullieren" class="btn btn-warnung btn-breit">Start annullieren (DNS)</button>
+    <button id="btn-annullierung-zurueck" class="btn btn-breit" hidden>Annullierung zurücknehmen</button>
     <button id="btn-status-abbrechen" class="btn">Abbrechen</button>
   </section>
   <div id="status-auswahl" class="kacheln kacheln-ziel"></div>

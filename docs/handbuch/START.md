@@ -16,11 +16,12 @@
 - **Mehrere Starts:** Jeder Start hat einen eigenen Link; oben steht dann z. B. „Start · Nord“. Du siehst nur die Fahrer, die hier starten, mit eigener Reihenfolge.
 
 ## Sonderfälle
-- **Fahrer noch nicht da:** „Überspringen“ – er rutscht ans Ende der Warteliste.
+- **Fahrer noch nicht da:** „Überspringen“ – er rutscht ans Ende der Warteliste. Oder gleich den nächsten Anwesenden wählen (siehe unten): Wer davor stand, gilt nach dessen START ebenfalls als übersprungen.
+- **Übersprungene:** Unten steht „Übersprungen: Nr. …“, ihre Kacheln sind orange mit „übersprungen“. Kommt einer doch (Nachzügler): Kachel antippen, „Als Nächsten übernehmen“, START.
 - **Fahrer startet nicht:** „DNS“ und gleich noch einmal tippen („Wirklich DNS?“).
 - **DNS war ein Irrtum / Fahrer kommt doch:** Seine Kachel steht grau mit „DNS“ unter „Nummer wählen“. Antippen („DNS aufheben?“) und innerhalb von 3 s noch einmal tippen – danach normal wählen und starten. Auch wenn schon „Alle Fahrer gestartet“ steht, bleiben die DNS-Kacheln darunter (auch offline); nach dem Aufheben ist der Fahrer wieder „Nächster“. DNF und DSQ lassen sich am Start nicht ändern.
 - **Falsch gestartet:** „Rückgängig“ innerhalb von 30 Sekunden.
-- **Reihenfolge durcheinander:** Startnummer-Kachel antippen, „Als Nächsten übernehmen“ – dann wie gewohnt **START**. Die Wahl bleibt bis START oder DNS (auch nach Neuladen oder im Funkloch); „Wahl aufheben“ nimmt sie zurück. Danach geht es in der normalen Reihenfolge weiter. Die Warteliste selbst ist nur Anzeige.
+- **Reihenfolge durcheinander:** Startnummer-Kachel antippen, „Als Nächsten übernehmen“ – dann wie gewohnt **START**. Die Wahl bleibt bis START oder DNS (auch nach Neuladen oder im Funkloch); „Wahl aufheben“ nimmt sie zurück. Nach dem START geht es hinter dem gewählten Fahrer weiter – der Ausgelassene steht nicht wieder als Nächster da. Die Warteliste selbst ist nur Anzeige.
 - **Doppeltipp:** Ein zweiter Tipp innerhalb einer Sekunde wird ignoriert – keine Sorge.
 - **Kein Netz (Funkloch):** Einfach weitermachen. Oben steht „offline · N ausstehend“. Alles ist im Handy gespeichert und wird automatisch gesendet, sobald wieder Netz da ist. Es zählt die Zeit des Tippens.
 - **Handy neu starten / App geschlossen / Akku leer:** App über das Symbol wieder öffnen – nichts geht verloren.

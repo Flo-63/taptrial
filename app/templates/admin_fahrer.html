@@ -137,7 +137,7 @@
         {% elif d.grund %}<span class="badge b-warn">nicht gezählt: {{ d.grund }}</span>
         {% elif d.korrektur_ms %}<span class="badge b-warn">korrigiert {{ korrektur_text(d.korrektur_ms) }}</span>{% endif %}</td>
       <td>{% if d.uuid %}<div class="btn-reihe">
-        {% if d.grund == "Doppeltipp" %}<details class="aktion doppeltipp-werten"><summary class="btn btn-quiet btn-sm">Doch werten</summary>
+        {% if (d.grund or "").startswith("Doppeltipp") %}<details class="aktion doppeltipp-werten"><summary class="btn btn-quiet btn-sm">Doch werten</summary>
           <form method="post" action="/admin/v/{{ v.id }}/korrektur" class="formular">
             {{ kopf_formular('doppeltipp_werten') }}<input type="hidden" name="stempel" value="{{ d.uuid }}">
             <div class="field"><label for="dw-{{ d.uuid }}">Notiz (Pflicht)</label><input id="dw-{{ d.uuid }}" name="notiz" required></div>

@@ -1,6 +1,6 @@
 // Posten an einem Messpunkt (Segmente): wie „Erfassen“ am Ziel, aber jede Kachel zeigt die
 // nächste Durchfahrt („Durchfahrt 2/3“) und bleibt bis zur letzten. Korrekturleiste wie am Ziel.
-import { Geraet, formatFahrzeit, formatUhrzeit, streckeMarke } from "./geraet.js";
+import { Geraet, formatFahrzeit, formatUhrzeit, kurzname, streckeMarke } from "./geraet.js";
 
 const ENTPRELLUNG_MS = 1000;
 const BESTAETIGUNG_MS = 3000;
@@ -120,7 +120,7 @@ function kachel(t) {
   nr.textContent = t.startnummer;
   const name = document.createElement("span");
   name.className = "kachel-name";
-  name.textContent = t.nachname;
+  name.textContent = kurzname(t);
   b.append(nr, name);
   if (t.erledigt && alleAn()) {
     const r = document.createElement("span");
@@ -168,7 +168,7 @@ function zeichnen() {
     text.textContent = "Noch keine Durchfahrt erfasst";
     return;
   }
-  const wer = `Nr. ${e.nr}${e.t ? " " + e.t.nachname : ""}`;
+  const wer = `Nr. ${e.nr}${e.t ? " " + kurzname(e.t) : ""}`;
   const fahrzeit = e.t && e.t.start_ms ? ` · ${formatFahrzeit(e.zeit_ms - e.t.start_ms)}` : "";
   text.textContent = `${wer} · ${formatUhrzeit(e.zeit_ms)}${fahrzeit}`;
   if (e.korrektur) {

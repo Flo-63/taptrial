@@ -17,9 +17,11 @@ from sqlalchemy.orm import Session
 
 from app import saetze, strecken
 from app.auswertung import (
+    DOPPELTIPP_GRUENDE,
     Art,
     AuswertungsConfig,
     Ergebnis,
+    KonfliktArt,
     Status,
     auswerten,
     gueltige_ereignisse,
@@ -111,7 +113,7 @@ def uhrzeit_text(ms: int | None) -> str:
 @dataclass
 class Stempel:
     uuid: str
-    art: str  # START, ZIEL, MANUELLE_ZEIT
+    art: str  # START, ZIEL, MANUELLE_ZEIT; DURCHFAHRT nur als Zielstempel eines Postens
     zeit_ms: int
     startnummer: int | None  # effektive Nummer
     geraet: str
@@ -124,7 +126,12 @@ class Stempel:
     @property
     def beschriftung(self) -> str:
         nr = f"Nr. {self.startnummer}" if self.startnummer is not None else "ohne Nummer"
-        art = {"START": "Start", "ZIEL": "Ziel", "MANUELLE_ZEIT": "manuell"}[self.art]
+        art = {
+            "START": "Start",
+            "ZIEL": "Ziel",
+            "MANUELLE_ZEIT": "manuell",
+            "DURCHFAHRT": "Posten",
+        }[self.art]
         korr = f" (korrigiert {korrektur_text(self.korrektur_ms)})" if self.korrektur_ms else ""
         return f"{self.uhrzeit}{korr} · {art} · {nr} · {self.geraet}"
 
@@ -283,6 +290,21 @@ def stornieren(session: Session, v: Veranstaltung, stempel_uuid: str, notiz: str
     return _admin_ereignis(
         session, v, Art.STORNO, notiz, bezug_uuid=e.uuid, startnummer=e.startnummer
     )
+
+
+def zeit_gilt(session: Session, v: Veranstaltung, stempel_uuid: str, notiz: str) -> int:
+    """Mehrere Start- oder Zielstempel eines Fahrers: dieser gilt, die anderen des Konflikts werden
+    storniert (je ein STORNO mit der Notiz). Gibt die Startnummer zurück."""
+    _notiz(notiz)
+    erg = ergebnis(session, v)
+    konflikt = next((x for x in erg.konflikte if stempel_uuid in x.uuids
+                     and x.art in (KonfliktArt.MEHRERE_ZIELE, KonfliktArt.MEHRERE_STARTS)), None)  # fmt: skip
+    if konflikt is None:
+        raise KorrekturFehler("Dieser Stempel gehört zu keinem offenen Konflikt mehrerer Zeiten.")
+    for u in konflikt.uuids:
+        if u != stempel_uuid:
+            stornieren(session, v, u, notiz)
+    return konflikt.startnummer
 
 
 def manuelle_zeit(session, v, nr: int, art: str, uhrzeit: str | None, fahrzeit: str | None,
@@ -729,7 +751,7 @@ def merkmal_setzen(session, v, tid: int, merkmal: str, wert: bool) -> Teilnehmer
 def doppeltipp_werten(session: Session, v: Veranstaltung, uuid_: str, notiz: str):
     """Einen automatisch verworfenen Doppeltipp doch als Durchfahrt werten (Ereignis RUNDE „GILT“)."""
     erg = ergebnis(session, v)
-    if erg.nicht_gezaehlt.get(uuid_) != "Doppeltipp":
+    if erg.nicht_gezaehlt.get(uuid_) not in DOPPELTIPP_GRUENDE:
         raise KorrekturFehler("Diese Durchfahrt ist kein verworfener Doppeltipp.")
     nr = next(d.startnummer for d in erg.durchfahrtstempel if d.uuid == uuid_)
     return _admin_ereignis(

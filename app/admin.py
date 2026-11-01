@@ -75,6 +75,7 @@ ART_TEXT = {
     Art.ZEITKORREKTUR: "Zeitkorrektur",
     Art.DURCHFAHRT: "Durchfahrt",
     Art.RUNDE: "Durchfahrt gewertet",
+    Art.START_ANNULLIERT: "Start annulliert",
 }
 
 templates.env.filters["uhrzeit"] = k.uhrzeit_text
@@ -457,6 +458,9 @@ def aufgaben(request: Request, vid: int, session: SessionDep, _a: AdminDep):
     v = _veranstaltung(session, vid)
     erg = _erg(request, session, v)
     alle = {s.uuid: s for s in k.stempel(session, v)}
+    # Ziel an einer Zwischenzeit: die Zielstempel sind Durchfahrten des Postens
+    alle |= {d.uuid: k.Stempel(d.uuid, "DURCHFAHRT", d.zeit_ms, d.startnummer, d.geraet, d.korrektur_ms)
+             for d in erg.zieldurchfahrten}  # fmt: skip
     offene = [{"stempel": alle[o.uuid], "vorschlaege": vorschlaege(erg, o.zeit_ms)}
               for o in erg.offene_ziele if o.uuid in alle]  # fmt: skip
     faelle = [{"k": x, "stempel": [alle[u] for u in x.uuids if u in alle],
@@ -672,6 +676,9 @@ def korrektur(
         if aktion == "stornieren":
             k.stornieren(session, v, stempel, notiz)
             return "Zeitstempel storniert."
+        if aktion == "gilt":
+            nr = k.zeit_gilt(session, v, stempel, notiz)
+            return f"Nr. {nr}: gewählte Zeit gilt, die anderen sind storniert."
         if aktion == "manuell":
             nr = _int(startnummer, "Startnummer")
             k.manuelle_zeit(session, v, nr, art, uhrzeit, fahrzeit, notiz)
@@ -1161,7 +1168,7 @@ def token_erneuern(
 PROTOKOLL_ARTEN = {
     "": ("alle", None), "START": ("Start", {Art.START}), "ZIEL": ("Ziel", {Art.ZIEL}),
     "korrekturen": ("Korrekturen", {Art.ZUORDNUNG, Art.STORNO, Art.MANUELLE_ZEIT, Art.ZEITKORREKTUR}),
-    "STATUS": ("Status", {Art.STATUS}), "sonstige": ("Ergebnis und Merkmale", {Art.ERGEBNIS, Art.MERKMAL}),
+    "STATUS": ("Status", {Art.STATUS, Art.START_ANNULLIERT}), "sonstige": ("Ergebnis und Merkmale", {Art.ERGEBNIS, Art.MERKMAL}),
     "DURCHFAHRT": ("Durchfahrten (Segmente)", {Art.DURCHFAHRT, Art.RUNDE}),
 }  # fmt: skip
 

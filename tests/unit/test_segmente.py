@@ -209,9 +209,10 @@ def test_doppeltipp_automatisch_verworfen_und_zuruecknehmbar():
         "d4",
     ]
     assert all(x.zeit_ms is not None for x in z.segmentzeiten) and erg.konflikte == []
-    # anderes Gerät: kein Doppeltipp (zwei Zeitnehmer am selben Messpunkt) → Tipp ohne Platz
+    # anderes Gerät (zwei Zeitnehmer am selben Messpunkt): ebenfalls Doppeltipp, die Abfolge bleibt
     erg = _auswerten(rennen(_e("DURCHFAHRT", 3 * MIN + 4_000, "y", geraet="h", wert="1")))
-    assert erg.nicht_gezaehlt.get("y") != "Doppeltipp"
+    assert erg.nicht_gezaehlt == {"y": "Doppeltipp (anderes Gerät)"}
+    assert [d.uuid for d in erg.zeile(1).durchfahrten] == ["d0", "d1", "d2", "d3", "d4"]
     # über 10 s: kein Doppeltipp
     assert "x" not in _auswerten(
         rennen(_e("DURCHFAHRT", 3 * MIN + 11_000, "x", wert="1"))
@@ -435,3 +436,68 @@ def test_rundenblock_kein_duplikat_eines_eigenen_abschnitts():
                      "von_nr": 1, "nach_nr": 2}]}  # fmt: skip
     assert [a.id for a in sg.abschnitte(t, e) if a.block] == ["b1"]
     assert sg.abschnitt_hinweise(t, e) == []
+
+
+# --- Mehrere Geräte an einem Messpunkt --------------------------------------------
+
+
+def test_zweites_geraet_mehrere_durchfahrten_abfolge_bleibt():
+    """P1 wird dreimal durchfahren; ein zweites Gerät tippt 0,5 s nach dem ersten. Früher wurde das
+    als 2. Durchfahrt gezählt und alles rutschte weiter – jetzt Doppeltipp, alle Segmentzeiten da."""
+    erg = _auswerten(rennen(_e("DURCHFAHRT", 3 * MIN + 500, "y", geraet="h", wert="1")))
+    z = erg.zeile(1)
+    assert [d.uuid for d in z.durchfahrten] == ["d0", "d1", "d2", "d3", "d4"]
+    assert all(x.zeit_ms is not None for x in z.segmentzeiten)
+    assert erg.nicht_gezaehlt == {"y": "Doppeltipp (anderes Gerät)"}
+    assert z.naechste_runde == {"1": 4, "2": 3}  # Zähler wie ohne zweites Gerät
+    assert erg.konflikte == [] and z.fahrzeit_ms == 25 * MIN and z.rang_gesamt == 1
+
+
+def test_zweites_geraet_frueher_dessen_zeit_gilt():
+    erg = _auswerten(rennen(_e("DURCHFAHRT", 3 * MIN - 300, "y", geraet="h", wert="1")))
+    assert [d.uuid for d in erg.zeile(1).durchfahrten] == ["y", "d1", "d2", "d3", "d4"]
+    assert erg.nicht_gezaehlt == {"d0": "Doppeltipp (anderes Gerät)"}
+
+
+def test_zweites_geraet_doch_werten():
+    """Die Rennleitung kann den verworfenen Tipp des zweiten Geräts doch werten (RUNDE „GILT“)."""
+    gilt = _e("RUNDE", 10**12, "r", bezug_uuid="y", wert="GILT", notiz="eigene Runde")
+    erg = _auswerten(rennen(_e("DURCHFAHRT", 3 * MIN + 500, "y", geraet="h", wert="1"), gilt))
+    assert "y" not in erg.nicht_gezaehlt
+
+
+def test_wellenstart_andere_fahrer_im_fenster_zaehlen():
+    """Regel je Fahrer: Nr. 1 und Nr. 2 gleichzeitig am selben Messpunkt (Massen-/Wellenstart),
+    von zwei Geräten getippt – beide zählen."""
+    ev = [x for x in rennen() if x.uuid != "n0"]
+    ev.append(_e("DURCHFAHRT", 3 * MIN + 200, "n0b", nr=2, geraet="h", wert="1"))
+    erg = _auswerten(ev)
+    assert erg.nicht_gezaehlt == {}
+    assert erg.zeile(2).durchfahrten[0].uuid == "n0b"
+
+
+def test_ein_durchgang_zweites_geraet_und_mehr_tipps_als_durchfahrten():
+    """Messpunkt mit einer Durchfahrt: der frühere Tipp gilt, der zweite ist Doppeltipp (anderes
+    Gerät); ein Tipp ohne offene Position heißt „mehr Tipps als Durchfahrten“."""
+    from datetime import date
+
+    from app.auswertung import AuswertungsConfig, MesspunktDef, StreckenDef, auswerten
+    from app.einstellungen import STANDARD_KLASSEN_DATEI
+    from app.klassen import lade_klassen
+    from tests.unit.test_auswertung import TN
+
+    t = sg.teile_aus_verlauf(["1", "2"])
+    klassen = lade_klassen(STANDARD_KLASSEN_DATEI)
+    alle = frozenset(k.name for k in klassen) | {"Offen"}
+    cfg = AuswertungsConfig(klassen=klassen, stichtag=date(2026, 12, 31), strecken=(
+        StreckenDef("Kurz", 100, alle, (MesspunktDef("1", "P1"), MesspunktDef("2", "P2")), t,
+                    tuple(sg.abschnitte(t))),))  # fmt: skip
+    ev = [_e("START", 0, "s1"), _e("ZIEL", 20 * MIN, "z1"),
+          _e("DURCHFAHRT", 5 * MIN, "a", wert="1"), _e("DURCHFAHRT", 5 * MIN + 400, "b", geraet="h", wert="1"),
+          _e("DURCHFAHRT", 10 * MIN, "c", wert="2"), _e("DURCHFAHRT", 12 * MIN, "d", wert="1")]  # fmt: skip
+    erg = auswerten([TN(1, "A", "B", "m", 1980)], ev, cfg)
+    assert [d.uuid for d in erg.zeile(1).durchfahrten] == ["a", "c"]
+    assert erg.nicht_gezaehlt == {
+        "b": "Doppeltipp (anderes Gerät)",
+        "d": "mehr Tipps als Durchfahrten",
+    }

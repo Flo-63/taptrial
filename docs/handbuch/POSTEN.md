@@ -20,7 +20,7 @@
 - **Unsicher, welcher Fahrer:** lieber nicht tippen – eine fehlende Durchfahrt schadet nicht, ein falscher Tipp verfälscht Segmentzeiten.
 - **Kein Netz:** weitermachen, alles wird gespeichert und später gesendet.
 - **Zwischenzeit auf der Ziellinie:** auch beim Zieleinlauf ruhig tippen – dieser Tipp zählt nicht doppelt.
-- **Doppeltipp:** Ein zweiter Tipp innerhalb einer Sekunde wird ignoriert; zwei Tipps desselben Fahrers innerhalb von 10 s wertet die Auswertung automatisch als einen.
+- **Doppeltipp:** Ein zweiter Tipp innerhalb einer Sekunde wird ignoriert; zwei Tipps desselben Fahrers innerhalb von 10 s wertet die Auswertung automatisch als einen – auch wenn ein zweites Handy am selben Posten tippt (empfohlen bleibt ein tippendes Handy je Posten).
 
 ## Nach dem Rennen
 1. Warten, bis **0 ausstehend** steht.
