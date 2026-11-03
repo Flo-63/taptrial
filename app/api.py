@@ -8,9 +8,10 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
-from app import saetze
+from app import rechte, saetze
 from app.anzeigename import anzeigenamen
 from app.auswertung import (
     ERGEBNIS_WERTE,
@@ -30,60 +31,39 @@ from app.models import (
     aktive_veranstaltung,
     freigabe_text,
 )
+from app.rechte import ERLAUBTE_ARTEN, ERLAUBTE_STATUS, rennleitung_getrennt
 
 router = APIRouter(prefix="/api")
 
 LETZTE_ZIELE = 10
-
-ERLAUBTE_ARTEN = {
-    "start": {Art.START, Art.STORNO, Art.STATUS},
-    # STATUS: Rennleitung
-    "ziel": {
-        Art.ZIEL,
-        Art.ZUORDNUNG,
-        Art.STORNO,
-        Art.STATUS,
-        Art.ZEITKORREKTUR,
-        Art.START_ANNULLIERT,
-    },
-    # Posten: nur Durchfahrten am eigenen Messpunkt und deren Korrektur/Rückgängig
-    "posten": {Art.DURCHFAHRT, Art.ZEITKORREKTUR, Art.STORNO},
-    "admin": set(Art),
-}
-ERLAUBTE_ARTEN["rennleitung"] = ERLAUBTE_ARTEN["ziel"]  # eigener Rennleitungs-Link (getrennt)
-# Ziel-Link bei getrennter Rennleitung: nur Einläufe, ±1 s und Rückgängig am eigenen letzten
-NUR_ERFASSEN_ARTEN = {Art.ZIEL, Art.ZEITKORREKTUR, Art.STORNO}
-
-
-# Erlaubte STATUS-Werte je Rolle: endgültiger DSQ nur durch den Admin
-ERLAUBTE_STATUS = {
-    "start": {"DNS", "OK"},
-    "ziel": {"DNF", "DSQ_VORLAEUFIG", "OK"},
-    "rennleitung": {"DNF", "DSQ_VORLAEUFIG", "OK"},
-    "admin": set(STATUS_WERTE),
-}
 
 
 def jetzt_ms() -> int:
     return time.time_ns() // 1_000_000
 
 
+MAX_INT32 = 2_147_483_647
+
+
 class EreignisEin(BaseModel):
     uuid: str = Field(min_length=1, max_length=64)
     art: Art
     zeit_ms: int | None = None
-    startnummer: int | None = Field(default=None, gt=0)
+    startnummer: int | None = Field(default=None, gt=0, le=MAX_INT32)
     bezug_uuid: str | None = Field(default=None, max_length=64)
     wert: str | None = Field(default=None, max_length=20)
     geraet: str = Field(min_length=1, max_length=50)
     erstellt_ms: int
     notiz: str | None = Field(default=None, max_length=500)
-    veranstaltung_id: int | None = None
+    veranstaltung_id: int | None = Field(default=None, le=MAX_INT32)
     delta_ms: int | None = None  # nur ZEITKORREKTUR: ±200
 
     @model_validator(mode="after")
     def _pflichtfelder(self):
         a = self.art
+        for ms in (self.zeit_ms, self.erstellt_ms):
+            if ms is not None and not rechte.ZEIT_MIN_MS <= ms <= rechte.ZEIT_MAX_MS:
+                raise ValueError(rechte.ZEIT_UNPLAUSIBEL)
         if a in (Art.START, Art.ZIEL, Art.MANUELLE_ZEIT) and self.zeit_ms is None:
             raise ValueError(f"{a}: zeit_ms fehlt")
         if a in (Art.START, Art.STATUS, Art.MANUELLE_ZEIT) and self.startnummer is None:
@@ -127,6 +107,7 @@ class Bestaetigung(BaseModel):
 
 
 MAX_UHR_ABWEICHUNG_MS = 86_400_000  # unplausible Meldungen werden ignoriert
+UHR_MELDUNG_MS = 30_000  # gleiche Abweichung höchstens alle 30 s speichern
 
 
 def uhr_meldung_merken(request: Request, session: Session, zugang: Zugang) -> None:
@@ -145,14 +126,22 @@ def uhr_meldung_merken(request: Request, session: Session, zugang: Zugang) -> No
     zeile = session.scalars(
         select(GeraetUhr).where(GeraetUhr.veranstaltung_id == v.id, GeraetUhr.geraet == geraet)
     ).first()
+    rolle, jetzt = rechte.akteur_von(zugang, v).kennung, jetzt_ms()
+    if (
+        zeile is not None
+        and zeile.rolle == rolle
+        and zeile.abweichung_ms == abweichung
+        and jetzt - zeile.gemessen_ms < UHR_MELDUNG_MS
+    ):
+        return  # sonst schriebe jedes Gerät alle 5 s über den einen Schreiber der Datenbank
     if zeile is None:
         zeile = GeraetUhr(veranstaltung_id=v.id, geraet=geraet)
         session.add(zeile)
-    rolle = f"posten-{zugang.messpunkt.id}" if zugang.messpunkt is not None else zugang.rolle
-    if zugang.ort is not None:  # Gerät eines weiteren Start-/Zielorts
-        rolle = f"{zugang.rolle}-{zugang.ort.id}"
-    zeile.rolle, zeile.abweichung_ms, zeile.gemessen_ms = rolle, abweichung, jetzt_ms()
-    session.commit()
+    zeile.rolle, zeile.abweichung_ms, zeile.gemessen_ms = rolle, abweichung, jetzt
+    try:
+        session.commit()
+    except OperationalError:  # Datenbank kurz belegt: nur eine Anzeige, die nächste Meldung kommt
+        session.rollback()
 
 
 def _veranstaltung_oder_409(session: Session) -> Veranstaltung:
@@ -185,46 +174,10 @@ def ort_von(session: Session, zugang: Zugang, v: Veranstaltung):
     return strecken.standard_ort(session, v, "start" if zugang.rolle == "start" else "ziel")
 
 
-def rennleitung_getrennt(zugang: Zugang, v: Veranstaltung) -> bool:
-    """„Ziel und Rennleitung getrennt“ gilt je Zielort (Standard-Zielort: an der Veranstaltung)."""
-    return bool(
-        zugang.ort.rennleitung_getrennt if zugang.ort is not None else v.rennleitung_getrennt
-    )
-
-
 def ergebnis_berechnen(request: Request, session: Session, v: Veranstaltung) -> Ergebnis:
     from app.korrekturen import ergebnis
 
     return ergebnis(session, v)
-
-
-def _nur_erfassen_pruefen(session: Session, v: Veranstaltung, batch: "Batch") -> None:
-    """Ziel-Link bei getrennter Rennleitung: ±1 s/Rückgängig nur am eigenen letzten Einlauf.
-
-    „Letzter“ gilt zum Zeitpunkt der Korrektur (erstellt_ms) – so bleiben offline gesammelte
-    Batches gültig. 422 statt 403, damit das Gerät nur das eine Ereignis ablehnt.
-    """
-    for e in batch.ereignisse:
-        if e.art not in NUR_ERFASSEN_ARTEN:
-            raise HTTPException(422, "Zuordnen, Umbuchen und Status nur über den Rennleitungs-Link")
-    ziele = {z.uuid: z for z in batch.ereignisse if z.art == Art.ZIEL}
-    for e in batch.ereignisse:
-        if e.art == Art.ZIEL:
-            continue
-        ziel = ziele.get(e.bezug_uuid) or session.get(Ereignis, e.bezug_uuid)
-        if ziel is None or ziel.art != Art.ZIEL or ziel.geraet != e.geraet:
-            raise HTTPException(422, "Nur der eigene letzte Einlauf ist am Ziel korrigierbar")
-        eigene = [
-            *session.scalars(
-                select(Ereignis.erstellt_ms).where(
-                    Ereignis.veranstaltung_id == v.id, Ereignis.art == Art.ZIEL,
-                    Ereignis.geraet == e.geraet, Ereignis.uuid != ziel.uuid,
-                )
-            ),
-            *(z.erstellt_ms for z in ziele.values() if z.geraet == e.geraet and z.uuid != ziel.uuid),
-        ]  # fmt: skip
-        if any(ziel.erstellt_ms <= t <= e.erstellt_ms for t in eigene):
-            raise HTTPException(422, "Nur der eigene letzte Einlauf ist am Ziel korrigierbar")
 
 
 @router.post("/ereignisse", response_model=Bestaetigung)
@@ -252,10 +205,13 @@ def ereignisse_annehmen(session: Session, zugang: Zugang, batch: Batch) -> list[
             raise HTTPException(403, f"Rolle {rolle} darf Status {e.wert} nicht setzen")
         if rolle == "admin" and not (e.notiz or "").strip():
             raise HTTPException(422, "Admin-Korrekturen brauchen eine Notiz")
-    if rolle == "posten":
-        _posten_pruefen(zugang, session, batch)
-    ziel_ids: dict[int | None, int] = {}
-    for vid in {e.veranstaltung_id for e in batch.ereignisse}:
+    gruppen: dict[int | None, list[EreignisEin]] = {}
+    for e in batch.ereignisse:
+        gruppen.setdefault(e.veranstaltung_id, []).append(e)
+    zeilen: list[dict] = []
+    ziele: list[Veranstaltung] = []
+    empfangen = jetzt_ms()
+    for vid, liste in gruppen.items():
         v = veranstaltung_fuer(zugang, session, vid)
         if zugang.veranstaltung is not None and vid not in (None, v.id):
             raise HTTPException(422, "Ereignis gehört zu einer anderen Veranstaltung als der Token")
@@ -265,42 +221,29 @@ def ereignisse_annehmen(session: Session, zugang: Zugang, batch: Batch) -> list[
             raise HTTPException(
                 423, freigabe_daten(v) | {"grund": "nicht_freigegeben", "text": freigabe_text(v)}
             )
-        if rolle == "ziel" and rennleitung_getrennt(zugang, v):
-            _nur_erfassen_pruefen(session, v, batch)
-        ziel_ids[vid] = v.id
-    empfangen = jetzt_ms()
-    bestaetigt: list[str] = []
-    zeilen: list[dict] = []
-    for e in batch.ereignisse:
-        if e.uuid in bestaetigt:
-            continue
-        daten = e.model_dump()
-        daten["veranstaltung_id"] = ziel_ids[e.veranstaltung_id]
-        # Messpunkt des Geräts in eigener Spalte (leer = Standard-Start/-Ziel)
-        ort = zugang.ort.id if zugang.ort is not None and e.art in (Art.START, Art.ZIEL) else None
-        daten["ort_id"] = ort
-        zeilen.append({**daten, "empfangen_ms": empfangen})
-        bestaetigt.append(e.uuid)
+        akteur = rechte.akteur_von(zugang, v)
+        try:
+            neu = rechte.stapel_pruefen(session, v, akteur, liste)
+        except rechte.Abgelehnt as a:
+            raise HTTPException(a.status, a.detail) from a
+        ziele.append(v)
+        for e in neu:
+            daten = e.model_dump()
+            daten["veranstaltung_id"] = v.id
+            # Messpunkt des Geräts in eigener Spalte (leer = Standard-Start/-Ziel)
+            ort = (
+                zugang.ort.id if zugang.ort is not None and e.art in (Art.START, Art.ZIEL) else None
+            )
+            zeilen.append(
+                {**daten, "ort_id": ort, "zugang": akteur.kennung, "empfangen_ms": empfangen}
+            )
     if zeilen:
         # idempotent: bereits vorhandene UUIDs werden ignoriert, nie überschrieben
         session.execute(sqlite_insert(Ereignis).values(zeilen).on_conflict_do_nothing())
-        for vid in set(ziel_ids.values()):  # ab dem ersten Ereignis: Klassen/Wertung einfrieren
-            saetze.einfrieren(session, session.get(Veranstaltung, vid))
+        for v in ziele:  # ab dem ersten Ereignis: Klassen/Wertung einfrieren
+            saetze.einfrieren(session, v)
     session.commit()
-    return bestaetigt
-
-
-def _posten_pruefen(zugang: Zugang, session: Session, batch: Batch) -> None:
-    """Posten: nur Durchfahrten am eigenen Messpunkt, Korrektur/Rückgängig nur für diese."""
-    eigen = str(zugang.messpunkt.id)
-    im_stapel = {e.uuid: e for e in batch.ereignisse}
-    for e in batch.ereignisse:
-        if e.art == Art.DURCHFAHRT and e.wert != eigen:
-            raise HTTPException(403, "Posten darf nur Durchfahrten für seinen Messpunkt senden")
-        if e.art in (Art.ZEITKORREKTUR, Art.STORNO):
-            bezug = im_stapel.get(e.bezug_uuid) or session.get(Ereignis, e.bezug_uuid)
-            if bezug is None or bezug.art != Art.DURCHFAHRT or bezug.wert != eigen:
-                raise HTTPException(403, "Posten darf nur eigene Durchfahrten korrigieren")
+    return list(dict.fromkeys(e.uuid for e in batch.ereignisse))
 
 
 def freigabe_daten(v: Veranstaltung) -> dict:
@@ -459,6 +402,7 @@ def _stand(erg: Ergebnis, v: Veranstaltung, zeilen) -> dict:
             )[:LETZTE_ZIELE]
         ],
         "konflikte": len(erg.konflikte),
+        "offiziell": erg.offiziell,  # Geräte sperren sich, bis der Admin zurücksetzt
         "rennleitung_getrennt": bool(v.rennleitung_getrennt),
         "server_ms": jetzt_ms(),
     }

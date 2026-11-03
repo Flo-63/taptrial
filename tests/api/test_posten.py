@@ -74,7 +74,7 @@ def durch(v, nr, t, name="Kreisel"):
 def test_posten_darf_nur_seinen_messpunkt(client, v):
     d = durch(v, 1, T0 + 3 * MIN)
     assert senden(client, [d], posten("kreisel")).status_code == 200
-    assert senden(client, [durch(v, 1, T0, "Brücke")], posten("kreisel")).status_code == 403
+    assert senden(client, [durch(v, 1, T0, "Brücke")], posten("kreisel")).status_code == 422
     for art in (ev("START", startnummer=1, zeit_ms=T0), ev("ZIEL", startnummer=1, zeit_ms=T0),
                 ev("STATUS", startnummer=1, wert="DNF"), ev("RUNDE", bezug_uuid=d["uuid"], wert="GILT")):  # fmt: skip
         assert senden(client, [art], posten("kreisel")).status_code == 403, art["art"]
@@ -89,7 +89,7 @@ def test_posten_darf_nur_seinen_messpunkt(client, v):
     assert senden(client, [fremd], posten("bruecke")).status_code == 200
     assert (
         senden(client, [ev("STORNO", bezug_uuid=fremd["uuid"])], posten("kreisel")).status_code
-        == 403
+        == 422
     )
     neu = durch(v, 3, T0 + MIN)  # Durchfahrt und Rückgängig im selben Stapel (offline)
     assert (

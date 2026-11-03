@@ -257,7 +257,7 @@ def test_dsq_entscheiden_und_ergebnis_offiziell(admin, server):
     for nr in (1, 2):
         stempel(server, "ZIEL", nr, starts[nr] + (10 + nr) * 60_000)
         server.senden([{"uuid": f"dsq-{nr}", "art": "STATUS", "startnummer": nr,
-                        "wert": "DSQ_VORLAEUFIG", "notiz": f"Grund {nr}", "erstellt_ms": 1,
+                        "wert": "DSQ_VORLAEUFIG", "notiz": f"Grund {nr}", "erstellt_ms": 1_791_000_000_000,
                         "geraet": "ziel-api"}], rolle="ziel")  # fmt: skip
     veranstaltung_oeffnen(admin)
     expect(admin.locator("#kpi-aufgaben")).to_contain_text("2offene Aufgaben")

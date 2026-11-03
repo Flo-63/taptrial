@@ -16,7 +16,7 @@ Wurde am Ziel „Zeit ohne Nummer“ gedrückt, steht die Zeit unter **„Offene
 ## Letzte Zieleinläufe korrigieren
 Hier stehen die letzten Einläufe **aller Zielhandys** als kompakte Zeilen (mit Abzeichen, „a. K.“ und ggf. der Strecke). **Zeile antippen** klappt die Knöpfe auf (immer nur eine Zeile; nochmal antippen klappt zu):
 - **Umbuchen:** falscher Fahrer angetippt → „Umbuchen“, dann den richtigen Fahrer wählen.
-- **Rückgängig:** Einlauf war ein Irrtum → „Rückgängig“ und nochmals tippen („Wirklich löschen?“).
+- **Rückgängig:** Einlauf war ein Irrtum → „Rückgängig“ und nochmals tippen („Wirklich löschen?“). Einträge anderer Geräte ändert nur die Rennleitung, Einträge des Admins nur der Admin.
 - **−1 s / +1 s:** Zielzeit verschieben (je Tipp 1 s, höchstens ±5 s); „korrigiert“ erscheint. Mehr: Veranstalter trägt eine manuelle Zeit ein.
 
 ## Segmente (Zwischenzeiten)
@@ -25,11 +25,12 @@ Mit Zwischenzeiten steht unter jedem der letzten Einläufe eine Zeile mit den Se
 ## Status setzen
 Reiter **„Status“**, Fahrer antippen (Fahrer mit Zielzeit tragen „✓ im Ziel“), dann:
 - **DNF** – Fahrer hat aufgegeben (zweimal tippen).
-- **DSQ vorläufig** – Regelverstoß: erst einen **Grund** eintragen, dann zweimal tippen. Der Fahrer bleibt mit Zeit und Rang „unter Vorbehalt“ (gelb). Endgültig entscheidet der Veranstalter im Admin.
+- **DSQ vorläufig** – Regelverstoß: erst einen **Grund** eintragen, dann zweimal tippen. Der Fahrer bleibt mit Zeit und Rang „unter Vorbehalt“ (gelb). Endgültig entscheidet der Veranstalter im Admin; einen **endgültigen DSQ** hebt nur er auf.
 - **Status aufheben** – bei Irrtum.
 - **Start annullieren (DNS)** – Fahrer wurde versehentlich gestartet (nicht angetreten), auch nach den 30 s am Start: **Grund** eintragen, dann zweimal tippen. Der Start zählt nicht mehr, der Fahrer ist DNS; nichts wird gelöscht. Hat er schon Tipps (Posten/Ziel), steht eine rote Warnung mit der Liste – erst „Trotzdem annullieren“ ankreuzen. Irrtum: „Annullierung zurücknehmen“ (zweimal tippen).
 Fahrer mit DNF/DSQ verschwinden auf den Zielhandys aus „Erfassen“. Kommt so ein Fahrer doch ins Ziel: dort „Zeit ohne Nummer“, hier zuordnen und den Status aufheben.
 
 ## Sonderfälle und nach dem Rennen
 - **Kein Netz:** alles wird gespeichert und später gesendet; Einläufe anderer Handys erscheinen erst mit Netz.
+- **„Ergebnis ist offiziell“:** keine Einträge mehr; Änderungen nur nach dem Zurücksetzen im Admin. „**N Einträge nicht angenommen**“: dem Veranstalter melden, sie bleiben auf dem Gerät.
 - **Nach dem Rennen:** keine offenen Zeiten mehr? Dann warten bis „0 ausstehend“. Nach dem Abschluss die App einmal öffnen (löscht die Daten auf dem Handy), ggf. „Einträge exportieren“, Symbol entfernen.

@@ -1,8 +1,25 @@
+import os
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
 from app.einstellungen import Einstellungen
 from app.main import create_app
+
+TESTS = Path(__file__).resolve().parent
+
+# Git-Aufrufe in Tests (auch in den geprüften Skripten) ohne persönliche Git-Konfiguration: Signieren
+# über den Schlüssel-Agenten kostet je Commit ~0,3 s, läuft nur nacheinander und hat in Tests nichts
+# zu suchen. Identität setzen die Fixtures selbst.
+os.environ["GIT_CONFIG_GLOBAL"] = os.devnull
+os.environ["GIT_CONFIG_NOSYSTEM"] = "1"
+
+
+def pytest_collection_modifyitems(items):
+    """Stufe aus dem Ordner als Marker (unit, api, e2e, container)."""
+    for item in items:
+        item.add_marker(item.path.relative_to(TESTS).parts[0])
 
 
 @pytest.fixture

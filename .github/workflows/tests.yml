@@ -1,5 +1,4 @@
-# Bei jedem Push auf main ruff und pytest (ohne E2E – die brauchen Browser und Zeit;
-# lokal: uv run pytest -q tests/e2e).
+# Bei jedem Push auf main ruff und pytest (ohne Browser-Tests: die laufen in e2e.yml).
 name: Tests
 
 on:

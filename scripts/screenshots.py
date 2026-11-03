@@ -32,7 +32,11 @@ from app.klassen import klassifizieren
 from app.models import Ereignis, Messpunkt, Teilnehmer, Veranstaltung, Wertungssatz
 from app.simulation import BEISPIEL_MESSPUNKTE, ZEITZONE, beispiel_teile, rennplan, rundkurs
 
-TOKEN_START, TOKEN_ZIEL, TOKEN_ADMIN = "handbuch-start", "handbuch-ziel", "handbuch-admin"
+TOKEN_START, TOKEN_ZIEL, TOKEN_ADMIN = (
+    "handbuch-start",
+    "handbuch-ziel",
+    "handbuch-admin-passphrase-screenshots",
+)
 TOKEN_POSTEN = "handbuch-posten"  # Messpunkt „Kreisel“
 HANDY = "Pixel 7"
 BILDER = [

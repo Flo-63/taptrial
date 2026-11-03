@@ -73,6 +73,7 @@ NACHGERUESTETE_SPALTEN = [
     ("ereignis", "ort_id", "INTEGER"),
     ("veranstaltung", "einrichtung_json", "TEXT"),
     ("messpunkt", "entfernt", "BOOLEAN NOT NULL DEFAULT 0"),
+    ("ereignis", "zugang", "VARCHAR(30)"),
 ]
 
 
@@ -118,71 +119,76 @@ def _messpunkte_zur_veranstaltung(conn) -> None:
 
 
 def tabellen_anlegen(engine: Engine) -> None:
-    from app import models  # noqa: F401  (registriert Modelle an Basis.metadata)
+    """Tabellen auf dem aktuellen Stand, ohne Daten-Nachzüge (die laufen beim Start der App)."""
+    from app import migrationen
 
-    Basis.metadata.create_all(engine)
-    schema_aktualisieren(engine)
+    migrationen.migrieren(engine, bis=migrationen.SCHEMA)
 
 
 def schema_aktualisieren(engine: Engine) -> None:
-    """Rüstet ältere SQLite-Dateien nach (kein Migrationstool bei dieser Größe)."""
+    with engine.begin() as conn:
+        schema_nachruesten(conn)
+
+
+def schema_nachruesten(conn) -> None:
+    """Rüstet ältere SQLite-Dateien nach (Stand vor den versionierten Migrationen). Neue Spalten
+    und Tabellen kommen als eigener Schritt nach app/migrationen.py."""
     from app.models import ANONYMISIEREN_NACH_MONATEN, neues_token, plus_monate
 
-    with engine.begin() as conn:
-        _messpunkte_zur_veranstaltung(conn)
-        for tabelle, spalte, typ in NACHGERUESTETE_SPALTEN:
-            vorhanden = {z[1] for z in conn.exec_driver_sql(f"PRAGMA table_info({tabelle})")}
-            if spalte not in vorhanden:
-                conn.exec_driver_sql(f"ALTER TABLE {tabelle} ADD COLUMN {spalte} {typ}")
-                if (tabelle, spalte) == ("ereignis", "ort_id") and "art" in vorhanden:
-                    _ort_id_aus_wert(conn)
-        # Zuerst (vor der Token-Vergabe): genau eine aktive Veranstaltung auch in der
-        # Datenbank erzwingen. Ältere Dateien mit mehreren aktiven: die zuletzt angelegte bleibt.
+    _messpunkte_zur_veranstaltung(conn)
+    for tabelle, spalte, typ in NACHGERUESTETE_SPALTEN:
+        vorhanden = {z[1] for z in conn.exec_driver_sql(f"PRAGMA table_info({tabelle})")}
+        if spalte not in vorhanden:
+            conn.exec_driver_sql(f"ALTER TABLE {tabelle} ADD COLUMN {spalte} {typ}")
+            if (tabelle, spalte) == ("ereignis", "ort_id") and "art" in vorhanden:
+                _ort_id_aus_wert(conn)
+    # Zuerst (vor der Token-Vergabe): genau eine aktive Veranstaltung auch in der
+    # Datenbank erzwingen. Ältere Dateien mit mehreren aktiven: die zuletzt angelegte bleibt.
+    conn.exec_driver_sql(
+        "UPDATE veranstaltung SET aktiv = 0 WHERE aktiv = 1 AND id < "
+        "(SELECT MAX(id) FROM veranstaltung WHERE aktiv = 1)"
+    )
+    conn.exec_driver_sql(
+        "CREATE UNIQUE INDEX IF NOT EXISTS ix_veranstaltung_eine_aktive "
+        "ON veranstaltung (aktiv) WHERE aktiv = 1"
+    )
+    # Tokens für Veranstaltungen ohne Token: die aktive übernimmt die bisherigen
+    # Umgebungs-Tokens (alte Gerätelinks bleiben gültig), alle anderen bekommen neue.
+    zeilen = conn.exec_driver_sql(
+        "SELECT id, aktiv, datum, token_start, token_ziel, anonymisieren_ab FROM veranstaltung"
+    ).fetchall()
+    for vid, aktiv, datum, t_start, t_ziel, anon in zeilen:
+        if t_start is None or t_ziel is None:
+            alt_start = umgebung.wert("token_start") if aktiv else None
+            alt_ziel = umgebung.wert("token_ziel") if aktiv else None
+            conn.exec_driver_sql(
+                "UPDATE veranstaltung SET token_start = ?, token_ziel = ? WHERE id = ?",
+                (
+                    t_start or alt_start or neues_token(),
+                    t_ziel or alt_ziel or neues_token(),
+                    vid,
+                ),
+            )
+        if anon is None:
+            frist = plus_monate(date.fromisoformat(str(datum)), ANONYMISIEREN_NACH_MONATEN)
+            conn.exec_driver_sql(
+                "UPDATE veranstaltung SET anonymisieren_ab = ? WHERE id = ?",
+                (frist.isoformat(), vid),
+            )
+    for (vid,) in conn.exec_driver_sql(
+        "SELECT id FROM veranstaltung WHERE token_rennleitung IS NULL"
+    ).fetchall():
         conn.exec_driver_sql(
-            "UPDATE veranstaltung SET aktiv = 0 WHERE aktiv = 1 AND id < "
-            "(SELECT MAX(id) FROM veranstaltung WHERE aktiv = 1)"
+            "UPDATE veranstaltung SET token_rennleitung = ? WHERE id = ?", (neues_token(), vid)
         )
+    for (mid,) in conn.exec_driver_sql(
+        "SELECT id FROM messpunkt WHERE token_rennleitung IS NULL"
+    ).fetchall():
         conn.exec_driver_sql(
-            "CREATE UNIQUE INDEX IF NOT EXISTS ix_veranstaltung_eine_aktive "
-            "ON veranstaltung (aktiv) WHERE aktiv = 1"
+            "UPDATE messpunkt SET token_rennleitung = ? WHERE id = ?", (neues_token(), mid)
         )
-        # Tokens für Veranstaltungen ohne Token: die aktive übernimmt die bisherigen
-        # Umgebungs-Tokens (alte Gerätelinks bleiben gültig), alle anderen bekommen neue.
-        zeilen = conn.exec_driver_sql(
-            "SELECT id, aktiv, datum, token_start, token_ziel, anonymisieren_ab FROM veranstaltung"
-        ).fetchall()
-        for vid, aktiv, datum, t_start, t_ziel, anon in zeilen:
-            if t_start is None or t_ziel is None:
-                alt_start = umgebung.wert("token_start") if aktiv else None
-                alt_ziel = umgebung.wert("token_ziel") if aktiv else None
-                conn.exec_driver_sql(
-                    "UPDATE veranstaltung SET token_start = ?, token_ziel = ? WHERE id = ?",
-                    (
-                        t_start or alt_start or neues_token(),
-                        t_ziel or alt_ziel or neues_token(),
-                        vid,
-                    ),
-                )
-            if anon is None:
-                frist = plus_monate(date.fromisoformat(str(datum)), ANONYMISIEREN_NACH_MONATEN)
-                conn.exec_driver_sql(
-                    "UPDATE veranstaltung SET anonymisieren_ab = ? WHERE id = ?",
-                    (frist.isoformat(), vid),
-                )
-        for (vid,) in conn.exec_driver_sql(
-            "SELECT id FROM veranstaltung WHERE token_rennleitung IS NULL"
-        ).fetchall():
-            conn.exec_driver_sql(
-                "UPDATE veranstaltung SET token_rennleitung = ? WHERE id = ?", (neues_token(), vid)
-            )
-        for (mid,) in conn.exec_driver_sql(
-            "SELECT id FROM messpunkt WHERE token_rennleitung IS NULL"
-        ).fetchall():
-            conn.exec_driver_sql(
-                "UPDATE messpunkt SET token_rennleitung = ? WHERE id = ?", (neues_token(), mid)
-            )
-        for spalte in ("token_start", "token_ziel", "token_rennleitung"):
-            conn.exec_driver_sql(
-                f"CREATE UNIQUE INDEX IF NOT EXISTS ix_veranstaltung_{spalte} "
-                f"ON veranstaltung ({spalte})"
-            )
+    for spalte in ("token_start", "token_ziel", "token_rennleitung"):
+        conn.exec_driver_sql(
+            f"CREATE UNIQUE INDEX IF NOT EXISTS ix_veranstaltung_{spalte} "
+            f"ON veranstaltung ({spalte})"
+        )

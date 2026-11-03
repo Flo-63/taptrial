@@ -193,6 +193,7 @@ def test_messpunkte_je_strecke_werden_messpunkte_der_veranstaltung(tmp_path):
             "REFERENCES strecke(id), position INTEGER NOT NULL, name VARCHAR(100) NOT NULL, km FLOAT, "
             "abschnitt VARCHAR(10) NOT NULL, token VARCHAR(64) NOT NULL UNIQUE)"
         )
+        conn.exec_driver_sql("PRAGMA user_version = 0")  # wie eine Datei von vor der Versionierung
     with engine.begin() as conn:
         for mid, name, tok in ((11, "Kreisel", "t-k"), (12, "Berg", "t-b")):
             conn.exec_driver_sql(

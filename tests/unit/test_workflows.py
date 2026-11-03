@@ -25,6 +25,15 @@ def test_tests_bei_push_auf_main():
     assert w["permissions"] == {"contents": "read"}
 
 
+def test_e2e_als_eigener_lauf_bei_push_auf_main():
+    w, _ = lade("e2e.yml")
+    assert w["name"] == "E2E" and w["on"] == {"push": {"branches": ["main"]}}
+    assert w["permissions"] == {"contents": "read"}
+    schritte = " ".join(str(s.get("run", "")) for s in w["jobs"]["e2e"]["steps"])
+    assert "uv sync --frozen" in schritte and "playwright install --with-deps chromium" in schritte
+    assert "pytest -q -n 2 tests/e2e" in schritte and "pytest -q tests/container" in schritte
+
+
 def test_image_bei_tag():
     w, text = lade("image.yml")
     assert w["on"] == {"push": {"tags": ["v*"]}}
@@ -49,7 +58,7 @@ MINDESTENS = {"actions/checkout": 7, "astral-sh/setup-uv": 10, "docker/setup-qem
 
 def test_aktuelle_actions_und_fester_runner():
     genutzt = {}
-    for name in ("tests.yml", "image.yml"):
+    for name in ("tests.yml", "e2e.yml", "image.yml"):
         w, _ = lade(name)
         for job in w["jobs"].values():
             assert job["runs-on"] == "ubuntu-24.04", name  # fest statt ubuntu-latest

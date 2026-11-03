@@ -8,7 +8,7 @@ import segno
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, Response
 
-from app import installation
+from app import admin_auth, installation
 from app import korrekturen as k
 from app.auswertung import Ergebnis, ErgebnisZeile, Status, StreckenDef
 from app.auth import SessionDep
@@ -253,6 +253,7 @@ def _gewaehlte_rangliste(erg: Ergebnis | None, daten: dict | None, schluessel: s
 
 
 KEINE_ERGEBNISSE = "Für diese Veranstaltung gibt es noch keine Ergebnisse."
+MAX_ID = 2_147_483_647
 
 
 def _hat_zeiten(erg: Ergebnis) -> bool:
@@ -261,10 +262,18 @@ def _hat_zeiten(erg: Ergebnis) -> bool:
     )
 
 
+def oeffentlich_sichtbar(v: Veranstaltung, erg: Ergebnis) -> bool:
+    """Ohne Admin-Anmeldung sichtbar: die aktive Veranstaltung und abgeschlossene mit offiziellem
+    Ergebnis. Alles andere gibt es für Außenstehende nicht, auch nicht per hochgezählter ID."""
+    return v.aktiv or (v.zustand != "laufend" and erg.offiziell)
+
+
 def _stand(
     request: Request, session, veranstaltung: int | None = None
 ) -> tuple[Veranstaltung | None, Ergebnis | None, dict | None]:
     """Aktive Veranstaltung oder (optional) eine bestimmte, z. B. für den PDF-Export im Admin."""
+    if veranstaltung and not 0 < veranstaltung <= MAX_ID:
+        return None, None, None
     v = (
         session.get(Veranstaltung, veranstaltung)
         if veranstaltung
@@ -273,7 +282,10 @@ def _stand(
     if v is None:
         return None, None, None
     erg = k.ergebnis(session, v)
-    vorschau = request.query_params.get("vorschau") == "1"  # Links aus dem Admin
+    admin = admin_auth.angemeldet(request)
+    if not admin and not oeffentlich_sichtbar(v, erg):
+        return None, None, None
+    vorschau = admin and request.query_params.get("vorschau") == "1"  # Links aus dem Admin
     if v.laufend and v.freigabe_fehlt and not _hat_zeiten(erg) and not vorschau:
         # Vor der Freigabe ohne Zeiten nichts zeigen (Admin-Vorschau bleibt möglich)
         return v, None, {"veranstaltung": {"name": v.name, "datum": v.datum.strftime("%d.%m.%Y")},

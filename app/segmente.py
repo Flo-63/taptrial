@@ -107,7 +107,8 @@ def pruefen(teile, messpunkte: dict[str, str], alle_genutzt: bool = True) -> lis
         if not t.segmente:
             fehler.append(f"Rundenblock „{t.name}“ hat keine Segmente.")
         if not 1 <= t.wdh <= MAX_WDH:
-            fehler.append(f"„{t.name or t.segmente[0].name}“: Wiederholungen 1 bis {MAX_WDH}.")
+            name = t.name or (t.segmente[0].name if t.segmente else "")
+            fehler.append(f"„{name}“: Wiederholungen 1 bis {MAX_WDH}.")
         for s in t.segmente:
             for p in (s.von, s.nach):
                 if p not in alle:
@@ -310,6 +311,7 @@ class Zuordnung:
     positionen: list[str | None]  # je innerer Abfolge-Position die UUID (oder None)
     fehlend_ab: int | None  # erste fehlende innere Position (None: keine erkannt)
     ohne_platz: list[str] = field(default_factory=list)  # Tipps ohne Position in der Abfolge
+    ausserhalb: list[str] = field(default_factory=list)  # Tipps vor dem Start oder nach dem Ziel
 
 
 LUECKE = 1.5  # Abstand über 1,5 × erwartete Segmentzeit: dazwischen fehlt eine Durchfahrt
@@ -318,6 +320,8 @@ LUECKE = 1.5  # Abstand über 1,5 × erwartete Segmentzeit: dazwischen fehlt ein
 def zuordnen(teile, fahrt: Fahrt, median: dict[str, float] | None = None) -> Zuordnung:
     """Tipps eines Fahrers der erwarteten Abfolge zuordnen.
 
+    Tipps vor dem Start oder nach dem Ziel des Fahrers gehören zu keiner Durchfahrt und belegen
+    keine Position (sie würden sonst alle folgenden Runden verschieben).
     Der Reihe nach: jeder Tipp geht an die nächste offene Position seines Messpunkts. Mit `median`
     (Segment-Schlüssel → Median der Segmentzeit aller Fahrer) zusätzlich die Abstandsregel: dauert
     es seit der letzten Messung länger als 1,5 × die erwartete Zeit bis zu dieser Position, fehlt
@@ -329,6 +333,7 @@ def zuordnen(teile, fahrt: Fahrt, median: dict[str, float] | None = None) -> Zuo
     innen = innere_punkte(teile)
     pos: list[str | None] = [None] * len(innen)
     ohne: list[str] = []
+    ausserhalb: list[str] = []
     tempo = _tempo(teile, fahrt, median) if median else 1.0
 
     def erwartet(von_punkt: int, bis_punkt: int) -> float | None:
@@ -341,6 +346,11 @@ def zuordnen(teile, fahrt: Fahrt, median: dict[str, float] | None = None) -> Zuo
 
     i, letzter_punkt, letzte_zeit = 0, 0, fahrt.start_ms
     for t in sorted(fahrt.tipps, key=lambda t: t.zeit_ms):
+        if (fahrt.start_ms is not None and t.zeit_ms <= fahrt.start_ms) or (
+            fahrt.ziel_ms is not None and t.zeit_ms >= fahrt.ziel_ms
+        ):
+            ausserhalb.append(t.uuid)
+            continue
         kandidaten = [j for j in range(i, len(innen)) if innen[j] == t.messpunkt]
         if not kandidaten:
             ohne.append(t.uuid)
@@ -356,7 +366,7 @@ def zuordnen(teile, fahrt: Fahrt, median: dict[str, float] | None = None) -> Zuo
                 j = min(passend)[1] if passend else j
         pos[j] = t.uuid
         i, letzter_punkt, letzte_zeit = j + 1, j + 1, t.zeit_ms
-    return Zuordnung(pos, _fehlend_ab(pos, fahrt), ohne)
+    return Zuordnung(pos, _fehlend_ab(pos, fahrt), ohne, ausserhalb)
 
 
 def _tempo(teile, fahrt: Fahrt, median: dict[str, float]) -> float:

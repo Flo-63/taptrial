@@ -230,7 +230,7 @@ def anmelden(request: Request, token: Annotated[str, Form()] = ""):
 def abmelden(request: Request, _a: AdminDep, csrf: Annotated[str, Form()] = ""):
     admin_auth.csrf_pruefen(request, csrf)
     antwort = RedirectResponse("/admin", status_code=303)
-    antwort.delete_cookie(admin_auth.COOKIE, path="/admin")
+    admin_auth.sitzung_loeschen(antwort)
     return antwort
 
 
@@ -1924,7 +1924,7 @@ async def regeln_speichern(request: Request, vid: int, session: SessionDep, _a: 
     v = _veranstaltung(session, vid)
     ziel = str(form.get("ziel") or "")
     standard = "strecken" if form.get("strecken_anzahl") else "einstellungen/klassen"
-    zurueck = ziel if ziel.startswith("/admin/") else f"/admin/v/{vid}/{standard}"
+    zurueck = _rueckweg(ziel, f"/admin/v/{vid}/{standard}")
     try:
         hinweise, _ = regeln_aus_formular(session, v, form)
     except saetze.SatzFehler as e:

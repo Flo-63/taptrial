@@ -1,5 +1,6 @@
 import re
 
+import pytest
 from playwright.sync_api import expect
 
 from tests.e2e.conftest import jetzt_synchronisieren, oeffnen, offline, warte_bis
@@ -40,6 +41,7 @@ def test_manifest_verlinkt(server, neues_geraet):
     assert manifest["start_url"].startswith("/start")
 
 
+@pytest.mark.slow
 def test_online_offline_neuladen_sync(server, neues_geraet):
     ctx = neues_geraet()
     page = oeffnen(ctx, server, "start")
@@ -333,7 +335,7 @@ def test_dnf_dsq_am_start_nicht_aenderbar(server, neues_geraet):
 
     server.starten(2)
     server.senden([{"uuid": str(uuid.uuid4()), "art": "STATUS", "startnummer": 2, "wert": "DNF",
-                    "erstellt_ms": 1, "geraet": "ziel"}], rolle="ziel")  # fmt: skip
+                    "erstellt_ms": 1_791_000_000_000, "geraet": "ziel"}], rolle="ziel")  # fmt: skip
     page = oeffnen(neues_geraet(), server, "start")
     expect(page.locator("#auswahl button[data-nr='1']")).to_be_visible()
     expect(page.locator("#auswahl button[data-nr='2']")).to_have_count(0)

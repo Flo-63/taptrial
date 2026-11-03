@@ -133,6 +133,7 @@ def test_raster_hoehe_und_schrift(browser, server, tmp_path, breite, hoehe):
     )  # alle Fahrer auf der Strecke kommen vor
 
 
+@pytest.mark.slow
 def test_bereich_blaettert_alle_10_sekunden(browser, server):
     rennen(server, 25)
     page = browser.new_page(viewport={"width": 1366, "height": 768})
@@ -151,6 +152,7 @@ def test_bereich_blaettert_alle_10_sekunden(browser, server):
     expect(seite).to_have_text(f"Seite 1/{gesamt}")  # danach wieder von vorn
 
 
+@pytest.mark.slow
 def test_keine_seite_mit_einer_zeile_bei_freiem_platz(browser, server):
     """Fehler 14.10.: 4 Fahrer unterwegs, „Seite 2/2“ mit einem Fahrer, darunter leer (1632×920)."""
     rennen(server, 4, im_ziel=1)

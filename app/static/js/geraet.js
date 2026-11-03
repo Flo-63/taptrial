@@ -12,6 +12,10 @@ const UHR_GRENZE_MS = 500; // ab mehr als 0,5 s deutlich warnen
 const AUSSTEHEND = 0;
 const BESTAETIGT = 1;
 const ABGELEHNT = 2;
+// Abgelehnt, weil das Ergebnis offiziell ist: nicht weiter senden; setzt der Admin es auf
+// „vorläufig“ zurück, gehen diese Einträge von selbst wieder in die Warteschlange.
+const OFFIZIELL = "offiziell";
+const OFFIZIELL_HINWEIS = "Das Ergebnis ist offiziell. Die Einträge bleiben auf dem Gerät und gehen automatisch durch, wenn der Admin es auf „vorläufig“ zurücksetzt.";
 
 function anfrage(req) {
   return new Promise((resolve, reject) => {
@@ -78,6 +82,7 @@ export function uhrText(abweichungMs) {
 export function formatUhrzeit(ms, mitZehntel = true) {
   if (ms == null) return "–";
   const d = new Date(ms);
+  if (Number.isNaN(d.getTime())) return "–"; // Altdaten außerhalb des darstellbaren Bereichs
   const basis = `${zwei(d.getHours())}:${zwei(d.getMinutes())}:${zwei(d.getSeconds())}`;
   return mitZehntel ? `${basis},${Math.floor(d.getMilliseconds() / 100)}` : basis;
 }
@@ -130,6 +135,15 @@ export function bindungVon(token) {
   let h = 0x811c9dc5;
   for (const c of String(token || "")) h = Math.imul(h ^ c.codePointAt(0), 0x01000193) >>> 0;
   return h.toString(16).padStart(8, "0");
+}
+
+// detail aus einer Fehlerantwort des Servers (Text oder Objekt), sonst null
+function fehlerDetail(err) {
+  try {
+    return JSON.parse(err.text).detail ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export class Geraet {
@@ -193,6 +207,7 @@ export class Geraet {
     await this._trennen((e) => !!this.bindung && (e.bindung || (this.wechsel ? this.alteBindung : this.bindung)) !== this.bindung, this.wechsel);
     this.ortZeigen();
     this.sperreZeigen();
+    this.zeigeAbgelehnt();
     this.letzterSync = (await this.kvLesen("letzter_sync")) || null;
     this.standZeit = (await this.kvLesen("stand_zeit")) || 0;
 
@@ -207,6 +222,7 @@ export class Geraet {
     window.addEventListener("online", () => this.sync());
     window.addEventListener("offline", () => {
       this.serverErreichbar = false;
+      this.sperreZeigen();
       this.zeigeStatus();
     });
     setInterval(() => this.sync(), SYNC_INTERVALL_MS);
@@ -215,21 +231,47 @@ export class Geraet {
 
   // Sperrbildschirm „Zeitnahme noch nicht freigegeben“: statt der Bedienung die
   // fehlenden Schritte; schaltet sich mit dem nächsten Stand von selbst frei.
+  // Offizielles Ergebnis: Sperre nur mit frischem Stand vom Server – offline bleibt
+  // die Erfassung möglich, kein Tipp geht verloren (der Server prüft beim Senden).
   sperreZeigen() {
     const f = this.stand && this.stand.freigabe;
-    const gesperrt = !!f && f.frei === false;
+    const nichtFrei = !!f && f.frei === false;
+    const offiziell = !nichtFrei && !!this.stand && this.stand.offiziell === true && this.serverErreichbar;
+    const gesperrt = nichtFrei || offiziell;
     document.body.classList.toggle("gesperrt", gesperrt);
     const box = document.getElementById("sperre");
     if (!box) return;
     box.hidden = !gesperrt;
     if (!gesperrt) return;
+    box.classList.toggle("sperre-offiziell", offiziell);
+    document.getElementById("sperre-titel").textContent = offiziell ? "Ergebnis ist offiziell" : "Zeitnahme noch nicht freigegeben";
+    document.getElementById("sperre-fehlt").hidden = offiziell;
     document.getElementById("sperre-schritte").replaceChildren(
-      ...(f.fehlt || []).map((s) => Object.assign(document.createElement("li"), { textContent: s.text })),
+      ...(nichtFrei ? f.fehlt || [] : []).map((s) => Object.assign(document.createElement("li"), { textContent: s.text })),
     );
+    document.getElementById("sperre-text").textContent = offiziell
+      ? "Dieses Gerät nimmt keine Einträge mehr an. Setzt der Admin das Ergebnis auf „vorläufig“ zurück, schaltet sich diese Seite von selbst frei."
+      : "Das erledigt die Turnierleitung im Admin. Diese Seite schaltet sich danach von selbst frei.";
     const n = this.ausstehend().length;
     const hinweis = document.getElementById("sperre-ausstehend");
-    hinweis.hidden = n === 0;
+    hinweis.hidden = n === 0 || offiziell;
     hinweis.textContent = `${n} ${n === 1 ? "Eintrag wartet" : "Einträge warten"} auf die Freigabe und ${n === 1 ? "wird" : "werden"} danach gesendet.`;
+  }
+
+  // Vom Server abgelehnte Einträge: Grund, „Rennleitung informieren“, Sicherung als Datei
+  zeigeAbgelehnt() {
+    const box = document.getElementById("abgelehnt-box");
+    if (!box) return;
+    const liste = this.abgelehnt();
+    box.hidden = liste.length === 0;
+    if (!liste.length) return;
+    const n = liste.length;
+    const wartet = liste.filter((e) => e.abgelehnt_grund === OFFIZIELL).length;
+    document.getElementById("abgelehnt-text").textContent =
+      `${n} ${n === 1 ? "Eintrag" : "Einträge"} nicht angenommen – Rennleitung informieren`;
+    const letzter = liste[liste.length - 1];
+    document.getElementById("abgelehnt-grund").textContent =
+      wartet === n ? `${OFFIZIELL_HINWEIS}` : letzter.abgelehnt_text || "Der Server hat den Eintrag abgelehnt.";
   }
 
   // Weiterer Start-/Zielort: Name in der Statusleiste, z. B. „Start · Nord“
@@ -337,19 +379,21 @@ export class Geraet {
       const antwort = await this._fetch("/api/stand");
       const empfangen = Date.now();
       this.stand = await antwort.json();
+      this.serverErreichbar = true;
       this.ortZeigen();
       this.sperreZeigen();
       this.uhrMessen(abgerufen, empfangen, this.stand.server_ms);
       this.standZeit = abgerufen;
       this.letzterSync = Date.now();
-      this.serverErreichbar = true;
       this.zeigeFehler(null);
+      await this._zurueckgestellteFreigeben();
       await this.kvSchreiben("stand", this.stand);
       await this.kvSchreiben("stand_zeit", this.standZeit);
       await this.kvSchreiben("letzter_sync", this.letzterSync);
       this.beiAenderung();
     } catch (err) {
       this.serverErreichbar = false;
+      this.sperreZeigen();
       if (err instanceof HttpFehler && err.status === 410) {
         // gelöscht oder abgeschlossen: aufräumen (nicht übertragene Einträge bleiben immer)
         // Gelöscht → „gibt es nicht mehr“ (nicht übertragene Einträge bleiben zum Export)
@@ -379,12 +423,21 @@ export class Geraet {
       await this._markieren(bestaetigt, BESTAETIGT);
     } catch (err) {
       if (err instanceof HttpFehler && err.status === 423) {
+        const detail = fehlerDetail(err);
+        if (detail && detail.grund === OFFIZIELL) {
+          // Einzeln senden: schon gespeicherte bestätigt der Server weiterhin
+          if (ereignisse.length > 1) {
+            for (const e of ereignisse) await this._senden([e]);
+          } else {
+            await this._markieren([ereignisse[0].uuid], ABGELEHNT, OFFIZIELL, detail.text);
+            this.stand = { ...(this.stand || {}), offiziell: true };
+            this.sperreZeigen();
+          }
+          return;
+        }
         // Noch nicht freigegeben – Einträge bleiben ausstehend und gehen nach der
         // Freigabe beim nächsten Sync durch (nie löschen)
-        let fehlt = [];
-        try {
-          fehlt = JSON.parse(err.text).detail.fehlt || [];
-        } catch {}
+        const fehlt = (detail && detail.fehlt) || [];
         this.stand = { ...(this.stand || {}), freigabe: { frei: false, fehlt } };
         this.sperreZeigen();
         return;
@@ -394,22 +447,37 @@ export class Geraet {
       if (ereignisse.length > 1) {
         for (const e of ereignisse) await this._senden([e]);
       } else {
-        await this._markieren([ereignisse[0].uuid], ABGELEHNT);
+        const detail = fehlerDetail(err);
+        // Text der Fachprüfung oder der Eingabeprüfung (Liste mit „Value error, …“)
+        const text = Array.isArray(detail) ? String(detail[0]?.msg || "").replace(/^Value error, /, "") : detail;
+        await this._markieren([ereignisse[0].uuid], ABGELEHNT, "", typeof text === "string" ? text : "");
       }
     }
   }
 
-  async _markieren(uuids, wert) {
+  async _markieren(uuids, wert, grund = "", text = "") {
     const menge = new Set(uuids);
     const tx = this.db.transaction("log", "readwrite");
     const store = tx.objectStore("log");
     for (const e of this.log) {
       if (menge.has(e.uuid)) {
         e.gesendet = wert;
+        e.abgelehnt_grund = grund;
+        e.abgelehnt_text = text;
         store.put(e);
       }
     }
     await fertig(tx);
+    this.zeigeAbgelehnt();
+  }
+
+  // Der Admin hat auf „vorläufig“ zurückgesetzt: zurückgestellte Einträge wieder senden
+  async _zurueckgestellteFreigeben() {
+    if (this.stand.offiziell !== false) return;
+    const liste = this.abgelehnt().filter((e) => e.abgelehnt_grund === OFFIZIELL);
+    if (!liste.length) return;
+    await this._markieren(liste.map((e) => e.uuid), AUSSTEHEND);
+    this._syncNochmal = true;
   }
 
   // Uhrabweichung = Serverzeit − Mitte aus Sende- und Empfangszeitpunkt.
@@ -551,7 +619,7 @@ export class Geraet {
   // Export der nicht übertragenen Einträge als Datei (oder über „Teilen“ am Handy)
   async exportieren(frueher = false) {
     const quelle = frueher ? this.frueher : this.nichtUebertragen();
-    const eintraege = quelle.map(({ bindung, frueher_veranstaltung, frueher_ort, ...e }) => ({ ...e, zeit: e.zeit_ms ? formatUhrzeit(e.zeit_ms) : null }));
+    const eintraege = quelle.map(({ bindung, frueher_veranstaltung, frueher_ort, abgelehnt_grund, abgelehnt_text, ...e }) => ({ ...e, zeit: e.zeit_ms ? formatUhrzeit(e.zeit_ms) : null }));
     // Admin warnt bei fremder Veranstaltung; frühere Einträge nennen ihre eigene
     const veranstaltung = frueher ? (quelle[0] && quelle[0].frueher_veranstaltung) || null : this.stand ? this.stand.veranstaltung : null;
     const ort = frueher ? (quelle[0] && quelle[0].frueher_ort) || null : this.stand && this.stand.ort ? this.stand.ort : null;
@@ -596,6 +664,8 @@ export class Geraet {
       await this.aufraeumen("Gerät zurückgesetzt – Daten auf diesem Gerät gelöscht.");
     });
     document.getElementById("btn-exportieren").addEventListener("click", () => this.exportieren());
+    const abgelehnt = document.getElementById("btn-abgelehnt-exportieren");
+    if (abgelehnt) abgelehnt.addEventListener("click", () => this.exportieren());
     const frueher = document.getElementById("btn-frueher-exportieren");
     if (frueher) frueher.addEventListener("click", () => this.exportieren(true));
   }

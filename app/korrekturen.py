@@ -99,15 +99,30 @@ def heute() -> date:
     return datetime.now(ZEITZONE).date()
 
 
+UNPLAUSIBEL_TEXT = "unplausibel"  # Altdaten außerhalb des darstellbaren Bereichs
+
+
+def _zeitpunkt(ms: int) -> datetime | None:
+    """Epoch-ms → Zeitpunkt; None, wenn der Wert nicht darstellbar ist. Der Server nimmt solche
+    Werte nicht mehr an, vorhandene dürfen aber keine Ansicht lahmlegen."""
+    try:
+        return datetime.fromtimestamp(ms / 1000, ZEITZONE)
+    except (OverflowError, OSError, ValueError):
+        return None
+
+
 def datum_text(ms: int | None) -> str:
-    return "" if ms is None else f"{datetime.fromtimestamp(ms / 1000, ZEITZONE):%d.%m.%Y}"
+    if ms is None:
+        return ""
+    d = _zeitpunkt(ms)
+    return f"{d:%d.%m.%Y}" if d else UNPLAUSIBEL_TEXT
 
 
 def uhrzeit_text(ms: int | None) -> str:
     if ms is None:
         return "–"
-    d = datetime.fromtimestamp(ms / 1000, ZEITZONE)
-    return f"{d:%H:%M:%S},{d.microsecond // 100_000}"
+    d = _zeitpunkt(ms)
+    return f"{d:%H:%M:%S},{d.microsecond // 100_000}" if d else UNPLAUSIBEL_TEXT
 
 
 @dataclass
@@ -197,6 +212,7 @@ def _admin_ereignis(session: Session, v: Veranstaltung, art: str, notiz: str, **
         veranstaltung_id=v.id,
         art=art,
         geraet=GERAET_ADMIN,
+        zugang=GERAET_ADMIN,
         erstellt_ms=erstellt,
         empfangen_ms=jetzt,
         notiz=_notiz(notiz),
@@ -720,14 +736,14 @@ def teilnehmer_speichern(session, v, tid: int | None, daten: dict) -> Teilnehmer
             setattr(t, merkmal, wert)
     session.commit()
     for merkmal, wert in geaendert:
-        _merkmal_protokollieren(session, v, t, merkmal, wert)
+        merkmal_protokollieren(session, v, t, merkmal, wert)
     return t
 
 
 MERKMAL_NAMEN = {"abzeichen": "Abzeichen", "ausser_konkurrenz": "Außer Konkurrenz"}
 
 
-def _merkmal_protokollieren(session, v, t: Teilnehmer, merkmal: str, wert: bool) -> None:
+def merkmal_protokollieren(session, v, t: Teilnehmer, merkmal: str, wert: bool) -> None:
     text = f"{MERKMAL_NAMEN[merkmal]}: {'ja' if wert else 'nein'} (Nr. {t.startnummer})"
     _admin_ereignis(session, v, Art.MERKMAL, text, startnummer=t.startnummer,
                     wert=f"{merkmal.upper()}_{'JA' if wert else 'NEIN'}")  # fmt: skip
@@ -744,7 +760,7 @@ def merkmal_setzen(session, v, tid: int, merkmal: str, wert: bool) -> Teilnehmer
     if getattr(t, merkmal) != wert:
         setattr(t, merkmal, wert)
         t.geaendert_ms = jetzt_ms()
-        _merkmal_protokollieren(session, v, t, merkmal, wert)  # committet auch die Änderung
+        merkmal_protokollieren(session, v, t, merkmal, wert)  # committet auch die Änderung
     return t
 
 

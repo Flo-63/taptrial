@@ -10,7 +10,7 @@
 2. „Anmeldung Admin“ wählen, die **Admin-Passphrase** eingeben (beim Einrichten als `TAPTRIAL_TOKEN_ADMIN` festgelegt, bei älteren Installationen `RCB_TOKEN_ADMIN`) und „Anmelden“.
 3. Die Anmeldung gilt 12 Stunden. Oben rechts „Abmelden“, wenn du fertig bist.
 
-> Nach 5 falschen Eingaben ist die Anmeldung für 15 Minuten gesperrt.
+> Nach 5 falschen Eingaben ist die Anmeldung für 15 Minuten gesperrt (je Anschluss). Die Passphrase muss mindestens 24 Zeichen haben und darf nicht der Platzhalter aus `.env.example` sein, sonst startet die App nicht (Meldung im Log).
 
 ![Anmeldung](bilder/anmelden.png)
 
@@ -112,7 +112,10 @@ Datei wählen und „**Hochladen und prüfen**“. Es folgt die **Vorschau**:
 - Oben steht der Zähler „N Fehler, M Warnungen“; „nur fehlerhafte Zeilen“ blendet den Rest aus.
 - **Zellen direkt korrigieren**, Zeilen mit × löschen oder „Zeile hinzufügen“ – die Prüfung läuft sofort neu.
 - Der Entwurf wird auf dem Server gespeichert: Neu laden oder später weitermachen verliert nichts („offener Import-Entwurf“ unter „Teilnehmer“). „Korrigierte Daten als CSV“ liefert die bereinigte Datei.
-- „**Importieren**“ ist erst aktiv, wenn es keine Fehler mehr gibt. Wahl: **ergänzen** (zu den vorhandenen Teilnehmern) oder **ersetzen** (löscht vorher die bisherige Liste – mit Warnung und Bestätigung; die Warnung nennt, wie viele Teilnehmer seit dem letzten Import im Admin angelegt oder geändert wurden – diese Änderungen gingen verloren).
+- „**Importieren**“ ist erst aktiv, wenn es keine Fehler mehr gibt. Wahl:
+  - **ergänzen:** zu den vorhandenen Teilnehmern; eine schon vergebene Startnummer ist ein Fehler.
+  - **ändern per Startnummer:** vorhandene Nummern werden überschrieben, neue ergänzt. Bleiben Verein, Abzeichen oder außer Konkurrenz leer, gilt der bisherige Wert. Zeiten bleiben bei ihrer Startnummer; geänderte Merkmale stehen im Protokoll.
+  - **ersetzen:** löscht vorher die bisherige Liste, mit Warnung und Bestätigung; die Warnung nennt, wie viele Teilnehmer seit dem letzten Import im Admin angelegt oder geändert wurden (diese Änderungen gingen verloren). **Sobald es Zeiten gibt, ist „ersetzen“ gesperrt**, denn die Zeiten hängen an den Startnummern und lägen danach bei anderen Namen.
 - „Entwurf verwerfen“ bricht ab, ohne etwas zu übernehmen.
 
 ### 4a. Fahrer-Seite {#fahrer}
@@ -273,13 +276,15 @@ Das **Protokoll** zeigt alle Einträge mit Notiz, filterbar nach Startnummer und
 
 **Durchfahrten (Segmente):** Tipps, die für die Segmentzeiten nicht zählen, tragen „nicht gezählt: Doppeltipp“ (gleicher Fahrer, gleiches Gerät, unter 10 s), „Doppeltipp (anderes Gerät)“ (zweites Handy am selben Messpunkt, der frühere Tipp zählt), „am Ziel“ (Tipp innerhalb 10 s um die Zielzeit, z. B. Zwischenzeit auf der Ziellinie), „nicht auf der Strecke“ (Messpunkt gehört nicht zur Strecke des Fahrers) oder „mehr Tipps als Durchfahrten“. Ein Doppeltipp (beide Arten) lässt sich mit **„Doch werten“** (Notiz Pflicht) zurücknehmen,
 
-**Gerätedatei einlesen:** Kommt ein Handy nicht mehr ins Netz, auf dem Handy „Gerät zurücksetzen“ (zweimal tippen) → „Einträge exportieren“ und die Datei zum Laptop schicken. Unter „Protokoll“ (oder „Aufgaben“ → „Sonderfälle“) → „Gerätedatei einlesen“ die Datei wählen → „Vorschau“: Anzahl der Einträge, davon schon vorhanden (gleiche UUID, z. B. doch schon übertragen), neu und ungültig. Gehört die Datei zu einer anderen Veranstaltung, erscheint eine Warnung; übernommen wird dann nur nach Ankreuzen. „Übernehmen“ legt nur die neuen Einträge an, mit der Gerätekennung aus der Datei – mehrfaches Einlesen schadet nicht. Im Protokoll steht bei diesen Einträgen „aus Datei übernommen“ (Zeitpunkt im Tooltip und in der Protokoll-CSV). Geht nur, solange die Veranstaltung läuft – also **vor** dem Abschließen.
+**Gerätedatei einlesen** (auch Durchfahrten von Posten-Handys)**:** Kommt ein Handy nicht mehr ins Netz, auf dem Handy „Gerät zurücksetzen“ (zweimal tippen) → „Einträge exportieren“ und die Datei zum Laptop schicken. Unter „Protokoll“ (oder „Aufgaben“ → „Sonderfälle“) → „Gerätedatei einlesen“ die Datei wählen → „Vorschau“: Anzahl der Einträge, davon schon vorhanden (gleiche UUID, z. B. doch schon übertragen), neu und ungültig. Gehört die Datei zu einer anderen Veranstaltung, erscheint eine Warnung; übernommen wird dann nur nach Ankreuzen. „Übernehmen“ legt nur die neuen Einträge an, mit der Gerätekennung aus der Datei – mehrfaches Einlesen schadet nicht. Im Protokoll steht bei diesen Einträgen „aus Datei übernommen“ (Zeitpunkt im Tooltip und in der Protokoll-CSV). Geht nur, solange die Veranstaltung läuft – also **vor** dem Abschließen.
 
 ## 8. Ergebnis offiziell erklären {#ergebnis}
 
 ![Ergebnis](bilder/admin-ergebnis.png)
 
 Auf der Seite „Ergebnis“ steht die Ergebnistabelle (ein Klick auf eine Zeile öffnet den Fahrer, „Urkunde“ druckt eine einzelne). Solange es vorläufig ist, heißt es überall „Vorläufiges Ergebnis“. Wenn alles geprüft ist: „**Ergebnis offiziell erklären …**“ und im Dialog bestätigen (Notiz optional). Das geht erst, wenn **alle gestarteten Fahrer durch sind** (Zielzeit oder DNF/DSQ) und keine vorläufigen DSQ und keine Konflikte mehr offen sind – sonst ist der Button gesperrt, die Seite nennt den Grund (z. B. „Noch 3 Fahrer auf der Strecke“) und bietet „Fahrer auf der Strecke“ (gefilterte Teilnehmerliste) bzw. „Zu den Aufgaben“. Erst dann erscheint der Punkt auch in „Als Nächstes“. Danach steht überall „Offizielles Ergebnis, Stand hh:mm“. Bei einem Einspruch: „Zurücknehmen …“ mit Notiz – das Ergebnis ist wieder vorläufig.
+
+**Solange das Ergebnis offiziell ist,** nehmen Start, Ziel, Rennleitung und Posten keine Einträge mehr an: Sie zeigen „Ergebnis ist offiziell“, und auch eine Gerätedatei lässt sich erst danach übernehmen. Korrigieren kannst du im Admin weiter. Setzt du das Ergebnis auf „vorläufig“ zurück, schalten sich die Geräte von selbst frei, und dort zurückgestellte Einträge gehen automatisch durch.
 
 Mit **Segmenten** (Abschnitt 5a.3) hat die Tabelle je sichtbarem Auswertungsabschnitt und Durchfahrt eine Spalte (z. B. „Start→Kreisel“, „Kreisel→Berg (1)“ … „Kreisel→Ziel“; „–“ = nicht vorhanden, z. B. ab einer fehlenden Durchfahrt). Nutzen mehrere Strecken Segmente, steht der Streckenname davor. Segmentzeiten zählen nicht für Rang und Gesamtzeit.
 
@@ -329,7 +334,7 @@ Unter Vorlagen → *Installation* → **Impressum & Datenschutz**, einmal für d
 ### Öffentliche Daten {#oeffentliche-daten}
 
 Als Grundlage für eure eigene Datenschutzerklärung – sachlich, keine Rechtsberatung:
-- **Öffentlich ohne Anmeldung** (Startseite, Ergebnisse mit Druck und CSV, Zielmonitor): Name und Datum der aktiven Veranstaltung; je Teilnehmer Startnummer, Vor- und Nachname, Verein, Klasse (lässt auf Altersgruppe und Geschlecht schließen), Strecke, Fahrzeit, Platz, Status (DNS/DNF/DSQ, „unter Vorbehalt“, „a. K.“), ggf. Abzeichen; auf dem Zielmonitor die laufende Zeit seit dem Start. Abschnitts- und Rundenzeiten nur, wenn „Zwischenzeiten öffentlich“ an ist (Ranglisten-Seiten des Monitors zeigen sie immer).
+- **Öffentlich ohne Anmeldung** (Startseite, Ergebnisse mit Druck und CSV, Zielmonitor): nur die **aktive** Veranstaltung und **abgeschlossene mit offiziellem Ergebnis**, auch über eine Adresse mit Veranstaltungsnummer. Eine laufende, nicht aktive oder eine abgeschlossene ohne offizielles Ergebnis siehst nur du (angemeldet, auch als Vorschau). Gezeigt werden Name und Datum der Veranstaltung; je Teilnehmer Startnummer, Vor- und Nachname, Verein, Klasse (lässt auf Altersgruppe und Geschlecht schließen), Strecke, Fahrzeit, Platz, Status (DNS/DNF/DSQ, „unter Vorbehalt“, „a. K.“), ggf. Abzeichen; auf dem Zielmonitor die laufende Zeit seit dem Start. Abschnitts- und Rundenzeiten nur, wenn „Zwischenzeiten öffentlich“ an ist (Ranglisten-Seiten des Monitors zeigen sie immer).
 - **Nicht öffentlich**, nur im Admin: Jahrgang, Geschlecht, Merkmale, das Protokoll aller Ereignisse mit Notizen, Gerätekennungen und Uhrabweichungen der Helfer-Geräte.
 - **Speicherung:** alles in einer Datenbank auf eurem Server; keine Dienste Dritter, keine Werbung, keine Analyse, Schriften lokal. Der Admin setzt nach der Anmeldung ein Sitzungs-Cookie; Helfer-Geräte speichern ihre Zeiten und Einstellungen im Browser (für den Offline-Betrieb), bis die Veranstaltung beendet ist.
 - **Löschen:** Anonymisieren entfernt Namen, Vereine und Jahrgänge (Frist standardmäßig 6 Monate, nie automatisch), „Komplett löschen“ entfernt eine Veranstaltung restlos (Abschnitt 10). Sicherungen eures Servers enthalten die Daten weiter.
@@ -350,6 +355,9 @@ Als Grundlage für eure eigene Datenschutzerklärung – sachlich, keine Rechtsb
 - **Fahrer ohne Rang mit „a. K.“:** fährt außer Konkurrenz (Abschnitt 4) – gewollt, sonst auf der Fahrer-Seite umschalten.
 - **Wertung nach Klassensatzwechsel weg:** Der Wertungssatz gehört zu einem anderen Klassensatz und wurde zurückgesetzt – passenden Wertungssatz wählen (Abschnitt 5).
 - **Anmeldung gesperrt:** 15 Minuten warten.
+- **Gerät zeigt „N Einträge nicht angenommen“:** Der Grund steht dort. Meist hat ein Gerät einen Eintrag eines anderen geändert (das darf nur die Rennleitung), oder das Ergebnis ist offiziell. Die Einträge bleiben auf dem Gerät („Als Datei sichern“).
+- **Öffentliche Vorschau zeigt nichts:** Nach dem Update auf 0.1.7 einmal neu anmelden.
+- **Importieren: „ersetzen“ ist grau:** Es gibt schon Zeiten; stattdessen „ändern per Startnummer“.
 
 ## 12. Vorlagen: Klassen- und Wertungssätze verwalten {#vorlagen}
 

@@ -10,11 +10,11 @@ def test_ungueltige_klassen_config_verhindert_start(einstellungen, tmp_path):
     import pytest
     from fastapi.testclient import TestClient
 
-    from app.klassen import KlassenConfigFehler
     from app.main import create_app
+    from app.migrationen import MigrationsFehler
 
     kaputt = tmp_path / "k.toml"
     kaputt.write_text('[[klasse]]\nname = "A"\ngeschlecht = "m"\nalter_von = 5\nalter_bis = 1\n')
     e = dataclasses.replace(einstellungen, klassen_datei=str(kaputt))
-    with pytest.raises(KlassenConfigFehler), TestClient(create_app(e)):
+    with pytest.raises(MigrationsFehler, match="alter_von"), TestClient(create_app(e)):
         pass

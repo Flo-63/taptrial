@@ -115,7 +115,7 @@ def test_fehlklick_anderswo_fahrer_bleibt_erreichbar(server, neues_geraet):
 
     def zuruecknehmen(e):
         server.senden([{"uuid": str(_uuid.uuid4()), "art": "STORNO", "bezug_uuid": e["uuid"], "startnummer": 1,
-                        "erstellt_ms": e["erstellt_ms"] + 1, "geraet": "posten-x"}], rolle="posten")  # fmt: skip
+                        "erstellt_ms": t0 + 60_000, "geraet": "posten-x"}], rolle="posten")  # fmt: skip
 
     kreisel(3)
     kreisel(13)

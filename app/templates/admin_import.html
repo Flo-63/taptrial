@@ -37,7 +37,9 @@
     <input type="hidden" name="csrf" value="{{ csrf }}">
     {% if assistent %}<input type="hidden" name="assistent" value="1">{% endif %}
     <label class="check"><input type="radio" name="modus" value="ergaenzen" {{ 'checked' if modus == 'ergaenzen' }}> ergänzen (zu den vorhandenen {{ vorhandene }} Teilnehmern)</label>
-    <label class="check"><input type="radio" name="modus" value="ersetzen" {{ 'checked' if modus == 'ersetzen' }}> ersetzen</label>
+    <label class="check"><input type="radio" name="modus" value="aendern" {{ 'checked' if modus == 'aendern' }}> ändern per Startnummer (vorhandene Nummern überschreiben, neue ergänzen; leere Felder Verein, Abzeichen und außer Konkurrenz bleiben, wie sie sind)</label>
+    <label class="check"><input type="radio" name="modus" value="ersetzen" {{ 'checked' if modus == 'ersetzen' }} {{ 'disabled' if ersetzen_gesperrt }}> ersetzen</label>
+    {% if ersetzen_gesperrt %}<p class="alert a-info" id="ersetzen-gesperrt">Ersetzen geht nicht mehr, weil es schon Zeiten gibt: Sie hängen an den Startnummern und lägen danach bei anderen Namen.</p>{% endif %}
     {% if vorhandene %}<div class="alert a-warn stapel-eng" id="ersetzen-warnung" {{ 'hidden' if modus != 'ersetzen' }}><span>Ersetzen löscht die vorhandenen {{ vorhandene }} Teilnehmer.{% if geaendert %} <strong id="seit-import-geaendert">{{ geaendert }} davon wurden seit dem letzten Import im Admin angelegt oder geändert – diese Änderungen gehen verloren.</strong>{% endif %}</span>
       <label class="check"><input type="checkbox" name="bestaetigung" value="1"> Ja, vorhandene Teilnehmer ersetzen</label></div>{% endif %}
     <div><button type="submit" class="btn btn-primary" id="importieren" {{ 'disabled' if pruefung.anzahl_fehler or not zeilen }}>Importieren</button> {{ abbrechen(abbruch_ziel(request, "/admin/v/" ~ v.id ~ "/teilnehmer")) }}</div>

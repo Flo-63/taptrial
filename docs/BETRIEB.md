@@ -90,11 +90,11 @@ Die Gerätelinks und QR-Codes stehen im Admin unter „Geräte“. Sie gelten nu
 
 ## 3. Nach dem Rennen
 
-- [ ] Auf **allen** Geräten „0 ausstehend“ abwarten, bevor Apps geschlossen oder Handys ausgeschaltet werden. Zeigt ein Gerät „abgelehnt“, Screenshot machen und dem Veranstalter melden.
+- [ ] Auf **allen** Geräten „0 ausstehend“ abwarten, bevor Apps geschlossen oder Handys ausgeschaltet werden. Zeigt ein Gerät „abgelehnt“ bzw. „N Einträge nicht angenommen“, Grund notieren und dem Veranstalter melden.
 - [ ] Kommt ein Gerät mit „N ausstehend“ nicht mehr ins Netz: dort „Gerät zurücksetzen“ (zweimal tippen) → „Einträge exportieren“, Datei zum Laptop schicken und im Admin unter „Protokoll“ → „Gerätedatei einlesen“ übernehmen – **vor** dem Abschließen (danach ist die Veranstaltung schreibgeschützt).
 - [ ] Admin „Aufgaben“: keine offenen Zeiten, keine Konflikte; Fehler dort unter „Korrekturen“ beheben (jede Korrektur mit Notiz, alles im Protokoll).
 - [ ] Vorläufige DSQ entscheiden (bestätigen oder verwerfen).
-- [ ] „Ergebnis offiziell erklären“ (geht erst ohne offene vorläufige DSQ und Konflikte; bei Einspruch mit Notiz zurücknehmbar).
+- [ ] „Ergebnis offiziell erklären“ (geht erst ohne offene vorläufige DSQ und Konflikte; bei Einspruch mit Notiz zurücknehmbar). **Danach nehmen die Geräte nichts mehr an**; kommt noch ein Handy mit Einträgen, erst auf „vorläufig“ zurücksetzen: Dann gehen sie von selbst durch. Abgeschlossene Veranstaltungen bleiben nur mit offiziellem Ergebnis öffentlich lesbar.
 - [ ] Mit Segmenten: Ranglisten je Abschnitt unter „Drucken & Export“ drucken bzw. als CSV laden (öffentlich nur mit „Zwischenzeiten öffentlich“).
 - [ ] Ergebnisliste prüfen, exportieren (CSV) bzw. drucken/als PDF speichern (Admin → Drucken & Export → „Ergebnisliste als PDF“; eine Klasse pro Seite).
 - [ ] **Sicherung ziehen** (README, „Sicherung und Wiederherstellung“) und an zweitem Ort ablegen.
@@ -125,7 +125,11 @@ Die Gerätelinks und QR-Codes stehen im Admin unter „Geräte“. Sie gelten nu
 | Handy mit Gerätelink verloren | Admin → „Geräte“ → Token erneuern; allen anderen Geräten derselben Rolle den neuen Link geben. Ausstehende Einträge eines Geräts mit altem Link werden abgewiesen, deshalb vorher „0 ausstehend“ abwarten, wenn möglich. |
 | Handy wird weitergegeben / Daten sollen sofort weg | Unten auf der Seite „Gerät zurücksetzen“ (zweimal tippen). Nicht übertragene Einträge bleiben erhalten und können exportiert werden. |
 | Admin-Passphrase vergessen | Auf dem Server in `.env` nachsehen bzw. neue eintragen und `docker compose up -d` (nicht am Renntag). |
-| Anmeldung „Zu viele Fehlversuche“ | 15 Minuten warten (Sperre je IP) oder anderes Netz/Gerät. |
+| Anmeldung „Zu viele Fehlversuche“ | 15 Minuten warten (Sperre je Anschluss) oder anderes Netz/Gerät. Geräte im Rennen sind davon nie betroffen: Gültige Gerätelinks werden nicht gesperrt. |
+| App startet nicht: „Admin-Passphrase zu kurz“ oder „Platzhalter“ | Mindestens 24 Zeichen, nicht der Wert aus `.env.example` (`openssl rand -base64 32`), in `.env` eintragen, `docker compose up -d`. Alle Anmeldungen gelten danach neu. |
+| App startet nicht: „Schutz der Ereignisse fehlt“ oder „Migration … abgebrochen“ | Bei einer abgebrochenen Migration bleibt die Datenbank auf dem Stand davor; Ursache aus dem Log beheben und neu starten. Fehlt der Schutz der Ereignisse: Datei prüfen oder die letzte Sicherung zurückspielen (README). Vor jedem Update eine Sicherung ziehen. |
+| Gerät zeigt „N Einträge nicht angenommen“ | Grund steht dort. „Das Ergebnis ist offiziell“: im Admin auf „vorläufig“ zurücksetzen, die Einträge gehen dann von selbst durch. „stammt von einem anderen Gerät“: Änderung über die Rennleitung machen. „Uhr des Geräts prüfen“: Datum und Uhrzeit stellen, Eintrag als Datei sichern, Zeit im Admin prüfen. |
+| Import: „ersetzen“ gesperrt | Es gibt schon Zeiten. „Ändern per Startnummer“ oder „ergänzen“ nehmen. |
 | Daten kaputt | Letzte Sicherung zurückspielen (README). Geräte senden danach ausstehende Einträge erneut. |
 
 ## 5. Demo-Veranstaltung

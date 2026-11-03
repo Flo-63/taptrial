@@ -79,9 +79,9 @@ def test_monitor_status_und_vorbehalt(server, bildschirm):
     ziel(server, 1, starts[1] + 30_000)
     ziel(server, 3, starts[3] + 40_000)
     server.senden([{"uuid": "v1", "art": "STATUS", "startnummer": 1, "wert": "DSQ_VORLAEUFIG",
-                    "notiz": "Windschatten", "erstellt_ms": 1, "geraet": "ziel"},
+                    "notiz": "Windschatten", "erstellt_ms": 1_791_000_000_000, "geraet": "ziel"},
                    {"uuid": "d2", "art": "STATUS", "startnummer": 2, "wert": "DNF",
-                    "erstellt_ms": 1, "geraet": "ziel"}], rolle="ziel")  # fmt: skip
+                    "erstellt_ms": 1_791_000_000_000, "geraet": "ziel"}], rolle="ziel")  # fmt: skip
     page = bildschirm().new_page()
     page.goto(f"{server.url}/monitor")
     zeile1 = page.locator("#mon-klassen tr[data-nr='1']")
@@ -98,6 +98,7 @@ def test_monitor_status_und_vorbehalt(server, bildschirm):
     expect(page.locator("#mon-zaehlung")).to_contain_text("1 DNF")
 
 
+@pytest.mark.slow
 def test_monitor_blaettert_wenn_zu_viel(server, bildschirm):
     starts = server.starten(*range(1, 11), abstand_ms=1000)
     for nr in range(1, 11):
@@ -113,6 +114,7 @@ def test_monitor_blaettert_wenn_zu_viel(server, bildschirm):
     expect(page.locator("#mon-letzte tr[data-nr]").first).to_be_visible()  # bleibt sichtbar
 
 
+@pytest.mark.slow
 def test_ergebnisse_aktualisieren_sich_automatisch(server, bildschirm):
     starts = server.starten(1, 2)
     ziel(server, 1, starts[1] + 30_000)

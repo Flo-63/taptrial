@@ -14,7 +14,7 @@ FIXTURE = Path(__file__).resolve().parents[2] / "config" / "teilnehmer_beispiel.
 def db(tmp_path, monkeypatch):
     pfad = str(tmp_path / "v.sqlite3")
     monkeypatch.setenv("TAPTRIAL_DB_PFAD", pfad)
-    monkeypatch.setenv("TAPTRIAL_TOKEN_ADMIN", "a1")
+    monkeypatch.setenv("TAPTRIAL_TOKEN_ADMIN", "a1-passphrase-lang-genug-fuer-den-test")
     return pfad
 
 

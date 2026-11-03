@@ -1,4 +1,6 @@
 import logging
+import re
+from pathlib import Path
 
 import pytest
 
@@ -6,6 +8,7 @@ from app import umgebung
 from app.einstellungen import Einstellungen, EinstellungsFehler
 
 PFLICHT = ("TAPTRIAL_TOKEN_ADMIN",)
+LANG = "eine-ausreichend-lange-passphrase"
 FELDER = ("token_admin", "db_pfad", "klassen_datei", "wertungen_verzeichnis", "vertraute_proxys")
 
 
@@ -19,19 +22,19 @@ def saubere_umgebung(monkeypatch):
 
 def test_einstellungen_aus_umgebung(monkeypatch):
     monkeypatch.setenv("TAPTRIAL_DB_PFAD", "/data/x.sqlite3")
-    monkeypatch.setenv("TAPTRIAL_TOKEN_ADMIN", "a")
+    monkeypatch.setenv("TAPTRIAL_TOKEN_ADMIN", LANG)
     monkeypatch.setenv("TAPTRIAL_ADMIN_PIN", "9999")  # wird ignoriert (keine PIN mehr)
     e = Einstellungen.aus_umgebung()  # Start/Ziel-Tokens kommen aus der DB, nicht nötig
     assert e.db_pfad == "/data/x.sqlite3"
-    assert e.token_admin == "a" and not hasattr(e, "admin_pin")
+    assert e.token_admin == LANG and not hasattr(e, "admin_pin")
     assert e.klassen_datei.endswith("config/altersklassen.toml")
 
 
 @pytest.mark.parametrize("feld", FELDER)
 def test_alte_namen_gelten_weiter_mit_hinweis(monkeypatch, caplog, feld):
     """Bestehende Installationen mit RCB_… laufen unverändert weiter."""
-    wert = "127.0.0.1" if feld == "vertraute_proxys" else "alt-wert"
-    monkeypatch.setenv("RCB_TOKEN_ADMIN", "a")
+    wert = "127.0.0.1" if feld == "vertraute_proxys" else f"{LANG}-alt"
+    monkeypatch.setenv("RCB_TOKEN_ADMIN", LANG)
     monkeypatch.setenv(f"RCB_{feld.upper()}", wert)
     with caplog.at_level(logging.WARNING, logger="app.umgebung"):
         e = Einstellungen.aus_umgebung()
@@ -42,10 +45,10 @@ def test_alte_namen_gelten_weiter_mit_hinweis(monkeypatch, caplog, feld):
 
 
 def test_neuer_name_gewinnt_ohne_hinweis(monkeypatch, caplog):
-    monkeypatch.setenv("TAPTRIAL_TOKEN_ADMIN", "neu")
-    monkeypatch.setenv("RCB_TOKEN_ADMIN", "alt")
+    monkeypatch.setenv("TAPTRIAL_TOKEN_ADMIN", LANG + "-neu")
+    monkeypatch.setenv("RCB_TOKEN_ADMIN", LANG + "-alt")
     with caplog.at_level(logging.WARNING, logger="app.umgebung"):
-        assert Einstellungen.aus_umgebung().token_admin == "neu"
+        assert Einstellungen.aus_umgebung().token_admin == LANG + "-neu"
     assert not caplog.records
 
 
@@ -70,3 +73,36 @@ def test_zufallswerte_nur_ueber_fuer_tests():
     assert e.token_admin == "a"
     with pytest.raises(TypeError):
         Einstellungen()  # type: ignore[call-arg]
+
+
+def _env_beispiel() -> str:
+    text = (Path(__file__).resolve().parents[2] / ".env.example").read_text(encoding="utf-8")
+    return re.search(r"^TAPTRIAL_TOKEN_ADMIN=(.*)$", text, re.MULTILINE).group(1)
+
+
+def test_platzhalter_aus_env_example_startet_nicht(monkeypatch):
+    monkeypatch.setenv("TAPTRIAL_TOKEN_ADMIN", _env_beispiel())
+    with pytest.raises(
+        EinstellungsFehler, match=r"Platzhalter aus \.env\.example.*App startet nicht"
+    ):
+        Einstellungen.aus_umgebung()
+
+
+@pytest.mark.parametrize("wert", ["kurz", "x" * 23, "x" * 20 + "    "])
+def test_zu_kurze_passphrase_startet_nicht(monkeypatch, wert):
+    monkeypatch.setenv("TAPTRIAL_TOKEN_ADMIN", wert)
+    with pytest.raises(
+        EinstellungsFehler, match="zu kurz .mindestens 24 Zeichen.*App startet nicht"
+    ):
+        Einstellungen.aus_umgebung()
+
+
+def test_alter_name_wird_in_der_meldung_genannt(monkeypatch):
+    monkeypatch.setenv("RCB_TOKEN_ADMIN", "kurz")
+    with pytest.raises(EinstellungsFehler, match="zu kurz"):
+        Einstellungen.aus_umgebung()
+
+
+def test_passphrase_ab_24_zeichen_gilt(monkeypatch):
+    monkeypatch.setenv("TAPTRIAL_TOKEN_ADMIN", "x" * 24)
+    assert Einstellungen.aus_umgebung().token_admin == "x" * 24

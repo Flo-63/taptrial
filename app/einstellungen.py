@@ -14,10 +14,26 @@ PROJEKT_DIR = Path(__file__).resolve().parent.parent
 STANDARD_KLASSEN_DATEI = str(PROJEKT_DIR / "config" / "altersklassen.toml")
 STANDARD_WERTUNGEN = str(PROJEKT_DIR / "config" / "wertungen")
 PFLICHT = ("token_admin",)
+MIN_PASSPHRASE = 24
+PLATZHALTER = ("bitte-aendern",)  # steht in .env.example
 
 
 class EinstellungsFehler(RuntimeError):
     pass
+
+
+def _passphrase_pruefen(wert: str) -> None:
+    """Keine bekannte oder zu kurze Passphrase: Sie schützt Admin, API und Sitzungen."""
+    name = umgebung.name("token_admin")
+    tipp = "Bitte in .env ändern, z. B. mit „openssl rand -base64 32“."
+    if wert.strip().lower() in PLATZHALTER:
+        raise EinstellungsFehler(
+            f"{name} ist noch der Platzhalter aus .env.example. App startet nicht. {tipp}"
+        )
+    if len(wert.strip()) < MIN_PASSPHRASE:
+        raise EinstellungsFehler(
+            f"{name} ist zu kurz (mindestens {MIN_PASSPHRASE} Zeichen). App startet nicht. {tipp}"
+        )
 
 
 @dataclass(frozen=True)
@@ -45,6 +61,7 @@ class Einstellungen:
                 "TAPTRIAL_TOKEN_ADMIN ist die Admin-Passphrase (lange, zufällige Zeichenfolge, z. B. "
                 "„openssl rand -base64 32“) – in .env eintragen (Vorlage .env.example)."
             )
+        _passphrase_pruefen(werte["token_admin"])
         return cls(**werte)
 
     @classmethod

@@ -42,7 +42,7 @@ Stand `uv.lock` (Version 0.1.0); alle über PyPI, im Docker-Image enthalten.
 
 ## Entwicklung und Tests (nicht im Image)
 
-pytest (MIT), ruff (MIT), Playwright für Python (Apache-2.0), pytest-playwright (Apache-2.0), httpx (BSD-3-Clause) – nur für Entwicklung und Tests, werden nicht mit ausgeliefert.
+pytest (MIT), ruff (MIT), Playwright für Python (Apache-2.0), pytest-playwright (Apache-2.0), httpx (BSD-3-Clause), pytest-xdist und execnet (MIT) – nur für Entwicklung und Tests, werden nicht mit ausgeliefert.
 
 ## Basis-Images und Werkzeuge
 

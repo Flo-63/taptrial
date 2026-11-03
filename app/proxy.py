@@ -59,6 +59,20 @@ def client_ip(request, netze: Netze) -> str:
     return peer
 
 
+def absender(ip: str) -> str:
+    """Schlüssel für die Sperre nach Fehlversuchen: IPv6 je /64 (ein Anschluss hat alle Adressen
+    davon), IPv4 je Adresse."""
+    try:
+        adresse = ipaddress.ip_address(ip)
+    except ValueError:
+        return ip
+    if adresse.version == 4:
+        return str(adresse)
+    if adresse.ipv4_mapped is not None:
+        return str(adresse.ipv4_mapped)
+    return f"{ipaddress.ip_network(f'{adresse}/64', strict=False).network_address}/64"
+
+
 def ist_https(request, netze: Netze) -> bool:
     if request.url.scheme == "https":
         return True

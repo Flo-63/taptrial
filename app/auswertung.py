@@ -614,6 +614,7 @@ DOPPELTIPP_GRUENDE = (DOPPELTIPP, DOPPELTIPP_GERAET)
 AM_ZIEL = "am Ziel"
 NICHT_AUF_STRECKE = "nicht auf der Strecke"  # Messpunkt gehört nicht zur Strecke des Fahrers
 OHNE_PLATZ = "mehr Tipps als Durchfahrten"  # keine offene Durchfahrt mehr an diesem Messpunkt
+AUSSERHALB = "vor dem Start oder nach dem Ziel"
 
 
 def _doppeltipp(letzte: dict, schluessel, e, zeit, runde_wert) -> str | None:
@@ -717,6 +718,8 @@ def _segmente_auswerten(strecken, strecke_von, start_von, ziel_von, durchfahrten
             zu = sg.zuordnen(s.teile, fahrt, median)
             for u in zu.ohne_platz:
                 erg.nicht_gezaehlt[u] = OHNE_PLATZ
+            for u in zu.ausserhalb:
+                erg.nicht_gezaehlt[u] = AUSSERHALB
             erg.zeilen[nr] = [
                 DurchfahrtZeile(labels[j], innen[j], j,
                                 zeit[u] - start if u and start is not None else None, u,

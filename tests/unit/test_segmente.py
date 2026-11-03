@@ -501,3 +501,38 @@ def test_ein_durchgang_zweites_geraet_und_mehr_tipps_als_durchfahrten():
         "b": "Doppeltipp (anderes Gerät)",
         "d": "mehr Tipps als Durchfahrten",
     }
+
+
+RUNDEN = (
+    TeilDef((SegmentDef("Anlauf", START, "1"),)),
+    TeilDef((SegmentDef("Runde", "1", "1"),), 2, "Runde"),
+    TeilDef((SegmentDef("Auslauf", "1", ZIEL),)),
+)
+
+
+def _zugeordnet(fahrt):
+    z = sg.zuordnen(RUNDEN, fahrt)
+    return z, sg.segmentzeiten(RUNDEN, fahrt, z, {t.uuid: t.zeit_ms for t in fahrt.tipps})
+
+
+def test_tipp_vor_dem_start_verschiebt_keine_runde():
+    tipps = [Tipp("x", "1", 500), Tipp("a", "1", 1500), Tipp("b", "1", 2300), Tipp("c", "1", 3100)]
+    z, werte = _zugeordnet(Fahrt(1000, 4000, tipps))
+    assert z.positionen == ["a", "b", "c"] and z.ausserhalb == ["x"] and not z.ohne_platz
+    assert werte == [500, 800, 800, 900]
+
+
+def test_tipp_nach_dem_ziel_fuellt_keine_luecke():
+    z, werte = _zugeordnet(Fahrt(1000, 4000, [Tipp("a", "1", 1500), Tipp("n", "1", 9000)]))
+    assert z.positionen == ["a", None, None] and z.ausserhalb == ["n"]
+    assert werte == [500, None, None, None]
+
+
+def test_ohne_start_und_ziel_zaehlt_jeder_tipp():
+    z = sg.zuordnen(RUNDEN, Fahrt(None, None, [Tipp("a", "1", 500)]))
+    assert z.positionen == ["a", None, None] and not z.ausserhalb
+
+
+def test_pruefung_rundenblock_ohne_segmente_und_falsche_wiederholung():
+    fehler = sg.pruefen((TeilDef((), 0),), {})
+    assert any("Wiederholungen" in f for f in fehler)

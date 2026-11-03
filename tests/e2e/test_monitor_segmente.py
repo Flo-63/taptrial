@@ -127,6 +127,7 @@ def konfig_setzen(server, daten):
 
 
 @pytest.mark.parametrize("rundkurs", [None])
+@pytest.mark.slow
 def test_seiten_wechseln_live_bereich_je_seite_ohne_neuladen(browser, server, rundkurs):
     server.starten(1, 2)
     konfig_setzen(server, [{"aktion": "neu", "neuer_typ": "ergebnis", "seite_an_0": "1", "seite_dauer_0": "3",
@@ -245,6 +246,7 @@ def test_einstellungen_wirken_sofort_in_offener_vorschau(browser, server, rundku
 
 
 @pytest.mark.parametrize("rundkurs", ["messpunkte"])
+@pytest.mark.slow
 def test_seitenfolge_im_laufenden_rennen(browser, server, rundkurs):
     """Fehler 11.10.: Neue Zeiten auf einer Ranglisten-Seite setzten den Monitor bei jedem Abruf auf
     die erste Seite zurück – Seitenfolge und Dauer wirkten im laufenden Rennen nicht."""

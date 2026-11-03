@@ -13,6 +13,7 @@
     <div class="kpi"><strong id="gd-neu">{{ p.neu|length }}</strong><span>davon neu</span></div>
     <div class="kpi"><strong id="gd-ungueltig">{{ p.ungueltig }}</strong><span>ungültig (werden nicht übernommen)</span></div>
   </div>
+  {% if p.gruende %}<ul class="alert a-warn" id="gd-gruende">{% for g in p.gruende %}<li>{{ g }}</li>{% endfor %}</ul>{% endif %}
   {% if p.neu %}
   <h2 class="zwischentitel">Neue Einträge</h2>
   <div class="tbl-box tbl-box-kurz"><table class="tbl" id="gd-liste">

@@ -4,7 +4,10 @@ Admin-Token aus der Umgebung; Start- und Ziel-Token gehören zu genau einer Vera
 (DB) und gelten nur, solange diese läuft (nicht abgeschlossen/anonymisiert).
 """
 
+import hashlib
+import logging
 import secrets
+import time
 from dataclasses import dataclass
 from typing import Annotated, Any
 
@@ -13,8 +16,16 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import GeloeschterToken, Veranstaltung, token_fingerabdruck
+from app.proxy import absender, client_ip
+
+log = logging.getLogger(__name__)
 
 GERAETEROLLEN = ("start", "ziel", "rennleitung")
+# API: Sperre je Absender nach verschiedenen falschen Tokens. Gültige Gerätetokens sind nie
+# betroffen; ein Gerät mit altem Link zählt einmal, egal wie oft es sich meldet.
+API_MAX_FEHLVERSUCHE = 20
+API_SPERRE_S = 15 * 60
+API_MAX_ABSENDER = 10_000  # begrenzt den Speicher bei wechselnden Absendern
 
 
 def get_session(request: Request):
@@ -42,6 +53,11 @@ class VeranstaltungBeendet(HTTPException):
         super().__init__(410, "Veranstaltung beendet")
 
 
+class ZuVieleVersuche(HTTPException):
+    def __init__(self):
+        super().__init__(429, "Zu viele Fehlversuche. Bitte 15 Minuten warten.")
+
+
 @dataclass
 class Zugang:
     rolle: str
@@ -61,12 +77,45 @@ def token_aus_anfrage(request: Request) -> str | None:
     return request.headers.get("x-token") or request.query_params.get("token")
 
 
+def _fehlversuche(request: Request, sender: str) -> dict[str, float]:
+    """Noch zählende Fehlversuche des Absenders: Fingerabdruck des Tokens → Zeitpunkt."""
+    alle = request.app.state.api_fehlversuche
+    grenze = time.time() - API_SPERRE_S
+    aktuell = {t: z for t, z in alle.get(sender, {}).items() if z > grenze}
+    if aktuell:
+        alle[sender] = aktuell
+    else:
+        alle.pop(sender, None)
+    return aktuell
+
+
+def _fehlversuch_merken(request: Request, sender: str, token: str) -> None:
+    alle = request.app.state.api_fehlversuche
+    if sender not in alle and len(alle) >= API_MAX_ABSENDER:
+        # Der älteste nicht gesperrte Absender weicht: Viele neue Absender heben keine Sperre auf
+        del alle[min(alle, key=lambda s: (len(alle[s]) >= API_MAX_FEHLVERSUCHE,
+                                          max(alle[s].values(), default=0)))]  # fmt: skip
+    versuche = alle.setdefault(sender, {})
+    versuche[hashlib.sha256(token.encode()).hexdigest()] = time.time()
+    if len(versuche) == API_MAX_FEHLVERSUCHE:
+        log.warning("API gesperrt für %s (%d falsche Tokens)", sender, len(versuche))
+
+
 def zugang_fuer_token(request: Request, session: Session, token: str | None) -> Zugang | None:
+    """Gerätetokens zuerst und ohne Sperre: Kein Fremder im selben Netz sperrt Geräte im Rennen aus.
+    Der Admin-Token und unbekannte Tokens zählen je Absender."""
     if not token:
         return None
+    zugang = geraet_zugang(session, token)
+    if zugang is not None:
+        return zugang
+    sender = absender(client_ip(request, request.app.state.vertraute_proxys))
+    if len(_fehlversuche(request, sender)) >= API_MAX_FEHLVERSUCHE:
+        raise ZuVieleVersuche()
     if gleich(token, request.app.state.einstellungen.token_admin):
         return Zugang("admin", None)
-    return geraet_zugang(session, token)
+    _fehlversuch_merken(request, sender, token)
+    return None
 
 
 def geraet_zugang(session: Session, token: str) -> Zugang | None:
@@ -101,7 +150,7 @@ def geraet_zugang(session: Session, token: str) -> Zugang | None:
 def geraetetoken_gueltig(request: Request, session: Session, rolle: str, token: str | None) -> bool:
     try:
         z = zugang_fuer_token(request, session, token)
-    except (VeranstaltungBeendet, VeranstaltungGeloescht):
+    except (VeranstaltungBeendet, VeranstaltungGeloescht, ZuVieleVersuche):
         return False
     return z is not None and z.rolle == rolle
 

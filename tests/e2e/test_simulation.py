@@ -17,6 +17,8 @@ from app.klassen import lade_klassen
 from app.simulation import ZEITZONE, rennplan, sollergebnis, strecken_dra_a1, ueberholungen
 from tests.e2e.conftest import jetzt_synchronisieren, oeffnen, offline, warte_bis
 
+pytestmark = pytest.mark.slow
+
 
 @pytest.fixture(params=[2026, 7, 99], ids=lambda seed: f"seed{seed}")
 def plan(request):

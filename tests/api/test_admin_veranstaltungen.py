@@ -26,6 +26,8 @@ def test_filter_als_navigationspunkte(admin, v):
         alt = Veranstaltung(name="Alt", datum=date(2020, 5, 1), zustand="abgeschlossen")
         neu = s.query(Veranstaltung).filter_by(name="Frühjahr").one()
         neu.einrichtung_schritt = 2
+        for laufend in (neu, s.get(Veranstaltung, v.id)):  # „fällig“ ist nur die alte, an jedem Tag
+            laufend.anonymisieren_ab = date(2999, 1, 1)
         s.add(alt)
         s.commit()
     html = admin.get("/admin").text

@@ -4,6 +4,32 @@ Alle nennenswerten Änderungen an TapTrial. Format nach [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [0.1.7] – 2026-11-03
+
+### Sicherheit
+- **Rechte der Geräte:** Ein Gerät ändert im Betrieb nur noch seine eigenen Einträge; fremde nur die Rennleitung, Einträge des Admins und einen endgültigen DSQ nur der Admin. Der Server prüft das, nicht nur die Oberfläche.
+- **Offizielles Ergebnis:** Solange es offiziell ist, nehmen Geräte und Gerätedatei keine Einträge mehr an. Die Geräte zeigen das, behalten zurückgestellte Einträge und senden sie nach dem Zurücksetzen auf „vorläufig“ von selbst.
+- **Admin-Passphrase:** Die App startet nicht mehr mit dem Platzhalter aus `.env.example` oder mit weniger als 24 Zeichen. **Vor dem Update prüfen.**
+- **Fehlversuche:** Falsche Tokens an der API zählen je Absender und führen zu einer zeitlich begrenzten Sperre; gültige Gerätelinks sind nie betroffen.
+- **Öffentlich lesbar** sind nur noch die aktive Veranstaltung und abgeschlossene mit offiziellem Ergebnis. Die Vorschau wirkt nur mit Admin-Anmeldung; das Sitzungs-Cookie gilt dafür für die ganze Seite, bestehende Sitzungen melden sich für die Vorschau einmal neu an.
+- **Eingaben:** Der Server weist unplausible Zeiten und zu große Anfragen ab (10 MB, auch in der Caddy-Vorlage).
+
+### Neu
+- **Import „ändern per Startnummer“:** Vorhandene Nummern überschreiben, neue ergänzen; leere optionale Felder bleiben, wie sie sind.
+- **Gerät:** Abgelehnte Einträge nennen den Grund und lassen sich als Datei sichern.
+
+### Geändert
+- **Import „ersetzen“** ist gesperrt, sobald es Zeiten gibt (auch über die Kommandozeile).
+- **Migrationen** sind versioniert und laufen je Schritt ganz oder gar nicht. Ohne den Schutz der Ereignisse startet die App nicht. Daten-Nachzüge laufen einmal statt bei jedem Start.
+- **Tests auf GitHub:** Browser- und Container-Tests laufen als eigener Lauf „E2E“.
+
+### Behoben
+- **Gerätedatei:** Durchfahrten von Posten-Handys wurden als ungültig verworfen.
+- **Protokoll und CSV** blieben nach einer unplausiblen Zeit dauerhaft mit einem Fehler stehen; alle Ansichten vertragen auch vorhandene Altdaten.
+- **Segmente:** Ein Tipp vor dem Start oder nach dem Ziel verschob Rundenzeiten. Gesamtzeit und Rang waren nie betroffen.
+- **Tests** wären ab April 2027 ohne Codeänderung rot geworden.
+- **Gerät:** Eine Ablehnung am Posten blockierte alle ausstehenden Einträge und meldete fälschlich „Token ungültig“.
+
 ## [0.1.6] – 2026-11-01
 
 ### Neu

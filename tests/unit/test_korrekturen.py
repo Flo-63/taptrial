@@ -386,3 +386,23 @@ def test_zwei_aktive_direkt_schlaegt_fehl(session, v):
     w.aktiv = True
     with pytest.raises(IntegrityError):
         session.commit()
+
+
+@pytest.mark.parametrize(
+    ("tag", "eingabe", "erwartet"),
+    [
+        (date(2026, 3, 29), "01:59:59,9", "01:59:59,9"),
+        (date(2026, 3, 29), "03:00:00,0", "03:00:00,0"),  # Umstellung auf Sommerzeit
+        (date(2026, 10, 25), "01:59:59,9", "01:59:59,9"),
+        (date(2026, 10, 25), "03:00:00,0", "03:00:00,0"),  # Umstellung auf Winterzeit
+    ],
+)
+def test_uhrzeit_um_die_zeitumstellung(tag, eingabe, erwartet):
+    assert k.uhrzeit_text(k.uhrzeit_zu_ms(tag, eingabe)) == erwartet
+
+
+def test_doppelte_stunde_der_zeitumstellung_gilt_einmal_eindeutig():
+    """Am Tag der Winterzeit gibt es 02:30 zweimal: gemeint ist die erste (fold = 0)."""
+    ms = k.uhrzeit_zu_ms(date(2026, 10, 25), "02:30:00")
+    assert k.uhrzeit_text(ms) == "02:30:00,0"
+    assert k.uhrzeit_zu_ms(date(2026, 10, 25), "03:00:00") - ms == 90 * 60_000

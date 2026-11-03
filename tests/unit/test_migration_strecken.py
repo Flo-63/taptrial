@@ -92,6 +92,8 @@ def test_migration_kopie_des_backups(tmp_path, backup):
     original_hash = hashlib.sha256(backup.read_bytes()).hexdigest()
     kopie = tmp_path / backup.name
     shutil.copy2(backup, kopie)  # nur eine KOPIE migrieren, das Original bleibt unverändert
+    unveraendert = tmp_path / f"vorher-{backup.name}"
+    shutil.copy2(backup, unveraendert)
     schon_strecken = hat_strecken(kopie)
     vorher = ergebnis_vorher(kopie)
     ergebnisse, strecken = nachher(kopie)
@@ -101,7 +103,7 @@ def test_migration_kopie_des_backups(tmp_path, backup):
         assert hashlib.sha256(backup.read_bytes()).hexdigest() == original_hash
         return
     assert strecken and all(len(liste) == 1 for liste in strecken.values())
-    con = sqlite3.connect(backup)
+    con = sqlite3.connect(unveraendert)
     laengen = dict(con.execute("SELECT id, strecke_km FROM veranstaltung")) if "strecke_km" in {
         r[1] for r in con.execute("PRAGMA table_info(veranstaltung)")} else {}  # fmt: skip
     con.close()

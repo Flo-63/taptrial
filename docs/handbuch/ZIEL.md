@@ -26,6 +26,8 @@
 - **Handy neu starten / App geschlossen:** über das Symbol öffnen – nichts geht verloren.
 
 ## Nach dem Rennen
+„**Ergebnis ist offiziell**“: keine Einträge mehr. „**N Einträge nicht angenommen**“: der Rennleitung melden, sie bleiben auf dem Gerät.
+
 1. Warten, bis **0 ausstehend** steht.
 2. Nach dem Abschluss durch den Veranstalter die App **einmal öffnen** („Veranstaltung beendet – Daten auf diesem Gerät gelöscht“).
 3. Bei „**N Einträge nicht übertragen**“: „Einträge exportieren“ und an die Rennleitung schicken. Meldet ein neuer Link „**N Einträge einer früheren Veranstaltung**“: „Als Datei sichern“ – sie gehen nicht an die neue.

@@ -223,7 +223,7 @@ def test_aktive_veranstaltung_bleibt_aktiv_laufende_blockiert(db, capsys):
         from app.auth import Zugang
 
         api.ereignisse_annehmen(s, Zugang("start", echt), api.Batch(ereignisse=[
-            {"uuid": "s1", "art": "START", "startnummer": 1, "zeit_ms": 1, "erstellt_ms": 1, "geraet": "g"}]))  # fmt: skip
+            {"uuid": "s1", "art": "START", "startnummer": 1, "zeit_ms": 1_791_000_000_000, "erstellt_ms": 1_791_000_000_000, "geraet": "g"}]))  # fmt: skip
     engine.dispose()
     assert demo.main(["--db", db, "--ersetzen"]) == 1  # laufende Veranstaltung wird nicht verdrängt
     assert "läuft" in capsys.readouterr().err

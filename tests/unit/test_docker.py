@@ -44,6 +44,7 @@ def test_compose_mit_caddy():
     assert caddy["network_mode"] == "service:app"  # Caddy kommt von 127.0.0.1 → vertrauter Proxy
     assert "./Caddyfile:/etc/caddy/Caddyfile:ro" in caddy["volumes"]
     caddyfile = lesen("Caddyfile")
+    assert "max_size 10MB" in caddyfile  # wie MAX_ANFRAGE_BYTES in app/main.py
     assert "{$TAPTRIAL_DOMAIN}" in caddyfile and "reverse_proxy 127.0.0.1:8000" in caddyfile
     assert Einstellungen.fuer_tests().vertraute_proxys == "127.0.0.1,::1"
 

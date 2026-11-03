@@ -322,12 +322,12 @@ def test_ungueltige_wertungsdatei_verhindert_start(einstellungen, tmp_path):
     from fastapi.testclient import TestClient
 
     from app.main import create_app
-    from app.wertung import WertungsConfigFehler
+    from app.migrationen import MigrationsFehler
 
     (tmp_path / "w").mkdir()
     (tmp_path / "w" / "kaputt.toml").write_text('name = "X"\nart = "falsch"\n')
     e = dataclasses.replace(einstellungen, wertungen_verzeichnis=str(tmp_path / "w"))
-    with pytest.raises(WertungsConfigFehler), TestClient(create_app(e)):
+    with pytest.raises(MigrationsFehler, match="art muss"), TestClient(create_app(e)):
         pass
 
 
@@ -335,6 +335,7 @@ def test_bestimmte_veranstaltung_fuer_pdf_export(client, v):
     fahrt(client, 1, 30)
     with client.app.state.sessionmaker() as s:
         s.add(Veranstaltung(name="Neu aktiv", datum=date(2026, 11, 1), aktiv=False))
+        k.ergebnis_offiziell(s, s.get(Veranstaltung, v.id), "fertig")  # abgeschlossen und offiziell
         s.get(Veranstaltung, v.id).zustand = "abgeschlossen"  # Laufende erst abschließen
         s.commit()
         k.aktiv_setzen(s, s.query(Veranstaltung).filter_by(name="Neu aktiv").one())

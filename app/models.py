@@ -164,6 +164,9 @@ class Ereignis(Basis):
     # Messpunkt (Start/Ziel) des Geräts bei START/ZIEL bzw. einer manuellen Zeit;
     # None = Standard-Start/-Ziel. Vom Server gesetzt, nie vom Gerät (früher in „wert“).
     ort_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Zugang, mit dem das Ereignis ankam („start“, „ziel-4“, „posten-5“, „admin“, „datei“): vom
+    # Server gesetzt, Grundlage für „nur eigene Einträge“ (app/rechte.py). Leer = ältere Einträge.
+    zugang: Mapped[str | None] = mapped_column(String(30), nullable=True)
 
 
 for _aktion in ("UPDATE", "DELETE"):

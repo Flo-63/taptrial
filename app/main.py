@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app import marke, saetze, strecken
+from app import marke
 from app.admin import nicht_angemeldet
 from app.admin import router as admin_router
 from app.admin_auth import NichtAngemeldet
@@ -15,9 +15,10 @@ from app.admin_geraetedatei import router as geraetedatei_router
 from app.admin_import import router as import_router
 from app.admin_saetze import router as saetze_router
 from app.api import router as api_router
-from app.db import erzeuge_engine, erzeuge_sessionmaker, tabellen_anlegen
+from app.db import erzeuge_engine, erzeuge_sessionmaker
 from app.einstellungen import Einstellungen, EinstellungsFehler
 from app.hilfe import router as hilfe_router
+from app.migrationen import MigrationsFehler, migrieren
 from app.oeffentlich import router as oeffentlich_router
 from app.proxy import Netze
 from app.seiten import STATIC_DIR
@@ -25,6 +26,53 @@ from app.seiten import router as seiten_router
 from app.version import VERSION
 
 log = logging.getLogger(__name__)
+
+MAX_ANFRAGE_BYTES = 10_000_000  # größter echter Fall: Gerätedatei (2 MB) als Formularfeld
+
+
+class AnfrageBegrenzen:
+    """Lehnt zu große Anfragen ab, bevor jemand sie liest: auch ohne Anmeldung, auch ohne
+    Content-Length. Sonst füllen anonyme Anfragen den Speicher der einzigen Instanz."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        zu_gross = False
+        gelesen = 0
+
+        async def _ablehnen():
+            await send({"type": "http.response.start", "status": 413,
+                        "headers": [(b"content-type", b"text/plain; charset=utf-8")]})  # fmt: skip
+            await send({"type": "http.response.body", "body": "Anfrage zu groß.".encode()})
+
+        laenge = dict(scope["headers"]).get(b"content-length", b"")
+        if laenge.isdigit() and int(laenge) > MAX_ANFRAGE_BYTES:
+            await _ablehnen()
+            return
+
+        async def begrenzt():
+            nonlocal gelesen, zu_gross
+            nachricht = await receive()
+            gelesen += len(nachricht.get("body", b""))
+            if gelesen > MAX_ANFRAGE_BYTES and not zu_gross:
+                zu_gross = True
+                await _ablehnen()
+                return {"type": "http.disconnect"}
+            return nachricht
+
+        async def senden(nachricht):
+            if not zu_gross:  # die Ablehnung ist schon gesendet
+                await send(nachricht)
+
+        try:
+            await self.app(scope, begrenzt, senden)
+        except Exception:
+            if not zu_gross:
+                raise
 
 
 def create_app(einstellungen: Einstellungen | None = None) -> FastAPI:
@@ -42,20 +90,21 @@ def create_app(einstellungen: Einstellungen | None = None) -> FastAPI:
         app.state.einstellungen = einstellungen
         app.state.vertraute_proxys = Netze.aus_text(einstellungen.vertraute_proxys)
         engine = erzeuge_engine(einstellungen.db_pfad)
-        tabellen_anlegen(engine)
-        with erzeuge_sessionmaker(engine)() as session:
+        try:
             # erster Start: Dateien aus config/ als Sätze; Migration bestehender Veranstaltungen
-            saetze.standardsaetze_anlegen(
-                session, einstellungen.klassen_datei, einstellungen.wertungen_verzeichnis
-            )
-            saetze.veranstaltungen_zuordnen(session)
-            strecken.migrieren(session)  # Je Veranstaltung mindestens eine Strecke
+            migrieren(engine, einstellungen.klassen_datei, einstellungen.wertungen_verzeichnis)
+        except MigrationsFehler as e:
+            log.error("%s", e)
+            engine.dispose()
+            raise
         app.state.engine = engine
         app.state.sessionmaker = erzeuge_sessionmaker(engine)
         yield
         engine.dispose()
 
     app = FastAPI(title=marke.NAME, version=VERSION, lifespan=lifespan)
+    app.state.api_fehlversuche = {}  # Absender → falsche Tokens (app/auth.py)
+    app.add_middleware(AnfrageBegrenzen)
 
     @app.get("/up")
     def up() -> dict[str, str]:

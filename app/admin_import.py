@@ -2,7 +2,8 @@
 
 Hochladen legt einen Entwurf an (serverseitig gespeichert). Die Vorschau zeigt alle Zeilen mit
 Fehlern/Warnungen je Zelle; Zellen sind bearbeitbar, jede Änderung wird sofort neu geprüft und
-gespeichert. Importiert wird erst, wenn alles fehlerfrei ist (ergänzen oder ersetzen).
+gespeichert. Importiert wird erst, wenn alles fehlerfrei ist (ergänzen, ändern per Startnummer oder
+ersetzen; ersetzen nur, solange es keine Zeiten gibt).
 """
 
 import json
@@ -19,18 +20,21 @@ from app.admin import AdminDep, _seite, _veranstaltung, _zurueck
 from app.auth import SessionDep
 from app.models import ImportEntwurf, Veranstaltung
 from app.teilnehmer_import import (
+    ERSETZEN_GESPERRT,
     SPALTEN,
     TRENNZEICHEN,
     ImportFehler,
     csv_lesen,
     pruefe_zeilen,
     vergebene_startnummern,
+    zeilen_aendern,
     zeilen_als_csv,
     zeilen_importieren,
+    zeiten_vorhanden,
 )
 
 router = APIRouter(prefix="/admin/v/{vid}/import", include_in_schema=False)
-MODI = ("ergaenzen", "ersetzen")
+MODI = ("ergaenzen", "aendern", "ersetzen")
 
 
 def _entwurf(session, v: Veranstaltung) -> ImportEntwurf | None:
@@ -110,6 +114,9 @@ def vorschau(
         return _zurueck(f"/admin/v/{v.id}/teilnehmer", fehler="Kein Import-Entwurf vorhanden.")
     zeilen = json.loads(e.zeilen_json)
     modus = modus if modus in MODI else "ergaenzen"
+    gesperrt = zeiten_vorhanden(session, v)
+    if gesperrt and modus == "ersetzen":
+        modus = "ergaenzen"
     p = pruefung(session, v, zeilen, modus)
     meldungen = {}
     for art in ("fehler", "warnungen"):
@@ -119,7 +126,7 @@ def vorschau(
         request, "admin_import.html", v=v, reiter="teilnehmer", hilfe="import", entwurf=e, zeilen=zeilen,
         spalten=SPALTEN, pruefung=p, meldungen=meldungen, modus=modus,
         vorhandene=len(vergebene_startnummern(session, v)),
-        geaendert=k.seit_import_geaendert(session, v),
+        geaendert=k.seit_import_geaendert(session, v), ersetzen_gesperrt=gesperrt,
         assistent=bool(request.query_params.get("assistent")),
     )  # fmt: skip
 
@@ -163,6 +170,8 @@ def uebernehmen(
     if not v.laufend:
         return _zurueck(vorschau_url, fehler=f"Veranstaltung ist {v.zustand} und schreibgeschützt.")
     ersetzen = modus == "ersetzen"
+    if ersetzen and zeiten_vorhanden(session, v):  # vor der Bestätigung: sie hilft hier nicht
+        return _zurueck(vorschau_url, fehler=ERSETZEN_GESPERRT)
     if ersetzen and vergebene_startnummern(session, v) and not bestaetigung:
         geaendert = k.seit_import_geaendert(session, v)
         mehr = (f" {geaendert} Teilnehmer wurden seit dem letzten Import im Admin angelegt oder geändert."
@@ -172,9 +181,13 @@ def uebernehmen(
             fehler=f"Ersetzen löscht alle vorhandenen Teilnehmer – bitte bestätigen.{mehr}",
         )
     try:
-        n = zeilen_importieren(
-            session, v, json.loads(e.zeilen_json), k.klassen_von(session, v), ersetzen
-        )
+        zeilen, klassen = json.loads(e.zeilen_json), k.klassen_von(session, v)
+        if modus == "aendern":
+            n, merkmale = zeilen_aendern(session, v, zeilen, klassen)
+            for t, merkmal, wert in merkmale:
+                k.merkmal_protokollieren(session, v, t, merkmal, wert)
+        else:
+            n = zeilen_importieren(session, v, zeilen, klassen, ersetzen)
     except ImportFehler as fehler:
         return _zurueck(
             vorschau_url, fehler="Import nicht möglich: " + "; ".join(fehler.fehler[:5])

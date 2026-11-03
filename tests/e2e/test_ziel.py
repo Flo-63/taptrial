@@ -367,7 +367,7 @@ def test_bestaetigter_dsq_nur_im_admin_aenderbar(server, neues_geraet):
     server.starten(1, 2)
     server.senden(
         [{"uuid": "dsq-1", "art": "STATUS", "startnummer": 1, "wert": "DSQ",
-          "notiz": "bestätigt", "erstellt_ms": 1, "geraet": "admin"}],
+          "notiz": "bestätigt", "erstellt_ms": 1_791_000_000_000, "geraet": "admin"}],
         rolle="admin",
     )  # fmt: skip
     ziel = oeffnen(neues_geraet(), server, "ziel")
@@ -418,7 +418,7 @@ def test_dns_vom_start_wird_in_erfassen_ausgeblendet(server, neues_geraet):
                 "art": "STATUS",
                 "startnummer": 2,
                 "wert": "DNS",
-                "erstellt_ms": 1,
+                "erstellt_ms": 1_791_000_000_000,
                 "geraet": "start-api",
             }
         ]

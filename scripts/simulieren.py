@@ -10,7 +10,7 @@ Nummer“ und Zuordnung), 1 DNS, 1 DNF. Zwei Strecken wie der Vorschlag aus DRA 
 (Jugendklassen, fünf Jugendliche) und „20 km“ (alle anderen). Zusätzlich ein vorläufiger DSQ und –
 wenn nicht abgeschaltet – die Leistungswertung A.1. Danach Server starten und ansehen:
 
-    TAPTRIAL_TOKEN_ADMIN=admin uv run uvicorn app.main:app
+    TAPTRIAL_TOKEN_ADMIN=admin-passphrase-nur-lokal-zum-testen uv run uvicorn app.main:app
     http://localhost:8000/ergebnisse   ·   /monitor   ·   /admin (Admin-Token „admin“)
 """
 

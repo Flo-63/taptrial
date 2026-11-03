@@ -23,7 +23,7 @@ PROJEKT = Path(__file__).resolve().parents[2]
 TOKENS = {
     "start": "e2e-start",
     "ziel": "e2e-ziel",
-    "admin": "e2e-admin",
+    "admin": "e2e-admin-passphrase-fuer-tests",
     "posten": "e2e-posten-kreisel",
     "posten-berg": "e2e-posten-berg",
     "start-nord": "e2e-start-nord",  # Weiterer Startort (rundkurs „orte“)
@@ -296,6 +296,28 @@ def rundkurs() -> str | None:
     return None
 
 
+def _uvicorn_starten(env: dict, log_pfad: Path) -> tuple[subprocess.Popen, int]:
+    """Startet uvicorn auf einem freien Port. Bei parallelen Läufen kann ein anderer Test denselben
+    Port wählen; /up allein könnte dann der fremde Server beantworten. Darum zählt nur die Meldung
+    des eigenen Prozesses, dass er gebunden hat – sonst nächster Versuch mit neuem Port."""
+    for _ in range(5):
+        port = _freier_port()
+        with log_pfad.open("wb") as log:
+            proc = subprocess.Popen(
+                [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1",
+                 "--port", str(port)],
+                cwd=PROJEKT, env=env, stdout=subprocess.DEVNULL, stderr=log,
+            )  # fmt: skip
+        ende = time.monotonic() + 30
+        while proc.poll() is None and time.monotonic() < ende:
+            if b"Uvicorn running on" in log_pfad.read_bytes():
+                return proc, port
+            time.sleep(0.02)
+        proc.kill()
+        proc.wait()
+    raise RuntimeError(f"Server startet nicht: {log_pfad.read_text(errors='replace')[-2000:]}")
+
+
 @pytest.fixture
 def server(tmp_path, teilnehmer_anzahl, teilnehmer_liste, zwei_strecken, rundkurs):
     """Echter Server mit frischer DB.
@@ -307,12 +329,12 @@ def server(tmp_path, teilnehmer_anzahl, teilnehmer_liste, zwei_strecken, rundkur
     daten.mkdir()
     db = daten / "zeitfahren.sqlite3"
     _seed(str(db), teilnehmer_anzahl, teilnehmer_liste, zwei_strecken, rundkurs)
-    port = _freier_port()
     secrets_env = {
         "TAPTRIAL_TOKEN_ADMIN": TOKENS["admin"],
     }
     image = umgebung.wert("e2e_image")
     if image:
+        port = _freier_port()
         daten.chmod(0o777)
         db.chmod(0o666)
         name = f"rcb-e2e-{uuid.uuid4().hex[:8]}"
@@ -326,14 +348,9 @@ def server(tmp_path, teilnehmer_anzahl, teilnehmer_liste, zwei_strecken, rundkur
         def stop():
             subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
     else:
-        proc = subprocess.Popen(
-            [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1",
-             "--port", str(port)],
-            cwd=PROJEKT,
-            env={**os.environ, "TAPTRIAL_DB_PFAD": str(db), **secrets_env},
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )  # fmt: skip
+        proc, port = _uvicorn_starten(
+            {**os.environ, "TAPTRIAL_DB_PFAD": str(db), **secrets_env}, tmp_path / "server.log"
+        )
 
         def stop():
             proc.terminate()
@@ -343,6 +360,14 @@ def server(tmp_path, teilnehmer_anzahl, teilnehmer_liste, zwei_strecken, rundkur
     _warte_auf_server(url, stop)
     yield Server(url)
     stop()
+
+
+@pytest.fixture(autouse=True)
+def offene_seiten_schliessen(browser):
+    """Offene Monitorseiten fragen sonst bis zum Ende der Sitzung weiter ab."""
+    yield
+    for ctx in list(browser.contexts):
+        ctx.close()
 
 
 @pytest.fixture

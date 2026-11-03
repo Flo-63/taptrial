@@ -135,14 +135,14 @@ def test_sperre_15_minuten_nach_5_fehlversuchen(client, caplog, monkeypatch):
 def test_cookie_eigenschaften_rolle_und_manipulation(client):
     r = client.post("/admin/anmelden", data={"token": "tok-admin"}, follow_redirects=False)
     kopf = r.headers["set-cookie"].lower()
-    assert "httponly" in kopf and "samesite=strict" in kopf and "path=/admin" in kopf
+    assert "httponly" in kopf and "samesite=strict" in kopf and "path=/" in kopf
     assert "max-age=43200" in kopf  # 12 h
     assert r.headers["set-cookie"].split("=", 1)[1].startswith("admin.")  # Rolle in der Sitzung
     wert = r.headers["set-cookie"].split("=", 1)[1].split(";")[0]
     _rolle, ablauf, sig = wert.split(".")
-    client.cookies.set(admin_auth.COOKIE, f"superadmin.{ablauf}.{sig}", path="/admin")
+    client.cookies.set(admin_auth.COOKIE, f"superadmin.{ablauf}.{sig}", path="/")
     assert client.get("/admin").status_code == 401  # Rolle nicht fälschbar
-    client.cookies.set(admin_auth.COOKIE, "admin.9999999999.falsch", path="/admin")
+    client.cookies.set(admin_auth.COOKIE, "admin.9999999999.falsch", path="/")
     assert client.get("/admin").status_code == 401
 
 
@@ -439,7 +439,7 @@ def test_https_und_geraetelinks_hinter_proxy(ueber_proxy):
     r = ueber_proxy.post("/admin/anmelden", data={"token": "tok-admin"},
                          headers={"X-Forwarded-Proto": "https"}, follow_redirects=False)  # fmt: skip
     assert "secure" in r.headers["set-cookie"].lower()
-    ueber_proxy.cookies.set(admin_auth.COOKIE, r.cookies[admin_auth.COOKIE], path="/admin")
+    ueber_proxy.cookies.set(admin_auth.COOKIE, r.cookies[admin_auth.COOKIE], path="/")
     html = ueber_proxy.get("/admin", headers={"X-Forwarded-Proto": "https"}).text
     csrf_wert = csrf(html)
     ueber_proxy.post("/admin/veranstaltungen", data={"csrf": csrf_wert, "name": "X",

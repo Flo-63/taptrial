@@ -4,7 +4,8 @@ Keine zusätzliche Abhängigkeit: Cookie = Rolle + Ablaufzeit + HMAC-SHA256 (Sch
 Ändert sich der Token, werden alle Sitzungen ungültig. Die Rolle steckt schon heute in der Sitzung,
 damit später Benutzer mit Rollen (Super-Admin, Race-Admin) andocken können.
 Formulare tragen ein CSRF-Token. Nach 5 Fehlversuchen ist die IP 15 Minuten gesperrt
-(Client-IP hinter dem Proxy siehe app/proxy.py).
+(Client-IP hinter dem Proxy siehe app/proxy.py). Das Cookie gilt für die ganze Seite: Auch die
+öffentlichen Ansichten erkennen so die Admin-Vorschau; HttpOnly und SameSite=strict bleiben.
 """
 
 import hashlib
@@ -16,13 +17,16 @@ from dataclasses import dataclass
 from fastapi import HTTPException, Request
 from fastapi.responses import Response
 
-from app.proxy import client_ip, ist_https
+from app.proxy import absender, client_ip, ist_https
 
 log = logging.getLogger(__name__)
 
 COOKIE = "rcb_admin"
+COOKIE_PFAD = "/"
+ALTER_COOKIE_PFAD = "/admin"
 SITZUNG_S = 12 * 3600
 MAX_FEHLVERSUCHE = 5
+MAX_ABSENDER = 10_000  # begrenzt den Speicher bei wechselnden Absendern
 SPERRE_S = 15 * 60
 ROLLE_ADMIN = "admin"
 
@@ -55,10 +59,12 @@ def cookie_wert(request: Request, rolle: str = ROLLE_ADMIN, jetzt: float | None 
 
 def sitzung(request: Request) -> Sitzung | None:
     teile = request.cookies.get(COOKIE, "").split(".")
-    if len(teile) != 3 or not teile[1].isdigit() or int(teile[1]) < time.time():
+    if len(teile) != 3 or not (teile[1].isascii() and teile[1].isdigit()) or len(teile[1]) > 20:
         return None
     rolle, ablauf, sig = teile
-    if not hmac.compare_digest(sig, _signatur(request, f"{rolle}|{ablauf}")):
+    if int(ablauf) < time.time():
+        return None
+    if not hmac.compare_digest(sig.encode(), _signatur(request, f"{rolle}|{ablauf}").encode()):
         return None
     return Sitzung(rolle, int(ablauf))
 
@@ -75,8 +81,13 @@ def sitzung_setzen(request: Request, antwort: Response, rolle: str = ROLLE_ADMIN
         httponly=True,
         samesite="strict",
         secure=ist_https(request, request.app.state.vertraute_proxys),
-        path="/admin",
+        path=COOKIE_PFAD,
     )
+
+
+def sitzung_loeschen(antwort: Response) -> None:
+    antwort.delete_cookie(COOKIE, path=COOKIE_PFAD)
+    antwort.delete_cookie(COOKIE, path=ALTER_COOKIE_PFAD)  # Sitzungen von vor 0.1.7
 
 
 def csrf_token(request: Request) -> str:
@@ -84,7 +95,7 @@ def csrf_token(request: Request) -> str:
 
 
 def csrf_pruefen(request: Request, token: str | None) -> None:
-    if not token or not hmac.compare_digest(token, csrf_token(request)):
+    if not token or not hmac.compare_digest(token.encode(), csrf_token(request).encode()):
         raise HTTPException(403, "Formular abgelaufen. Bitte Seite neu laden.")
 
 
@@ -95,13 +106,16 @@ def admin_token_gueltig(request: Request, token: str | None) -> bool:
 
 def _ip(request: Request) -> str:
     """Client-IP; X-Forwarded-For nur, wenn die Anfrage vom vertrauten Proxy kommt."""
-    return client_ip(request, request.app.state.vertraute_proxys)
+    return absender(client_ip(request, request.app.state.vertraute_proxys))
 
 
 def gesperrt(ip: str) -> bool:
     jetzt = time.time()
     versuche = [t for t in _fehlversuche.get(ip, []) if jetzt - t < SPERRE_S]
-    _fehlversuche[ip] = versuche
+    if versuche:
+        _fehlversuche[ip] = versuche
+    else:
+        _fehlversuche.pop(ip, None)
     return len(versuche) >= MAX_FEHLVERSUCHE
 
 
@@ -113,6 +127,10 @@ def token_pruefen(request: Request, token: str | None) -> bool:
         raise HTTPException(429, "Zu viele Fehlversuche. Bitte 15 Minuten warten.")
     if admin_token_gueltig(request, token):
         return True
+    if ip not in _fehlversuche and len(_fehlversuche) >= MAX_ABSENDER:
+        # Der älteste nicht gesperrte Absender weicht: Viele neue Absender heben keine Sperre auf
+        del _fehlversuche[min(_fehlversuche, key=lambda s: (len(_fehlversuche[s]) >= MAX_FEHLVERSUCHE,
+                                                            max(_fehlversuche[s], default=0)))]  # fmt: skip
     _fehlversuche.setdefault(ip, []).append(time.time())
     log.warning("Admin-Anmeldung fehlgeschlagen von %s (%d. Fehlversuch)", ip,
                 len(_fehlversuche[ip]))  # fmt: skip

@@ -58,7 +58,7 @@ Ohne Docker (Entwicklung): Python 3.12 und [uv](https://docs.astral.sh/uv/), dan
 
 ```bash
 uv sync
-TAPTRIAL_TOKEN_ADMIN=geheim uv run uvicorn app.main:app --reload    # http://localhost:8000
+TAPTRIAL_TOKEN_ADMIN=$(openssl rand -base64 32) uv run uvicorn app.main:app --reload    # http://localhost:8000
 uv run pytest -q                                                # Tests (E2E: uv run playwright install chromium)
 ```
 
@@ -68,7 +68,7 @@ Alle Einstellungen kommen aus Umgebungsvariablen (Vorlage: [.env.example](.env.e
 
 | Variable | Pflicht | Bedeutung |
 |---|---|---|
-| `TAPTRIAL_TOKEN_ADMIN` | ja | Admin-Passphrase. Ohne sie startet die App nicht (Meldung im Log). |
+| `TAPTRIAL_TOKEN_ADMIN` | ja | Admin-Passphrase, mindestens 24 Zeichen. Ohne sie, zu kurz oder mit dem Platzhalter aus `.env.example` startet die App nicht (Meldung im Log). |
 | `TAPTRIAL_DOMAIN` | mit Caddy | Domain für HTTPS (`docker-compose.caddy.yml`). |
 | `TAPTRIAL_VERSION` | nein | Image-Version für Compose (Standard `latest`). |
 | `TAPTRIAL_PORT` | nein | Port ohne Caddy (Standard 8000). |

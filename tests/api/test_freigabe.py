@@ -140,23 +140,30 @@ def test_oeffentlich_ohne_freigabe_und_ohne_zeiten(admin, v):
 
     gast = TestClient(oeffentlich)
     seite = gast.get(f"/ergebnisse?veranstaltung={v.id}").text
-    assert "Für diese Veranstaltung gibt es noch keine Ergebnisse." in seite and "Anna" not in seite
-    daten = gast.get(f"/api/oeffentlich?veranstaltung={v.id}").json()
-    assert daten["keine_ergebnisse"] == "Für diese Veranstaltung gibt es noch keine Ergebnisse."
-    assert "Für diese Veranstaltung" in gast.get(f"/ergebnisse/druck?veranstaltung={v.id}").text
+    assert "Anna" not in seite and v.name not in seite
+    assert gast.get(f"/api/oeffentlich?veranstaltung={v.id}").json()["veranstaltung"] is None
+    assert v.name not in gast.get(f"/ergebnisse/druck?veranstaltung={v.id}").text
     assert gast.get(f"/ergebnisse.csv?veranstaltung={v.id}").status_code == 404
-    # Admin-Vorschau (Monitor-Vorschau, „Öffentliche Ergebnisse“ aus der Übersicht) bleibt möglich
+    # Admin-Vorschau (Monitor-Vorschau, „Öffentliche Ergebnisse“ aus der Übersicht): nur angemeldet
+    assert (
+        gast.get(f"/api/oeffentlich?veranstaltung={v.id}&vorschau=1").json()["veranstaltung"]
+        is None
+    )
+    daten = admin.get(f"/api/oeffentlich?veranstaltung={v.id}").json()
+    assert daten["keine_ergebnisse"] == "Für diese Veranstaltung gibt es noch keine Ergebnisse."
     assert (
         "keine_ergebnisse"
-        not in gast.get(f"/api/oeffentlich?veranstaltung={v.id}&vorschau=1").json()
+        not in admin.get(f"/api/oeffentlich?veranstaltung={v.id}&vorschau=1").json()
     )
     assert f"/ergebnisse?veranstaltung={v.id}&amp;vorschau=1" in admin.get(f"/admin/v/{v.id}").text
-    # mit Zeiten (vorher freigegeben, dann nicht mehr aktiv) wird gezeigt, was da ist
+    # aktiv: öffentlich; danach nicht mehr aktiv und laufend: nur der Admin sieht die Zeiten
     setzen(admin, v, aktiv=True)
     geraet(admin, v, "START", startnummer=1, zeit_ms=T0)
+    assert gast.get(f"/api/oeffentlich?veranstaltung={v.id}").json()["veranstaltung"] is not None
     setzen(admin, v, aktiv=False)
-    assert "keine_ergebnisse" not in gast.get(f"/api/oeffentlich?veranstaltung={v.id}").json()
-    # abgeschlossene Veranstaltungen unverändert
+    assert gast.get(f"/api/oeffentlich?veranstaltung={v.id}").json()["veranstaltung"] is None
+    assert "keine_ergebnisse" not in admin.get(f"/api/oeffentlich?veranstaltung={v.id}").json()
+    # abgeschlossen: öffentlich erst mit offiziellem Ergebnis (test_zugang.py)
     setzen(admin, v, zustand="abgeschlossen")
     assert "keine_ergebnisse" not in gast.get(f"/api/oeffentlich?veranstaltung={v.id}").json()
 

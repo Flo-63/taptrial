@@ -20,7 +20,7 @@ def test_uvicorn_startet(tmp_path, praefix):
     env = {
         f"{praefix}DB_PFAD": str(tmp_path / "x.sqlite3"),
         "PATH": "/usr/bin:/bin",
-        f"{praefix}TOKEN_ADMIN": "a",
+        f"{praefix}TOKEN_ADMIN": "x" * 30,
     }
     proc = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "app.main:app", "--port", str(port)],

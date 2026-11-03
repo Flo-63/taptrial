@@ -10,15 +10,23 @@ from types import SimpleNamespace
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
+from app.auswertung import Art
 from app.einstellungen import PROJEKT_DIR
 from app.klassen import GESCHLECHTER, KeineKlasseFehler, Klasse, klassifizieren
-from app.models import Teilnehmer, Veranstaltung
+from app.models import Ereignis, Teilnehmer, Veranstaltung
 
 JA = ("ja", "1", "x")
 NEIN = ("nein", "0", "")
 JA_NEIN_TEXT = "ja/nein, 1/0, x/leer"
 TRENNZEICHEN = (";", ",")
+MAX_STARTNUMMER = 2_147_483_647  # wie an der Geräte-API
 BEISPIEL_CSV = PROJEKT_DIR / "config" / "teilnehmer_beispiel.csv"
+ERSETZEN_GESPERRT = (
+    "Ersetzen geht nicht mehr, weil es schon Zeiten gibt: Die Zeiten hängen an den Startnummern und "
+    "lägen danach bei anderen Namen. Stattdessen „ergänzen“ oder „ändern per Startnummer“ wählen."
+)
+# Ereignisse ohne Bezug zu einer Zeit sperren „ersetzen“ nicht
+OHNE_ZEITBEZUG = (Art.MERKMAL, Art.ERGEBNIS)
 
 
 @dataclass(frozen=True)
@@ -54,6 +62,11 @@ def ja_nein(wert: str | None) -> bool | None:
     if w in NEIN:
         return False
     return None
+
+
+def _ganzzahl(text: str) -> bool:
+    """Nur 0–9 in vertretbarer Länge; „²“ gilt für isdigit() als Ziffer, aber nicht für int()."""
+    return text.isascii() and text.isdigit() and len(text) <= 18
 
 
 BEZEICHNUNG = {"vorname": "Vorname", "nachname": "Nachname"}
@@ -137,7 +150,7 @@ def pruefe_zeilen(
             fehler.append(Zellmeldung(i, feld, text))
 
         startnummer = None
-        if werte["startnummer"].isdigit() and int(werte["startnummer"]) > 0:
+        if _ganzzahl(werte["startnummer"]) and 0 < int(werte["startnummer"]) <= MAX_STARTNUMMER:
             startnummer = int(werte["startnummer"])
             if startnummer in gesehen:
                 melden("startnummer",
@@ -159,7 +172,7 @@ def pruefe_zeilen(
             )
 
         geburtsjahr = None
-        if werte["geburtsjahr"].isdigit() and 1900 <= int(werte["geburtsjahr"]) <= stichtag.year:
+        if _ganzzahl(werte["geburtsjahr"]) and 1900 <= int(werte["geburtsjahr"]) <= stichtag.year:
             geburtsjahr = int(werte["geburtsjahr"])
         else:
             melden("geburtsjahr", f"ungültiges Geburtsjahr „{werte['geburtsjahr']}“")
@@ -221,6 +234,18 @@ def vergebene_startnummern(session: Session, veranstaltung: Veranstaltung) -> se
     ))  # fmt: skip
 
 
+def zeiten_vorhanden(session: Session, veranstaltung: Veranstaltung) -> bool:
+    """Gibt es Zeiten oder andere Rennereignisse? Dann darf „ersetzen“ nichts mehr löschen."""
+    return (
+        session.scalars(
+            select(Ereignis.uuid).where(
+                Ereignis.veranstaltung_id == veranstaltung.id, Ereignis.art.not_in(OHNE_ZEITBEZUG)
+            )
+        ).first()
+        is not None
+    )
+
+
 def zeilen_importieren(session: Session, veranstaltung: Veranstaltung, zeilen: list[dict],
                        klassen: list[Klasse], ersetzen: bool = False) -> int:  # fmt: skip
     """Importiert geprüfte Textzeilen (z. B. aus der Vorschau) – alles oder nichts."""
@@ -233,9 +258,54 @@ def zeilen_importieren(session: Session, veranstaltung: Veranstaltung, zeilen: l
     return _speichern(session, veranstaltung, p.gueltig, ersetzen)
 
 
+def zeilen_aendern(session: Session, veranstaltung: Veranstaltung, zeilen: list[dict],
+                   klassen: list[Klasse]) -> tuple[int, list[tuple[Teilnehmer, str, bool]]]:  # fmt: skip
+    """„Ändern per Startnummer“: vorhandene Nummern überschreiben, neue ergänzen – alles oder nichts.
+    Leere optionale Felder (Verein, Merkmale) lassen den bisherigen Wert stehen; so löscht eine Datei
+    ohne diese Spalten nichts. Gibt die Anzahl und die geänderten Merkmale fürs Protokoll zurück."""
+    _schreibbar(veranstaltung)
+    p = pruefe_zeilen(zeilen, veranstaltung.stichtag_alter, klassen, set())
+    if p.fehler or not p.gueltig:
+        raise ImportFehler(
+            [f"Zeile {m.index + 1}: {m.text}" for m in p.fehler] or ["keine Teilnehmer"]
+        )
+    bisher = {t.startnummer: t for t in session.scalars(
+        select(Teilnehmer).where(Teilnehmer.veranstaltung_id == veranstaltung.id))}  # fmt: skip
+    merkmale, jetzt = [], time.time_ns() // 1_000_000
+    try:
+        for roh, z in zip(zeilen, p.gueltig, strict=True):
+            t = bisher.get(z["startnummer"])
+            if t is None:
+                session.add(Teilnehmer(veranstaltung_id=veranstaltung.id, **z))
+                continue
+            t.vorname, t.nachname = z["vorname"], z["nachname"]
+            t.geschlecht, t.geburtsjahr = z["geschlecht"], z["geburtsjahr"]
+            t.verein = z["verein"] or t.verein
+            t.geaendert_ms = jetzt
+            for m in MERKMALE:
+                if str(roh.get(m) or "").strip() and getattr(t, m) != z[m]:
+                    setattr(t, m, z[m])
+                    merkmale.append((t, m, z[m]))
+        veranstaltung.letzter_import_ms = jetzt
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    return len(p.gueltig), merkmale
+
+
+def _schreibbar(veranstaltung: Veranstaltung) -> None:
+    if not veranstaltung.laufend:
+        raise ImportFehler([f"Veranstaltung ist {veranstaltung.zustand} und schreibgeschützt."])
+
+
 def _speichern(
     session: Session, veranstaltung: Veranstaltung, zeilen: list[dict], ersetzen: bool
 ) -> int:
+    """Die eine Stelle, an der Teilnehmer aus einem Import in die Datenbank kommen (Admin und CLI)."""
+    _schreibbar(veranstaltung)
+    if ersetzen and zeiten_vorhanden(session, veranstaltung):
+        raise ImportFehler([ERSETZEN_GESPERRT])
     try:
         if ersetzen:
             session.execute(

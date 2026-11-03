@@ -1,6 +1,6 @@
 [project]
 name = "rcb-zeitfahren"
-version = "0.1.6"
+version = "0.1.7"
 description = "Zeitnahme für ein Rennrad-Einzelzeitfahren"
 requires-python = ">=3.12,<3.13"
 dependencies = [
@@ -19,6 +19,7 @@ dev = [
     "ruff",
     "playwright",
     "pytest-playwright",
+    "pytest-xdist>=3.8.0",
 ]
 
 [tool.ruff]
@@ -27,6 +28,13 @@ target-version = "py312"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "unit: ohne Server und Browser (Ordner tests/unit, automatisch)",
+    "api: FastAPI TestClient (Ordner tests/api, automatisch)",
+    "e2e: Browser gegen echten Server (Ordner tests/e2e, automatisch)",
+    "container: baut und startet das Image (Ordner tests/container, automatisch)",
+    "slow: längste Einzeltests und Simulation; mit -m 'not slow' abwählbar",
+]
 filterwarnings = [
     "ignore:Using `httpx` with `starlette.testclient` is deprecated",
 ]

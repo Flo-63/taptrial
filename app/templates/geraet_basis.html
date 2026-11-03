@@ -24,11 +24,16 @@
   </header>
   <div id="fehler" class="fehler" hidden></div>
   <section id="sperre" class="sperre" hidden aria-live="polite">
-    <h1>Zeitnahme noch nicht freigegeben</h1>
-    <p>Es fehlt:</p>
+    <h1 id="sperre-titel">Zeitnahme noch nicht freigegeben</h1>
+    <p id="sperre-fehlt">Es fehlt:</p>
     <ul id="sperre-schritte"></ul>
-    <p>Das erledigt die Turnierleitung im Admin. Diese Seite schaltet sich danach von selbst frei.</p>
+    <p id="sperre-text">Das erledigt die Turnierleitung im Admin. Diese Seite schaltet sich danach von selbst frei.</p>
     <p id="sperre-ausstehend" class="klein" hidden></p>
+  </section>
+  <section id="abgelehnt-box" class="ungesendet" role="alert" hidden>
+    <p><strong id="abgelehnt-text"></strong></p>
+    <p id="abgelehnt-grund" class="klein"></p>
+    <button id="btn-abgelehnt-exportieren" class="btn">Als Datei sichern</button>
   </section>
   <section id="ende-box" class="ende-box" hidden aria-live="polite">
     <p id="ende-text" class="ende-text"></p>

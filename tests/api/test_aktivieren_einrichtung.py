@@ -121,7 +121,7 @@ def k_laufende(admin) -> int:
         from app.auth import Zugang
 
         api.ereignisse_annehmen(s, Zugang("start", v), api.Batch(ereignisse=[
-            {"uuid": "s1", "art": "START", "startnummer": 1, "zeit_ms": 1, "erstellt_ms": 1, "geraet": "g"}]))  # fmt: skip
+            {"uuid": "s1", "art": "START", "startnummer": 1, "zeit_ms": 1_791_000_000_000, "erstellt_ms": 1_791_000_000_000, "geraet": "g"}]))  # fmt: skip
         return v.id
 
 

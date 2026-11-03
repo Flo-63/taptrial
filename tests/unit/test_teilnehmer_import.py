@@ -1,3 +1,4 @@
+import uuid
 from datetime import date
 from pathlib import Path
 
@@ -7,8 +8,13 @@ from sqlalchemy import select
 from app.db import erzeuge_engine, erzeuge_sessionmaker, tabellen_anlegen
 from app.einstellungen import STANDARD_KLASSEN_DATEI
 from app.klassen import lade_klassen
-from app.models import Teilnehmer, Veranstaltung
-from app.teilnehmer_import import ImportFehler, importiere_teilnehmer, pruefe_csv
+from app.models import Ereignis, Teilnehmer, Veranstaltung
+from app.teilnehmer_import import (
+    ImportFehler,
+    importiere_teilnehmer,
+    pruefe_csv,
+    zeilen_aendern,
+)
 
 FIXTURE = Path(__file__).resolve().parents[2] / "config" / "teilnehmer_beispiel.csv"
 STICHTAG = date(2026, 12, 31)
@@ -189,3 +195,77 @@ def test_50er_datei_hat_merkmale(session, veranstaltung, klassen):
     importiere_teilnehmer(session, veranstaltung, FIXTURE.read_bytes(), klassen)
     tn = session.scalars(select(Teilnehmer)).all()
     assert sum(t.abzeichen for t in tn) >= 10 and sum(t.ausser_konkurrenz for t in tn) == 2
+
+
+# --- S 3: Ersetzen nur ohne Zeiten, Ändern per Startnummer -----------------------------------
+
+
+def _ereignis(session, veranstaltung, art="START", **felder):
+    session.add(Ereignis(uuid=str(uuid.uuid4()), veranstaltung_id=veranstaltung.id, art=art,
+                         geraet="g", erstellt_ms=1, empfangen_ms=1, **felder))  # fmt: skip
+    session.commit()
+
+
+def test_ersetzen_mit_zeiten_wird_verweigert(session, veranstaltung, klassen):
+    importiere_teilnehmer(session, veranstaltung, (KOPF + "5;A;B;m;1990;\n").encode(), klassen)
+    _ereignis(session, veranstaltung, zeit_ms=1, startnummer=5)
+    with pytest.raises(ImportFehler) as e:
+        importiere_teilnehmer(
+            session, veranstaltung, (KOPF + "5;C;D;w;1991;\n").encode(), klassen, ersetzen=True
+        )
+    assert "schon Zeiten" in e.value.fehler[0]
+    assert session.scalars(select(Teilnehmer.vorname)).all() == ["A"]
+
+
+def test_zeit_ohne_nummer_sperrt_ersetzen_auch(session, veranstaltung, klassen):
+    importiere_teilnehmer(session, veranstaltung, (KOPF + "5;A;B;m;1990;\n").encode(), klassen)
+    _ereignis(session, veranstaltung, art="ZIEL", zeit_ms=1)
+    with pytest.raises(ImportFehler):
+        importiere_teilnehmer(
+            session, veranstaltung, (KOPF + "5;C;D;w;1991;\n").encode(), klassen, ersetzen=True
+        )
+
+
+def test_merkmal_ohne_zeiten_sperrt_ersetzen_nicht(session, veranstaltung, klassen):
+    importiere_teilnehmer(session, veranstaltung, (KOPF + "5;A;B;m;1990;\n").encode(), klassen)
+    _ereignis(session, veranstaltung, art="MERKMAL", startnummer=5, wert="ABZEICHEN_JA")
+    n = importiere_teilnehmer(
+        session, veranstaltung, (KOPF + "5;C;D;w;1991;\n").encode(), klassen, ersetzen=True
+    )
+    assert n == 1
+
+
+def test_import_nur_bei_laufender_veranstaltung(session, veranstaltung, klassen):
+    veranstaltung.zustand = "abgeschlossen"
+    with pytest.raises(ImportFehler) as e:
+        importiere_teilnehmer(session, veranstaltung, (KOPF + "5;A;B;m;1990;\n").encode(), klassen)
+    assert "schreibgeschützt" in e.value.fehler[0]
+
+
+def test_aendern_per_startnummer_ueberschreibt_und_ergaenzt(session, veranstaltung, klassen):
+    inhalt = KOPF_MERKMALE + "5;A;B;m;1990;Verein;ja;ja\n6;C;D;w;1991;;;\n"
+    importiere_teilnehmer(session, veranstaltung, inhalt.encode(), klassen)
+    _ereignis(session, veranstaltung, zeit_ms=1, startnummer=5)
+    zeilen = [
+        {"startnummer": "5", "vorname": "Neu", "nachname": "B", "geschlecht": "m",
+         "geburtsjahr": "1990", "verein": "", "abzeichen": "", "ausser_konkurrenz": "nein"},
+        {"startnummer": "7", "vorname": "E", "nachname": "F", "geschlecht": "w",
+         "geburtsjahr": "1992", "verein": "", "abzeichen": "", "ausser_konkurrenz": ""},
+    ]  # fmt: skip
+    n, merkmale = zeilen_aendern(session, veranstaltung, zeilen, klassen)
+    assert n == 2
+    tn = {t.startnummer: t for t in session.scalars(select(Teilnehmer))}
+    assert sorted(tn) == [5, 6, 7] and tn[5].vorname == "Neu"
+    # leere optionale Felder bleiben; „nein“ ist eine Angabe und wird übernommen
+    assert tn[5].verein == "Verein" and tn[5].abzeichen is True and tn[5].ausser_konkurrenz is False
+    assert merkmale == [(tn[5], "ausser_konkurrenz", False)]
+    assert tn[5].geaendert_ms is not None
+
+
+def test_aendern_mit_fehler_aendert_nichts(session, veranstaltung, klassen):
+    importiere_teilnehmer(session, veranstaltung, (KOPF + "5;A;B;m;1990;\n").encode(), klassen)
+    zeilen = [{"startnummer": "5", "vorname": "", "nachname": "B", "geschlecht": "m",
+               "geburtsjahr": "1990"}]  # fmt: skip
+    with pytest.raises(ImportFehler):
+        zeilen_aendern(session, veranstaltung, zeilen, klassen)
+    assert session.scalars(select(Teilnehmer.vorname)).all() == ["A"]

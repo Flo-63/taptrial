@@ -31,6 +31,7 @@ def test_hilfe_link_im_ziel_wechselt_mit_der_sicht(server, neues_geraet):
     expect(ziel.locator("h1")).to_have_text("Kurzanleitung Rennleitung")
 
 
+@pytest.mark.slow
 def test_screenshot_skript(tmp_path):
     r = subprocess.run(
         [sys.executable, "scripts/screenshots.py", "--ziel", str(tmp_path)],
