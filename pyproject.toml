@@ -1,6 +1,6 @@
 [project]
 name = "rcb-zeitfahren"
-version = "0.1.7"
+version = "0.1.8"
 description = "Zeitnahme für ein Rennrad-Einzelzeitfahren"
 requires-python = ">=3.12,<3.13"
 dependencies = [

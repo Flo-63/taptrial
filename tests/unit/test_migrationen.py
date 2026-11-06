@@ -14,7 +14,17 @@ from app.einstellungen import Einstellungen
 from app.main import create_app
 from app.migrationen import AKTUELL, SCHEMA, MigrationsFehler, migrieren
 from app.models import Veranstaltung
-from tests.unit.test_migration_saetze import BACKUPS, _kurz, alte_datenbank, ergebnis_vorher
+from tests.unit.test_migration_saetze import (
+    BACKUPS,
+    _kurz,
+    alte_datenbank,
+    ergebnis_vorher,
+    schema_version,
+)
+
+# Der Abbruch greift nur, wenn ein Schritt aussteht: Sicherungen im aktuellen Schema (etwa die vom
+# letzten Deploy) taugen dafür nicht. Älteste und neueste der übrigen.
+ALTE_BACKUPS = [b for b in BACKUPS if schema_version(b) < AKTUELL]
 
 
 def stand(pfad: Path) -> tuple[int, set[str], set[str], set[str]]:
@@ -84,6 +94,7 @@ def test_abbruch_im_schema_laesst_die_datei_unveraendert(
     pfad = tmp_path / "alt.sqlite3"
     alte_datenbank(pfad, mit_wertung)
     vorher = stand(pfad)
+    assert vorher[0] < AKTUELL  # sonst prüft der Test nichts
     echt = db.schema_nachruesten
 
     def bis_zum_ende_dann_abbruch(conn):
@@ -119,14 +130,20 @@ def test_abbruch_im_daten_schritt_bleibt_auf_dem_stand_davor(tmp_path, engine_vo
     assert stand(pfad)[0] == AKTUELL
 
 
-@pytest.mark.skipif(not BACKUPS, reason="kein Backup unter ~/rcb-backups/")
-@pytest.mark.parametrize("backup", BACKUPS[:1] + BACKUPS[-1:], ids=lambda p: p.name)
+@pytest.mark.skipif(
+    not ALTE_BACKUPS,
+    reason="keine Sicherung mit älterem Schema unter ~/rcb-backups/ – nichts zu migrieren",
+)
+@pytest.mark.parametrize(
+    "backup", list(dict.fromkeys(ALTE_BACKUPS[:1] + ALTE_BACKUPS[-1:])), ids=lambda p: p.name
+)
 def test_abbruch_mit_kopie_einer_echten_sicherung(tmp_path, engine_von, monkeypatch, backup):
     pfad = tmp_path / backup.name
     shutil.copy2(backup, pfad)
     for rest in ("-wal", "-shm"):
         (Path(str(pfad) + rest)).unlink(missing_ok=True)
     vorher = stand(pfad)
+    assert vorher[0] < AKTUELL  # sonst prüft der Test nichts
     echt = db.schema_nachruesten
 
     def abbruch(conn):

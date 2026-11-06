@@ -24,19 +24,33 @@ h2 { font-size: 1rem; color: var(--grau); text-transform: uppercase; margin: 20p
 
 .statusleiste {
   position: sticky; top: 0; z-index: 10;
-  display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: center; align-content: center;
+  display: flex; flex-direction: column; justify-content: center;
   /* feste Höhe: Änderungen im Text dürfen den Inhalt darunter nicht verschieben */
   height: var(--status-hoehe); overflow: hidden;
-  padding: 0 12px; background: #000; border-bottom: 1px solid #333; font-size: 0.85rem;
+  padding: 0 12px; background: #000; border-bottom: 1px solid #333; font-size: 0.85rem; line-height: 1.2;
 }
+/* Zwei feste Zeilen ohne Umbruch: oben Uhrzeit und Verbindung (nie gekürzt), unten die Hinweise.
+   Die Geräteseiten nutzen die Systemschrift, die Breite ist also je Handy anders. */
+.status-zeile { display: flex; align-items: center; gap: 8px; height: 28px; min-width: 0; white-space: nowrap; }
+.status-hinweise { height: 22px; font-size: 0.8rem; }
+.statusleiste .rolle, .hinweis, .uhr-pruefung { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .statusleiste .rolle { font-weight: 700; color: var(--gelb); }
-.statusleiste .uhr-box { margin-left: auto; white-space: nowrap; color: var(--grau); font-size: 0.8rem; }
+.statusleiste .uhr-box { flex: none; margin-left: auto; color: var(--grau); font-size: 0.8rem; }
 .statusleiste .uhr { color: var(--fg); font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.1rem; }
-.netz { padding: 2px 8px; border-radius: 4px; font-weight: 700; }
+.netz { flex: none; padding: 2px 8px; border-radius: 4px; font-weight: 700; }
 .netz.ist-online { background: var(--gruen); color: #000; }
 .netz.ist-offline { background: var(--rot); color: #fff; }
-.uhr-pruefung { color: var(--grau); white-space: nowrap; font-size: 0.8rem; }
-.uhr-pruefung.uhr-warnung { background: var(--rot); color: #fff; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+.status-sync { flex-shrink: 100; } /* wird zuerst gekürzt */
+.uhr-pruefung { color: var(--grau); }
+/* Warnung vorn und mit Vorrang: „Uhr weicht 12,0 s ab“ bleibt lesbar, „letzter Sync“ weicht */
+.uhr-pruefung.uhr-warnung {
+  order: -1; flex-shrink: 1000; min-width: 66%;
+  background: var(--rot); color: #fff; font-weight: 700; padding: 1px 6px; border-radius: 4px;
+}
+.mit-warnung .status-sync { display: none; }
+@media (max-width: 359px) {
+  .uhr-text, .sync-text { display: none; }
+}
 /* Overlay statt im Fluss, damit Kacheln nicht springen */
 .fehler {
   position: fixed; left: 8px; right: 8px; bottom: 8px; z-index: 20;

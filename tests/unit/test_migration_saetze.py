@@ -20,9 +20,19 @@ from app.models import Veranstaltung
 from app.simulation import rennplan
 from app.wertung import Stufe, Wertung, lade_wertungen, zehntel_km
 
-# Backups des echten Rennens (nur lokal); im Release-Export zeigt TAPTRIAL_BACKUP_VERZEICHNIS ins Leere
+# Backups des echten Rennens (nur lokal); bei den Tests im Export zeigt TAPTRIAL_BACKUP_VERZEICHNIS
+# ins Leere (wie auf GitHub)
 BACKUP_VERZEICHNIS = Path(umgebung.wert("backup_verzeichnis") or Path.home() / "rcb-backups")
 BACKUPS = sorted(BACKUP_VERZEICHNIS.glob("backup-*.sqlite3"))
+
+
+def schema_version(backup: Path) -> int:
+    """PRAGMA user_version der Sicherung, nur lesend (immutable): das Original bleibt unberührt."""
+    con = sqlite3.connect(f"file:{backup}?mode=ro&immutable=1", uri=True)
+    try:
+        return con.execute("PRAGMA user_version").fetchone()[0]
+    finally:
+        con.close()
 
 
 def hat_strecken(pfad: Path) -> bool:

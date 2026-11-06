@@ -15,12 +15,16 @@
 </head>
 <body class="geraet geraet-{{ rolle }}">
   <header id="statusleiste" class="statusleiste">
-    <span class="rolle">{{ titel }}</span>
-    <span id="netz" class="netz">…</span>
-    <span id="ausstehend">0 ausstehend</span>
-    <span>letzter Sync <span id="letzter-sync">–</span></span>
-    <span id="uhr-pruefung" class="uhr-pruefung" title="Abweichung der Geräteuhr gegenüber dem Server">Uhr ungeprüft</span>
-    <span class="uhr-box" title="Aktuelle Uhrzeit dieses Geräts (keine Rennuhr)">Uhrzeit <span id="uhr" class="uhr"></span></span>
+    <div class="status-zeile">
+      <span class="rolle">{{ titel }}</span>
+      <span id="netz" class="netz">…</span>
+      <span class="uhr-box" title="Aktuelle Uhrzeit dieses Geräts (keine Rennuhr)"><span class="uhr-text">Uhrzeit </span><span id="uhr" class="uhr"></span></span>
+    </div>
+    <div class="status-zeile status-hinweise">
+      <span id="ausstehend" class="hinweis">0 ausstehend</span>
+      <span class="hinweis status-sync"><span class="sync-text">letzter </span>Sync <span id="letzter-sync">–</span></span>
+      <span id="uhr-pruefung" class="uhr-pruefung" title="Abweichung der Geräteuhr gegenüber dem Server">Uhr ungeprüft</span>
+    </div>
   </header>
   <div id="fehler" class="fehler" hidden></div>
   <section id="sperre" class="sperre" hidden aria-live="polite">

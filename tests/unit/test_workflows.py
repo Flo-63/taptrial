@@ -32,6 +32,8 @@ def test_e2e_als_eigener_lauf_bei_push_auf_main():
     schritte = " ".join(str(s.get("run", "")) for s in w["jobs"]["e2e"]["steps"])
     assert "uv sync --frozen" in schritte and "playwright install --with-deps chromium" in schritte
     assert "pytest -q -n 2 tests/e2e" in schritte and "pytest -q tests/container" in schritte
+    # Schriften wie lokal, vor den Browser-Tests (tests/e2e/schriften.conf)
+    assert schritte.index("fonts-dejavu-core fonts-dejavu-extra") < schritte.index("pytest -q -n 2")
 
 
 def test_image_bei_tag():

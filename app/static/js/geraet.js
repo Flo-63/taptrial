@@ -687,6 +687,7 @@ export class Geraet {
     const { text, warnung } = uhrText(on ? this.uhrAbweichung() : null);
     pruefung.textContent = text;
     pruefung.classList.toggle("uhr-warnung", warnung);
+    document.getElementById("statusleiste").classList.toggle("mit-warnung", warnung);
   }
 
   zeigeUhr() {

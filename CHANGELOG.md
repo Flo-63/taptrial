@@ -4,6 +4,14 @@ Alle nennenswerten Änderungen an TapTrial. Format nach [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [0.1.8] – 2026-11-03
+
+### Behoben
+- **Statusleiste der Geräte:** Bei einer Uhrwarnung konnte die Uhrzeit auf schmalen Handys oder mit breiter Systemschrift aus der Leiste rutschen. Uhrzeit und Verbindung bleiben jetzt immer ganz sichtbar; lange Hinweise werden gekürzt.
+
+### Intern
+- E2E-Tests laufen lokal und auf GitHub mit denselben Schriften, und `veroeffentlichen.sh` führt sie vor dem Commit im öffentlichen Repo auch im Export aus (`--schnell` überspringt das mit Hinweis).
+
 ## [0.1.7] – 2026-11-03
 
 ### Sicherheit

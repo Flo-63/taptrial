@@ -30,6 +30,10 @@ TOKENS = {
     "ziel-hof": "e2e-ziel-hof",  # weiterer Zielort (rundkurs „zielorte“)
 }
 GERAET = "Pixel 7"
+# Dieselben Schriften lokal und auf GitHub, sonst schwanken Layout-Prüfungen; erbt der Browser
+SCHRIFT = "DejaVu Sans"
+if sys.platform == "linux":
+    os.environ["FONTCONFIG_FILE"] = str(Path(__file__).with_name("schriften.conf"))
 
 
 @dataclass
@@ -368,6 +372,21 @@ def offene_seiten_schliessen(browser):
     yield
     for ctx in list(browser.contexts):
         ctx.close()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def schrift_vorhanden():
+    """Ohne die festgelegte Schrift wären Layout-Prüfungen zufällig: lieber klar scheitern."""
+    if sys.platform != "linux":
+        return
+    r = subprocess.run(
+        ["fc-match", "-f", "%{family}", "sans-serif"], capture_output=True, text=True, check=False
+    )
+    if SCHRIFT not in r.stdout:
+        pytest.fail(
+            f"E2E braucht {SCHRIFT}, gefunden: „{r.stdout}“. "
+            "Installieren: sudo apt-get install fontconfig fonts-dejavu-core fonts-dejavu-extra"
+        )
 
 
 @pytest.fixture
