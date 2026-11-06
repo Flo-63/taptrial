@@ -16,9 +16,10 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, object_session
 
-from app import admin_auth, installation, saetze, strecken
+from app import admin_auth, installation, rechte_admin, saetze, strecken
 from app import korrekturen as k
 from app import segmente as sg
+from app.anmeldung import Person
 from app.auswertung import (
     Art,
     KonfliktArt,
@@ -43,6 +44,7 @@ from app.export import (
 from app.models import (
     FREIGABE_FEHLT,
     FREIGABE_SCHRITTE,
+    AdminAktion,
     Ereignis,
     GeraetUhr,
     ImportEntwurf,
@@ -102,9 +104,13 @@ templates.env.globals["STUFE_TEXT"] = STUFE_TEXT
 templates.env.globals["status_text"] = status_text
 templates.env.globals["stufe_text"] = stufe_text
 templates.env.globals["quelle_text"] = quelle_text
+templates.env.globals["darf"] = lambda request, recht, v=None: rechte_admin.darf(
+    getattr(request.state, "person", None), recht, v
+)
 
 
-AdminDep = Annotated[admin_auth.Sitzung, Depends(admin_auth.erfordere_admin)]
+AdminDep = Annotated[Person, Depends(admin_auth.admin_pruefen)]
+AKTIONEN_MAX = 200  # Admin-Aktionen auf der Protokollseite
 
 
 def aufgaben_anzahl(erg) -> int:
@@ -205,6 +211,55 @@ def _anmeldeseite(request: Request, fehler: str | None = None, status_code: int 
     )
 
 
+def _hinweis(request: Request, titel: str, absaetze: list[str], status_code: int,
+             mit_abmelden: bool = False, kopf: dict | None = None) -> Response:  # fmt: skip
+    antwort = templates.TemplateResponse(
+        request,
+        "admin_hinweis.html",
+        {
+            "titel": titel,
+            "absaetze": absaetze,
+            "v": None,
+            "mit_abmelden": mit_abmelden,
+            "csrf": admin_auth.csrf_token(request),
+        },
+        status_code=status_code,
+    )
+    antwort.headers.update(kopf or {})
+    return antwort
+
+
+def kein_zugriff(request: Request, exc) -> Response:
+    """Angemeldet, aber ohne Rolle (oder deaktiviert): an wen wenden?"""
+    kontakt = installation.fuer_vorlage(request).get("zugang_kontakt", "").strip()
+    wer = kontakt or "die Turnierleitung"
+    person = getattr(request.state, "person", None)
+    absaetze = [f"Für dein Konto ist noch keine Rolle vergeben. Bitte an {wer} wenden."]
+    if person is not None and not person.aktiv:
+        absaetze = [f"Dein Konto ist deaktiviert. Bitte an {wer} wenden."]
+    if person is not None and person.benutzer_id:
+        absaetze.append(f"Angemeldet als {person.anzeige}.")
+    return _hinweis(request, "Kein Zugriff", absaetze, 403, mit_abmelden=True, kopf=exc.headers)
+
+
+def keine_berechtigung(request: Request, exc) -> Response:
+    return _hinweis(request, "Keine Berechtigung",
+                    ["Diese Seite oder Aktion ist für deine Rolle nicht freigegeben."], 403,
+                    kopf=exc.headers)  # fmt: skip
+
+
+def anmeldung_fehlgeschlagen(request: Request, _exc) -> Response:
+    """Modus proxy: Token fehlt oder ist ungültig – keine Anmeldung (Grund steht im Log)."""
+    absaetze = [
+        "Die Anmeldung über den Anmeldedienst ließ sich nicht prüfen.",
+        (
+            "Bitte die Seite neu laden oder neu anmelden. Hält das an, bitte an die "
+            "Turnierleitung wenden; der Grund steht im Protokoll des Servers."
+        ),
+    ]
+    return _hinweis(request, "Anmeldung nicht möglich", absaetze, 401)
+
+
 def nicht_angemeldet(request: Request, _exc) -> Response:
     """Ohne Sitzung: Anmeldeformular. Alt-Link /admin?token=… meldet an und entfernt den Token."""
     token = request.query_params.get("token")
@@ -219,6 +274,9 @@ def nicht_angemeldet(request: Request, _exc) -> Response:
 
 @router.post("/anmelden")
 def anmelden(request: Request, token: Annotated[str, Form()] = ""):
+    if request.app.state.einstellungen.proxy:  # Passphrase abgeschaltet
+        return _hinweis(request, "Anmeldung über den Anmeldedienst",
+                        ["Die Anmeldung mit der Passphrase ist abgeschaltet."], 404)  # fmt: skip
     if not admin_auth.token_pruefen(request, token.strip()):
         return _anmeldeseite(request, "Admin-Token falsch.")
     antwort = RedirectResponse("/admin", status_code=303)
@@ -229,7 +287,14 @@ def anmelden(request: Request, token: Annotated[str, Form()] = ""):
 @router.post("/abmelden")
 def abmelden(request: Request, _a: AdminDep, csrf: Annotated[str, Form()] = ""):
     admin_auth.csrf_pruefen(request, csrf)
-    antwort = RedirectResponse("/admin", status_code=303)
+    einstellungen = request.app.state.einstellungen
+    if einstellungen.proxy and einstellungen.proxy_logout_url:
+        antwort = RedirectResponse(einstellungen.proxy_logout_url, status_code=303)
+    elif einstellungen.proxy:
+        text = "Die Anmeldung gilt beim Anmeldedienst weiter. Zum Abmelden bitte den Browser schließen."
+        antwort = _hinweis(request, "Abmelden", [text], 200)
+    else:
+        antwort = RedirectResponse("/admin", status_code=303)
     admin_auth.sitzung_loeschen(antwort)
     return antwort
 
@@ -241,16 +306,22 @@ def abmelden(request: Request, _a: AdminDep, csrf: Annotated[str, Form()] = ""):
 def uebersicht(request: Request, session: SessionDep, _a: AdminDep, filter: str = ""):
     if "token" in request.query_params:  # Alt-Link bei bestehender Sitzung: Token aus der URL
         return RedirectResponse("/admin", status_code=303)
-    veranstaltungen = list(
-        session.scalars(select(Veranstaltung).order_by(Veranstaltung.datum.desc()))
-    )
+    veranstaltungen = [  # nur, was die Rolle sehen darf
+        x
+        for x in session.scalars(select(Veranstaltung).order_by(Veranstaltung.datum.desc()))
+        if rechte_admin.darf(_a, rechte_admin.V_LESEN, x)
+    ]
     anzahl = dict(
         session.execute(
             select(Teilnehmer.veranstaltung_id, func.count()).group_by(Teilnehmer.veranstaltung_id)
         ).all()
     )
     offen = {v.id: aufgaben_anzahl(_erg(request, session, v)) for v in veranstaltungen if v.laufend}
-    faellige = k.faellige(session, k.heute())
+    faellige = [
+        f
+        for f in k.faellige(session, k.heute())
+        if rechte_admin.darf(_a, rechte_admin.V_VERWALTEN, f)
+    ]
     faellig_ids = {f.id for f in faellige}
     filter_fn = {
         "alle": lambda v: True,
@@ -263,7 +334,8 @@ def uebersicht(request: Request, session: SessionDep, _a: AdminDep, filter: str 
     texte = {"alle": "Alle", "laufend": "Aktiv/laufend", "einrichtung": "In Einrichtung",
              "abgeschlossen": "Abgeschlossen", "faellig": "Anonymisierung fällig"}  # fmt: skip
     leiste = {"titel": "Veranstaltungen",
-              "knopf": ("Neue Veranstaltung einrichten", "/admin/einrichtung/neu", "neue-veranstaltung"),
+              "knopf": ("Neue Veranstaltung einrichten", "/admin/einrichtung/neu", "neue-veranstaltung")
+              if rechte_admin.darf(_a, rechte_admin.ANLEGEN) else None,
               "gruppen": [("Filter", [(f, texte[f], "/admin" + ("" if f == "alle" else f"?filter={f}"),
                                       sum(1 for x in veranstaltungen if fn(x)))
                                      for f, fn in filter_fn.items()])]}  # fmt: skip
@@ -1200,6 +1272,13 @@ def protokoll(request: Request, vid: int, session: SessionDep, _a: AdminDep, nr:
         nr=nr,
         art=art if art in PROTOKOLL_ARTEN else "",
         PROTOKOLL_ARTEN=PROTOKOLL_ARTEN,
+        aktionen=session.scalars(
+            select(AdminAktion)
+            .where(AdminAktion.veranstaltung_id == v.id)
+            .order_by(AdminAktion.id.desc())
+            .limit(AKTIONEN_MAX)
+        ).all(),
+        AKTIONEN_MAX=AKTIONEN_MAX,
     )
 
 

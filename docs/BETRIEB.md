@@ -124,6 +124,8 @@ Die Gerätelinks und QR-Codes stehen im Admin unter „Geräte“. Sie gelten nu
 | Gerät zeigt „Zugangstoken ungültig“ | Falscher oder erneuerter Link bzw. Veranstaltung abgeschlossen. Aktuellen Link im Admin unter „Geräte“ öffnen. |
 | Handy mit Gerätelink verloren | Admin → „Geräte“ → Token erneuern; allen anderen Geräten derselben Rolle den neuen Link geben. Ausstehende Einträge eines Geräts mit altem Link werden abgewiesen, deshalb vorher „0 ausstehend“ abwarten, wenn möglich. |
 | Handy wird weitergegeben / Daten sollen sofort weg | Unten auf der Seite „Gerät zurücksetzen“ (zweimal tippen). Nicht übertragene Einträge bleiben erhalten und können exportiert werden. |
+| Anmeldedienst ausgefallen (`proxy`) | Auf `token` zurückstellen (Abschnitt 6, „Umstellen“) und mit der Passphrase anmelden. Geräte und Ergebnisse laufen ohnehin weiter. |
+| „Anmeldung nicht möglich“ (`proxy`) | Grund im Log der App (`Admin-Anmeldung (proxy) abgelehnt: …`): meist falscher Aussteller, Schlüsseladresse nicht erreichbar oder Uhr des Servers falsch. |
 | Admin-Passphrase vergessen | Auf dem Server in `.env` nachsehen bzw. neue eintragen und `docker compose up -d` (nicht am Renntag). |
 | Anmeldung „Zu viele Fehlversuche“ | 15 Minuten warten (Sperre je Anschluss) oder anderes Netz/Gerät. Geräte im Rennen sind davon nie betroffen: Gültige Gerätelinks werden nicht gesperrt. |
 | App startet nicht: „Admin-Passphrase zu kurz“ oder „Platzhalter“ | Mindestens 24 Zeichen, nicht der Wert aus `.env.example` (`openssl rand -base64 32`), in `.env` eintragen, `docker compose up -d`. Alle Anmeldungen gelten danach neu. |
@@ -142,3 +144,70 @@ Zum Vorführen und Üben gibt es eine fertige, **abgeschlossene** Veranstaltung 
 - Fehlt der Wertungssatz „DRA A.1 flach“ (umbenannt oder gelöscht), wird nichts angelegt.
 - Ansehen: Admin → „Demo-Zeitfahren Kottenforst“ bzw. öffentlich `/ergebnisse?veranstaltung=<ID>`.
 - Entfernen: Admin → Demo öffnen → „Status & Datenschutz“ → „Komplett löschen“ (Namen eintippen).
+
+## 6. Anmeldung über einen Anmeldedienst (Benutzer und Rollen)
+
+Standard ist die Anmeldung mit der Admin-Passphrase (`TAPTRIAL_ANMELDUNG=token`): Wer sie kennt, darf im Admin alles. Mit einem vorhandenen Anmeldedienst (z. B. Authentik) meldet sich jede Person mit ihrem eigenen Konto an, und die App vergibt Rollen (`TAPTRIAL_ANMELDUNG=proxy`). Geräte, Ergebnisse und Zielmonitor sind davon nicht betroffen: Sie laufen weiter ohne Anmeldung bzw. mit ihren Gerätelinks.
+
+**Rollen** (vergeben im Admin unter „Benutzer“, nicht beim Anmeldedienst):
+
+| Rolle | darf |
+|---|---|
+| Superadmin | alles, auch Benutzer und Rollen, Branding, Impressum/Datenschutz |
+| Vereinsadmin | alle Veranstaltungen des Vereins anlegen, einrichten, durchführen, aktiv setzen, abschließen, anonymisieren, löschen; Vorlagen; Event-Admins zuweisen |
+| Event-Admin | nur zugewiesene Veranstaltungen: einrichten, Geräte, Rennleitung, Korrekturen, Ergebnis offiziell erklären, Drucken und Export |
+| ohne Rolle | nur die Seite „Kein Zugriff – bitte an … wenden“ |
+
+**Einstellungen** (in `.env`, Beispiele in `.env.example`):
+
+| Variable | Bedeutung |
+|---|---|
+| `TAPTRIAL_ANMELDUNG` | `token` (Standard) oder `proxy` |
+| `TAPTRIAL_SUPERADMINS` | Benutzernamen, die immer Superadmin sind (kommagetrennt, Groß/Klein genau wie beim Anmeldedienst); nicht aussperrbar |
+| `TAPTRIAL_PROXY_JWKS_URL` | Pflicht für `proxy`: Adresse der öffentlichen Schlüssel des Anmeldedienstes (https) |
+| `TAPTRIAL_PROXY_JWT_ISSUER` | Pflicht für `proxy`: Aussteller des Tokens, genau wie im Token |
+| `TAPTRIAL_PROXY_JWT_AUDIENCE` | Pflicht für `proxy`: erwartete Zielgruppe (Client-ID der Anwendung beim Anmeldedienst); sonst gälte ein Token einer anderen Anwendung |
+| `TAPTRIAL_PROXY_GRUPPE` | optional: nur Mitglieder dieser Gruppe (Feld `groups` im Token) |
+| `TAPTRIAL_PROXY_NETZE` | optional: nur Verbindungen aus diesen Netzen (Netz des Reverse-Proxys) |
+| `TAPTRIAL_PROXY_LOGOUT_URL` | optional: Ziel von „Abmelden“; ohne Angabe Hinweis „Browser schließen“ |
+| `TAPTRIAL_PROXY_HEADER_…` | Namen der Kopfzeilen (`UID`, `BENUTZERNAME`, `EMAIL`, `NAME`, `JWT`); Standard wie bei Authentik |
+
+Die Admin-Passphrase bleibt Pflicht: Sie schützt Sitzung und Formulare und ist der Rückweg. In `proxy` gilt sie weder im Anmeldeformular noch an der API.
+
+**So prüft die App:** Der Anmeldedienst steht als Forward-Auth nur vor `/admin/*` und reicht nach erfolgreicher Anmeldung Kopfzeilen und ein signiertes Token (JWT) weiter. Bei jeder Admin-Anfrage prüft die App Signatur, Ablauf und Aussteller des Tokens; Uid und Benutzername müssen zu den Kopfzeilen passen. Schlägt etwas fehl, meldet niemand an (Seite „Anmeldung nicht möglich“, Grund im Log). Beim ersten Besuch wird das Konto angelegt: über die Uid, sonst ein vorab angelegtes Konto mit gleichem Benutzernamen, sonst neu **ohne Rolle**. Wer keine Rolle hat, sieht „Kein Zugriff“ mit dem Kontakt aus „Vorlagen → Branding“; ein Superadmin vergibt die Rolle unter „Benutzer“ mit einem Klick.
+
+**Beispiel Traefik und Authentik** (Proxy-Provider im Modus „Forward auth (single application)“, Outpost erreichbar als `authentik-outpost:9000`; Namen und Adressen anpassen):
+
+```yaml
+http:
+  middlewares:
+    anmeldung:
+      forwardAuth:
+        address: http://authentik-outpost:9000/outpost.goauthentik.io/auth/traefik
+        trustForwardHeader: true
+        authResponseHeaders:
+          - X-Authentik-Uid
+          - X-Authentik-Username
+          - X-Authentik-Email
+          - X-Authentik-Name
+          - X-Authentik-Jwt
+  routers:
+    taptrial-admin:            # nur der Admin hinter der Anmeldung
+      rule: Host(`zeitnahme.example.org`) && PathPrefix(`/admin`)
+      middlewares: [anmeldung]
+      service: taptrial
+    taptrial-outpost:          # Anmelde- und Abmeldeseiten des Outposts
+      rule: Host(`zeitnahme.example.org`) && PathPrefix(`/outpost.goauthentik.io/`)
+      service: authentik-outpost
+    taptrial:                  # alles andere ohne Anmeldung (Geräte, Ergebnisse, Monitor, /api)
+      rule: Host(`zeitnahme.example.org`)
+      service: taptrial
+```
+
+Dazu in `.env`: `TAPTRIAL_ANMELDUNG=proxy`, `TAPTRIAL_PROXY_JWKS_URL=https://<anmeldedienst>/application/o/<anwendung>/jwks/`, `TAPTRIAL_PROXY_JWT_ISSUER=https://<anmeldedienst>/application/o/<anwendung>/` (steht im Provider unter „OpenID Configuration Issuer“), `TAPTRIAL_PROXY_JWT_AUDIENCE=<Client-ID des Providers>`, `TAPTRIAL_PROXY_LOGOUT_URL=/outpost.goauthentik.io/sign_out`, `TAPTRIAL_SUPERADMINS=<euer benutzername>`, optional `TAPTRIAL_PROXY_NETZE=<Docker-Netz von Traefik>`.
+
+**Sicherheit der Kopfzeilen:** Die App vertraut nur dem signierten Token, nicht den Kopfzeilen allein. Trotzdem: Die Forward-Auth muss die Identitäts-Kopfzeilen setzen bzw. überschreiben (`authResponseHeaders` tut das), die App darf von außen nur über den Reverse-Proxy erreichbar sein, und `TAPTRIAL_PROXY_NETZE` begrenzt zusätzlich, wer die Kopfzeilen schicken darf. `/api`, Gerätelinks, `/ergebnisse`, `/monitor`, `/static`, `/sw.js` und `/up` dürfen **nicht** hinter der Anmeldung liegen, sonst funktionieren Geräte und Monitor nicht mehr.
+
+**Umstellen:**
+- `token` → `proxy`: Unter „Benutzer“ Konten vorab anlegen und Rollen geben (geht schon mit der Passphrase), Superadmins in `TAPTRIAL_SUPERADMINS`, Forward-Auth vor `/admin/*` einrichten, Einstellungen setzen, neu starten. Danach einmal mit dem eigenen Konto anmelden und unter „Benutzer“ prüfen.
+- `proxy` → `token` (z. B. wenn der Anmeldedienst ausfällt): `TAPTRIAL_ANMELDUNG=token` setzen, neu starten, mit der Passphrase anmelden. Die Forward-Auth vor `/admin` dann ebenfalls abschalten, sonst kommt niemand bis zum Anmeldeformular. Konten, Rollen und Protokoll bleiben erhalten.

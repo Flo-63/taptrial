@@ -323,7 +323,13 @@ def _uvicorn_starten(env: dict, log_pfad: Path) -> tuple[subprocess.Popen, int]:
 
 
 @pytest.fixture
-def server(tmp_path, teilnehmer_anzahl, teilnehmer_liste, zwei_strecken, rundkurs):
+def server_umgebung() -> dict[str, str]:
+    """Zusätzliche Umgebung für den Server (z. B. Anmeldung über einen Anmeldedienst)."""
+    return {}
+
+
+@pytest.fixture
+def server(tmp_path, teilnehmer_anzahl, teilnehmer_liste, zwei_strecken, rundkurs, server_umgebung):
     """Echter Server mit frischer DB.
 
     Ist TAPTRIAL_E2E_IMAGE gesetzt (scripts/container_e2e.sh), läuft der Server im Docker-Container
@@ -335,6 +341,7 @@ def server(tmp_path, teilnehmer_anzahl, teilnehmer_liste, zwei_strecken, rundkur
     _seed(str(db), teilnehmer_anzahl, teilnehmer_liste, zwei_strecken, rundkurs)
     secrets_env = {
         "TAPTRIAL_TOKEN_ADMIN": TOKENS["admin"],
+        **server_umgebung,
     }
     image = umgebung.wert("e2e_image")
     if image:

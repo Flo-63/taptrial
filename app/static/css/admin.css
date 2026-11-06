@@ -77,3 +77,8 @@ html { scroll-padding-top: var(--kopf-hoehe, 56px); }
 /* Strecken-Liste auf der Seite „Strecken“ */
 .raster-karten { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: var(--s4); }
 .strecke-kurz .fakten dd { overflow-wrap: anywhere; }
+/* Angemeldete Person und Rolle in der Kopfzeile; auf schmalen Bildschirmen ausgeblendet */
+.top-person { color: var(--kopf-text); font-size: 0.85rem; white-space: nowrap; }
+.top-person small { color: var(--kopf-text); opacity: 0.7; }
+@media (max-width: 760px) { .top-person { display: none; } }
+.zeile-neu td { background: var(--warn-soft); }

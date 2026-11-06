@@ -1,5 +1,6 @@
 import logging
 import re
+from dataclasses import fields
 from pathlib import Path
 
 import pytest
@@ -14,7 +15,8 @@ FELDER = ("token_admin", "db_pfad", "klassen_datei", "wertungen_verzeichnis", "v
 
 @pytest.fixture(autouse=True)
 def saubere_umgebung(monkeypatch):
-    for feld in (*FELDER, "token_start", "token_ziel", "admin_pin"):
+    for feld in (*FELDER, *(f.name for f in fields(Einstellungen)), "token_start", "token_ziel",
+                 "admin_pin"):  # fmt: skip
         for praefix in ("TAPTRIAL_", "RCB_"):
             monkeypatch.delenv(f"{praefix}{feld.upper()}", raising=False)
     umgebung._gemeldet.clear()
@@ -106,3 +108,29 @@ def test_alter_name_wird_in_der_meldung_genannt(monkeypatch):
 def test_passphrase_ab_24_zeichen_gilt(monkeypatch):
     monkeypatch.setenv("TAPTRIAL_TOKEN_ADMIN", "x" * 24)
     assert Einstellungen.aus_umgebung().token_admin == "x" * 24
+
+
+def test_anmeldung_standard_token_und_proxy_einstellungen(monkeypatch):
+    monkeypatch.setenv("TAPTRIAL_TOKEN_ADMIN", LANG)
+    e = Einstellungen.aus_umgebung()
+    assert e.anmeldung == "token" and not e.proxy
+    monkeypatch.setenv("TAPTRIAL_ANMELDUNG", "Proxy")
+    monkeypatch.setenv("TAPTRIAL_SUPERADMINS", "Erika.Muster, max.m ,")
+    monkeypatch.setenv("TAPTRIAL_PROXY_JWT_AUDIENCE", "taptrial")
+    monkeypatch.setenv("TAPTRIAL_PROXY_JWKS_URL", "https://a.test/jwks/")
+    monkeypatch.setenv("TAPTRIAL_PROXY_HEADER_UID", "X-Remote-Uid")
+    e = Einstellungen.aus_umgebung()
+    assert e.proxy and e.superadmin_namen == {"Erika.Muster", "max.m"}  # Groß/Klein zählt
+    assert e.proxy_header_uid == "X-Remote-Uid" and e.proxy_fehlt() == ["TAPTRIAL_PROXY_JWT_ISSUER"]
+
+
+@pytest.mark.parametrize(("name", "wert", "text"), [
+    ("TAPTRIAL_ANMELDUNG", "lokal", "„token“ oder „proxy“"),
+    ("TAPTRIAL_PROXY_JWKS_URL", "file:///etc/jwks.json", "https://"),
+    ("TAPTRIAL_PROXY_NETZE", "198.51.100.0/99", "TAPTRIAL_PROXY_NETZE"),
+])  # fmt: skip
+def test_ungueltige_anmeldeeinstellung_startet_nicht(monkeypatch, name, wert, text):
+    monkeypatch.setenv("TAPTRIAL_TOKEN_ADMIN", LANG)
+    monkeypatch.setenv(name, wert)
+    with pytest.raises(EinstellungsFehler, match=text):
+        Einstellungen.aus_umgebung()

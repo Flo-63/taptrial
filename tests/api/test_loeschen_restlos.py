@@ -10,7 +10,16 @@ from sqlalchemy import inspect, select, text
 from app import korrekturen as k
 from app import segmente as sg
 from app import strecken as st
-from app.models import Basis, ImportEntwurf, Messpunkt, Teilnehmer, Veranstaltung
+from app.models import (
+    AdminAktion,
+    Basis,
+    Benutzer,
+    ImportEntwurf,
+    Messpunkt,
+    Rollenzuweisung,
+    Teilnehmer,
+    Veranstaltung,
+)
 from app.simulation import beispiel_teile
 from tests.api import test_admin
 from tests.api.test_admin import MIN, T0, korr, post
@@ -27,6 +36,8 @@ AUSNAHMEN = {
     "wertungssatz_stufe": "Teil der Vorlage Wertungssatz",
     "app_einstellung": "globale Einstellungen der Installation (Vereinsname, Impressum, Datenschutz), "
     "ohne Bezug zu einer Veranstaltung",
+    "verein": "Verein der Installation, gilt für alle Veranstaltungen",
+    "benutzer": "Konten des Admin-Bereichs; nur ihre Rollen für die Veranstaltung werden gelöscht",
 }
 
 
@@ -109,6 +120,11 @@ def alles_anlegen(admin, v):
     post(
         admin, f"/admin/v/{v.id}/teilnehmer/{t.id}/merkmal", merkmal="ausser_konkurrenz", wert="ja"
     )
+    with admin.app.state.sessionmaker() as s:  # Event-Admin und Protokoll der Admin-Aktionen
+        b = Benutzer(benutzername="erika.muster", angelegt_ms=T0)
+        b.rollen.append(Rollenzuweisung(rolle="eventadmin", veranstaltung_id=v.id))
+        s.add_all([b, AdminAktion(zeit_ms=T0, benutzer="x", veranstaltung_id=v.id, aktion="test")])
+        s.commit()
     return tokens + [posten]
 
 
@@ -172,6 +188,9 @@ def test_loeschen_restlos(admin, v):
     assert "Vorher angelegte Sicherungen enthalten die Veranstaltung weiterhin." in status
     r = post(admin, f"/admin/v/{v.id}/loeschen", bestaetigung="1", name="Kottenforst")
     assert "komplett gelöscht" in r.text
+    with admin.app.state.sessionmaker() as s:
+        letzte = s.scalars(select(AdminAktion).order_by(AdminAktion.id.desc())).first()
+        assert (letzte.aktion, letzte.veranstaltung_id) == ("Löschen", None)
 
     with engine.connect() as conn:
         for name, ids in eigen.items():
@@ -179,8 +198,10 @@ def test_loeschen_restlos(admin, v):
                 continue
             pk = next(iter(Basis.metadata.tables[name].primary_key.columns)).name
             werte = ",".join(f"'{x}'" if isinstance(x, str) else str(x) for x in ids)
+            # Das Löschen selbst steht danach ohne Bezug im Protokoll (SQLite vergibt die ID neu)
+            ohne_bezug = " AND veranstaltung_id IS NOT NULL" if name == "admin_aktion" else ""
             rest = conn.execute(
-                text(f"SELECT COUNT(*) FROM {name} WHERE {pk} IN ({werte})")
+                text(f"SELECT COUNT(*) FROM {name} WHERE {pk} IN ({werte}){ohne_bezug}")
             ).scalar()
             assert rest == 0, name
         for (

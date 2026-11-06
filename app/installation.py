@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from app import marke
-from app.models import AppEinstellung
+from app.models import STANDARD_VEREIN, AppEinstellung, Verein
 
 SCHLUESSEL = (
     "vereinsname",
@@ -14,9 +14,10 @@ SCHLUESSEL = (
     "impressum_text",
     "datenschutz_url",
     "datenschutz_text",
+    "zugang_kontakt",  # wen fragt, wer keine Rolle hat („Kein Zugriff“)
 )
 MAX_LAENGE = {"vereinsname": 100, "impressum_url": 500, "datenschutz_url": 500,
-              "impressum_text": 20000, "datenschutz_text": 20000}  # fmt: skip
+              "impressum_text": 20000, "datenschutz_text": 20000, "zugang_kontakt": 200}  # fmt: skip
 RECHTLICHES = {"impressum": "Impressum", "datenschutz": "Datenschutzerklärung"}
 
 
@@ -41,6 +42,10 @@ def speichern(session, werte: dict[str, str]) -> None:
             session.add(AppEinstellung(schluessel=schluessel, wert=wert))
         else:
             e.wert = wert
+    if "vereinsname" in werte:  # ein Verein: sein Name folgt dem Branding
+        verein = session.scalars(select(Verein).order_by(Verein.id)).first()
+        if verein is not None:
+            verein.name = werte["vereinsname"].strip() or STANDARD_VEREIN
     session.commit()
 
 

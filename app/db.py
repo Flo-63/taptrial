@@ -74,6 +74,10 @@ NACHGERUESTETE_SPALTEN = [
     ("veranstaltung", "einrichtung_json", "TEXT"),
     ("messpunkt", "entfernt", "BOOLEAN NOT NULL DEFAULT 0"),
     ("ereignis", "zugang", "VARCHAR(30)"),
+    # Migration 3: auch hier, weil Schritt 2 die Modelle schon mit diesen Spalten liest;
+    # Dateien ab Schritt 2 bekommen sie in Schritt 3
+    ("veranstaltung", "verein_id", "INTEGER REFERENCES verein(id)"),
+    ("ereignis", "benutzer", "VARCHAR(120)"),
 ]
 
 
@@ -123,6 +127,11 @@ def tabellen_anlegen(engine: Engine) -> None:
     from app import migrationen
 
     migrationen.migrieren(engine, bis=migrationen.SCHEMA)
+    with (
+        engine.begin() as conn
+    ):  # Datei schon weiter (z. B. Schritt 2): Tabellen und Spalten neuerer Schritte
+        Basis.metadata.create_all(conn)
+        schema_nachruesten(conn)
 
 
 def schema_aktualisieren(engine: Engine) -> None:

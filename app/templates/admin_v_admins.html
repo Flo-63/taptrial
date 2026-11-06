@@ -1,0 +1,24 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf %}
+{% block titel %}Event-Admins{% endblock %}
+{% block kopf %}{{ seitenkopf("Event-Admins", "Wer diese Veranstaltung einrichten und durchführen darf. Anlegen, Abschließen und Löschen bleiben beim Vereinsadmin.") }}{% endblock %}
+{% block inhalt %}
+<section class="card stapel-eng" id="event-admins">
+  {% if zuweisungen %}
+  <ul class="liste-schlicht">
+    {% for r in zuweisungen %}<li data-benutzer="{{ r.benutzer.benutzername }}">{{ r.benutzer.anzeige }}{% if not r.benutzer.aktiv %} <span class="badge">deaktiviert</span>{% endif %}
+      <form method="post" action="/admin/v/{{ v.id }}/admins/{{ r.id }}/entziehen" class="inline" data-bestaetigen="{{ r.benutzer.benutzername }} als Event-Admin entfernen?">
+        <input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit" class="btn btn-quiet btn-sm">Entfernen</button></form></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="hint" id="keine-event-admins">Noch keine Event-Admins.</p>{% endif %}
+  {% if konten %}
+  <form method="post" action="/admin/v/{{ v.id }}/admins" class="btn-reihe">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <select name="benutzer" aria-label="Konto">{% for b in konten %}<option value="{{ b.id }}">{{ b.anzeige }}</option>{% endfor %}</select>
+    <button type="submit" class="btn btn-secondary btn-sm">Als Event-Admin zuweisen</button>
+  </form>
+  {% else %}<p class="hint">Kein weiteres Konto vorhanden. Konten entstehen bei der ersten Anmeldung oder vorab unter „Benutzer“.</p>
+  {% if darf(request, 'benutzer') %}<a class="btn btn-quiet btn-sm" href="/admin/benutzer" id="zu-benutzern">Benutzer verwalten</a>{% endif %}{% endif %}
+</section>
+{% endblock %}

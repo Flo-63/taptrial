@@ -4,6 +4,21 @@ Alle nennenswerten Änderungen an TapTrial. Format nach [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [0.2.0] – 2026-11-06
+
+### Neu
+- **Benutzer und Rollen:** Superadmin, Vereinsadmin und Event-Admin mit festem Geltungsbereich (Verein bzw. zugewiesene Veranstaltung). Die Oberfläche zeigt nur, was die Rolle darf; der Server prüft jede Admin-Seite und -Aktion.
+- **Anmeldung über einen Anmeldedienst** (`TAPTRIAL_ANMELDUNG=proxy`, z. B. Authentik mit Forward-Auth vor `/admin`): Die App prüft das signierte Token bei jeder Anfrage und vergibt die Rollen selbst. Wer sich zum ersten Mal anmeldet, bekommt ein Konto ohne Rolle und sieht „Kein Zugriff“ mit einem Kontakt. Standard bleibt die Passphrase (`token`); Umstellen und Rückweg im Betriebshandbuch.
+- **Seite „Benutzer“:** Konten vorab anlegen, Rollen vergeben und entziehen, Konten deaktivieren; Event-Admins auch direkt in der Veranstaltung.
+- **Wer hat was gemacht:** Admin-Einträge zeigen im Protokoll, auf der Fahrer-Seite und im Protokoll-CSV, wer sie ausgelöst hat; jede Admin-Änderung steht mit Person in „Admin-Aktionen“.
+
+### Geändert
+- Die öffentliche Vorschau einer Veranstaltung gibt es nur noch für Personen, die sie im Admin sehen dürfen.
+- Neue Abhängigkeit: `pyjwt` mit `cryptography` (Prüfung der Tokens).
+
+### Intern
+- Migration 3 (Verein, Benutzer, Rollen, Protokoll). `scripts/tests.sh` sichert die Ausgabe roter Läufe.
+
 ## [0.1.8] – 2026-11-03
 
 ### Behoben

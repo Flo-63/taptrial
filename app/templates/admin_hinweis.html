@@ -1,0 +1,12 @@
+{% extends "admin_basis.html" %}
+{% block titel %}{{ titel }}{% endblock %}
+{% block inhalt %}
+<section class="card stapel-eng anmelde-karte" id="admin-hinweis">
+  <h1>{{ titel }}</h1>
+  {% for absatz in absaetze %}<p>{{ absatz }}</p>{% endfor %}
+  {% if mit_abmelden %}
+  <form method="post" action="/admin/abmelden"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit" class="btn btn-quiet btn-sm">Abmelden</button></form>
+  {% endif %}
+  <div class="aufgabe"><span class="hint">Teilnehmer und Zuschauer:</span><a class="btn btn-quiet btn-sm" href="/ergebnisse">Zu den Ergebnissen</a></div>
+</section>
+{% endblock %}

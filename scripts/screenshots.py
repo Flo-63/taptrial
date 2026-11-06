@@ -47,7 +47,7 @@ BILDER = [
     "admin-uebersicht.png", "admin-v-uebersicht.png", "admin-stammdaten.png", "admin-klassen.png",
     "admin-teilnehmer.png", "admin-import.png", "admin-geraete.png", "admin-rennen.png",
     "admin-ergebnis.png", "admin-saetze.png", "admin-klassensatz.png", "admin-wertungssatz.png",
-    "admin-einrichtung.png", "posten.png",
+    "admin-einrichtung.png", "posten.png", "admin-benutzer.png",
 ]  # fmt: skip
 
 
@@ -310,6 +310,16 @@ def _aufnehmen(browser, handy, url, uhrzeit, ziel: Path) -> None:
     a.wait_for_selector("#import-tabelle")
     foto(a, "admin-import.png")
     a.click("#verwerfen button")
+    a.click("#nav-benutzer")
+    a.fill("#b-name", "erika.muster")
+    a.fill("#b-anzeige", "Erika Muster")
+    a.click("#konto-anlegen button[type=submit]")
+    a.fill("#b-name", "max.mustermann")
+    a.click("#konto-anlegen button[type=submit]")
+    zeile = a.locator('tr[data-benutzer="erika.muster"]')
+    zeile.locator("select[name=veranstaltung]").select_option(index=1)
+    zeile.locator(".rolle-vergeben button").click()
+    foto(a, "admin-benutzer.png")
     a.click("#nav-vorlagen")
     foto(a, "admin-saetze.png")
     a.click("#klassensaetze a:has-text('DRA 2026')")

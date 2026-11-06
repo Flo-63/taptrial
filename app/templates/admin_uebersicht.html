@@ -30,7 +30,7 @@
   {% else %}
   <tr><td colspan="6"><div class="leer-zustand">{% if alle_anzahl %}<span>Keine Veranstaltung in „{{ filter_text }}“.</span>
     <a class="btn btn-secondary" href="/admin">Alle zeigen</a>{% else %}<span>Noch keine Veranstaltung.</span>
-    <a class="btn btn-primary" href="/admin/einrichtung/neu">Neue Veranstaltung einrichten</a>{% endif %}</div></td></tr>
+    {% if darf(request, 'anlegen') %}<a class="btn btn-primary" href="/admin/einrichtung/neu">Neue Veranstaltung einrichten</a>{% endif %}{% endif %}</div></td></tr>
   {% endfor %}
   </tbody>
 </table></div></div>

@@ -10,6 +10,8 @@
 2. „Anmeldung Admin“ wählen, die **Admin-Passphrase** eingeben (beim Einrichten als `TAPTRIAL_TOKEN_ADMIN` festgelegt, bei älteren Installationen `RCB_TOKEN_ADMIN`) und „Anmelden“.
 3. Die Anmeldung gilt 12 Stunden. Oben rechts „Abmelden“, wenn du fertig bist.
 
+**Mit Anmeldedienst:** Ist die Installation an einen Anmeldedienst angebunden (z. B. Authentik), meldest du dich dort mit deinem eigenen Konto an; die Passphrase gilt dann nicht. Was du darfst, hängt von deiner Rolle ab (Abschnitt 13). Ohne Rolle siehst du „Kein Zugriff“ mit dem Hinweis, an wen du dich wenden kannst.
+
 > Nach 5 falschen Eingaben ist die Anmeldung für 15 Minuten gesperrt (je Anschluss). Die Passphrase muss mindestens 24 Zeichen haben und darf nicht der Platzhalter aus `.env.example` sein, sonst startet die App nicht (Meldung im Log).
 
 ![Anmeldung](bilder/anmelden.png)
@@ -18,7 +20,7 @@ Unter dem Anmeldefeld führt „Zu den Ergebnissen“ zur öffentlichen Ergebnis
 
 ## 2. Aufbau des Admins {#aufbau}
 
-Die **Kopfzeile** hat immer dieselben Knöpfe: **Veranstaltungen** (Liste aller Veranstaltungen), **Vorlagen** (Klassen- und Wertungssätze, Abschnitt 12), **Hilfe** und **Abmelden**. „Hilfe“ öffnet dieses Handbuch im selben Fenster direkt beim Abschnitt zur aktuellen Seite; „Zurück zum Admin“ in der Kopfzeile der Hilfe führt zurück.
+Die **Kopfzeile** hat immer dieselben Knöpfe: **Veranstaltungen** (Liste der Veranstaltungen, die du sehen darfst), **Vorlagen** (Klassen- und Wertungssätze, Abschnitt 12), **Benutzer** (Abschnitt 13), **Hilfe** und **Abmelden**; daneben dein Name und deine Rolle (mit der Passphrase „Admin (Passphrase)“). Was deine Rolle nicht darf, erscheint nicht. „Hilfe“ öffnet dieses Handbuch im selben Fenster direkt beim Abschnitt zur aktuellen Seite; „Zurück zum Admin“ in der Kopfzeile der Hilfe führt zurück.
 
 In einer geöffneten Veranstaltung steht links die **Seitenleiste** mit allen Seiten, nach Themen gruppiert. Kopfzeile und Seitenleiste bleiben beim Scrollen stehen. Auf dem Handy bleibt nur die Kopfzeile stehen; der Knopf „**Menü**“ darin klappt die Seitenleiste auf. Ganz unten in der Seitenleiste steht klein die Version der App (auf dem Handy unten im aufgeklappten Menü); auf den öffentlichen Seiten und in der Hilfe steht sie klein rechts in der Fußzeile neben Impressum und Datenschutz. Alle Punkte sind immer sichtbar; was im aktuellen Zustand nicht geht, ist auf der Seite gesperrt und nennt den Grund.
 
@@ -35,6 +37,7 @@ In einer geöffneten Veranstaltung steht links die **Seitenleiste** mit allen Se
 | Auswertung | **Ergebnis** | Ergebnistabelle, offiziell erklären bzw. zurücknehmen |
 | | **Drucken & Export** | alle Ausdrucke und Dateien an einem Ort |
 | Verwaltung | **Status & Datenschutz** | aktiv setzen, abschließen, anonymisieren, löschen |
+| | **Event-Admins** | wer diese Veranstaltung einrichten und durchführen darf (nur Vereinsadmin und Superadmin) |
 
 Jedes Formular zum Anlegen oder Bearbeiten hat neben „Speichern“ den Knopf **„Abbrechen“**: ohne Speichern zurück zur Seite, von der man kam (bzw. zur passenden Liste); in aufgeklappten Formularen (z. B. „Manuelle Zeit eintragen“) klappt er das Formular zu und verwirft die Eingaben. Detailseiten (Fahrer) haben oben „Zurück“ zur Liste. Jede Seite hat **höchstens eine Reiter-Ebene**; Editoren mit mehreren Reitern (Strecken-Editor) haben unten eine zentrale **Aktionsleiste** mit „Alles speichern“, „Abbrechen“ und „Zurück“.
 
@@ -384,3 +387,24 @@ Beim Speichern wird geprüft:
 „**Vorlagen**“ → *Gestaltung* → „**Branding**“. Ein Feld „Vereinsname“ für die ganze Installation (gilt für alle Veranstaltungen, einmal eintragen). Ist er gesetzt, steht er **vorn**: Startseite (groß über der Veranstaltung), Kopf der öffentlichen Ergebnisse („Verein · Veranstaltung“), Admin-Kopf (Kürzel und Name, „TapTrial“ klein darunter), Zielmonitor-Kopfleiste, Druckansichten (Ergebnisliste, Aushang, Start-/Zielprotokoll, Gerätelinks), Urkunden (statt des Logo-Platzhalters) und Seitentitel im Browser-Tab. „TapTrial“ steht dann nur noch klein in Fußzeilen und als Zusatz im Seitentitel. Leer: überall neutral „TapTrial“. Die Änderung gilt sofort nach „Speichern“ – auch ein offener Zielmonitor übernimmt sie beim nächsten Abruf. Solange eine Veranstaltung aktiv ist und kein Vereinsname eingetragen ist, erinnert die Übersicht dezent unter „Als Nächstes“ daran. Ein Logo lässt sich noch nicht hochladen (Roadmap).
 
 Änderungen an einem Satz wirken auf alle Veranstaltungen, die ihn nutzen und **noch keine Zeiten** haben. Veranstaltungen mit Zeiten behalten ihre eingefrorene Kopie.
+
+## 13. Benutzer und Rollen {#benutzer}
+
+![Benutzer](bilder/admin-benutzer.png)
+
+Mit der Passphrase gibt es nur einen Zugang mit allen Rechten. Ist die Installation an einen Anmeldedienst angebunden, meldet sich jede Person mit ihrem eigenen Konto an, und hier legst du fest, wer was darf. Die Rollen vergibt TapTrial selbst, nicht der Anmeldedienst.
+
+| Rolle | darf |
+|---|---|
+| **Superadmin** | alles, auch Benutzer und Rollen, Branding, Impressum und Datenschutz |
+| **Vereinsadmin** | alle Veranstaltungen des Vereins: anlegen, einrichten, durchführen, aktiv setzen, abschließen, anonymisieren, löschen; Vorlagen; Event-Admins zuweisen |
+| **Event-Admin** | nur die zugewiesenen Veranstaltungen: einrichten, Geräte, Rennleitung, Korrekturen, Ergebnis offiziell erklären, Drucken und Export – nicht anlegen, abschließen, anonymisieren, löschen; keine Vorlagen, keine Benutzer |
+
+**Seite „Benutzer“** (Kopfzeile): Liste aller Konten mit Name, Benutzername, E-Mail, letzter Anmeldung und Rollen. Wer sich zum ersten Mal anmeldet, bekommt automatisch ein Konto **ohne Rolle**; solche Konten stehen oben und sind gelb markiert. Rolle wählen (bei Event-Admin dazu die Veranstaltung) und „Vergeben“; „Entziehen“ nimmt eine Rolle zurück. Ein Superadmin kann Konten deaktivieren (nicht das eigene). Unter „Konto vorab anlegen“ trägst du den Benutzernamen ein, wie er beim Anmeldedienst heißt; bei der ersten Anmeldung wird das Konto verknüpft und hat sofort seine Rollen. Ein Vereinsadmin sieht die Liste, legt Konten an und vergibt nur Event-Admin-Rollen für Veranstaltungen seines Vereins.
+
+**Event-Admins einer Veranstaltung:** In der Seitenleiste unter „Verwaltung“ → „Event-Admins“: Konto wählen und zuweisen bzw. entfernen.
+
+**Kein Zugriff:** Wer angemeldet ist, aber keine Rolle hat (oder deaktiviert ist), sieht „Kein Zugriff – bitte an … wenden“. Den Kontakt trägst du unter Vorlagen → Branding bei „Kontakt für Zugangsanfragen“ ein.
+
+**Wer hat was gemacht:** Korrekturen und andere Admin-Einträge zeigen im Protokoll und auf der Fahrer-Seite unter „Gerät / von“, wer sie ausgelöst hat (mit der Passphrase „Admin (Passphrase)“); das Protokoll-CSV hat dafür die Spalte „Ausgelöst von“. Unten auf der Protokollseite stehen die **Admin-Aktionen** der Veranstaltung (wer wann was geändert hat), unten auf der Seite „Benutzer“ die Änderungen an Konten und Rollen.
+

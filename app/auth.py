@@ -112,7 +112,11 @@ def zugang_fuer_token(request: Request, session: Session, token: str | None) -> 
     sender = absender(client_ip(request, request.app.state.vertraute_proxys))
     if len(_fehlversuche(request, sender)) >= API_MAX_FEHLVERSUCHE:
         raise ZuVieleVersuche()
-    if gleich(token, request.app.state.einstellungen.token_admin):
+    einstellungen = request.app.state.einstellungen
+    if gleich(token, einstellungen.token_admin):
+        if einstellungen.proxy:  # Admin nur über den Anmeldedienst, nicht mit der Passphrase
+            log.warning("API: Admin-Passphrase im Modus proxy abgewiesen (%s)", sender)
+            return None
         return Zugang("admin", None)
     _fehlversuch_merken(request, sender, token)
     return None

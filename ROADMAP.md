@@ -33,7 +33,7 @@ Ideen und geplante Themen für TapTrial – ohne Termine und ohne Zusage. Wünsc
 
 ## Mehrere Benutzer und Vereine
 
-- **Benutzerverwaltung** mit Rollen (z. B. Verwaltung und Rennleitung je Veranstaltung) statt einer gemeinsamen Admin-Passphrase.
+- **Benutzerverwaltung:** Rollen (Superadmin, Vereinsadmin, Event-Admin) und Anmeldung über einen vorhandenen Anmeldedienst gibt es seit 0.2.0. Geplant: eigene Konten mit Passwort in der App und Anmeldung per OpenID Connect.
 - **Mehrere Vereine** auf einer Installation (Mandanten) – als eigene Stufe nach Version 1.0.
 
 ## Lauf, Wellen- und Massenstart

@@ -1,0 +1,73 @@
+{% extends "admin_basis.html" %}
+{% from "_admin.html" import seitenkopf, abbrechen %}
+{% block titel %}Benutzer{% endblock %}
+{% block kopf %}{{ seitenkopf("Benutzer", "Wer im Admin was darf. Rollen vergibt die App, nicht der Anmeldedienst.") }}{% endblock %}
+{% block inhalt %}
+{% if not proxy %}<p class="alert a-info" id="hinweis-token">Anmeldung zurzeit mit der Passphrase: Konten und Rollen wirken erst mit der Anmeldung über den Anmeldedienst (Einstellung „proxy“). Sie lassen sich schon vorbereiten.</p>{% endif %}
+<div class="card card-flach"><div class="tbl-box"><table class="tbl" id="benutzer">
+  <thead><tr><th>Name</th><th>Benutzername</th><th>E-Mail</th><th>Letzte Anmeldung</th><th>Rollen</th><th></th></tr></thead>
+  <tbody>
+  {% for b in konten %}
+  {% set immer = b.benutzername in superadmin_namen %}
+  <tr data-benutzer="{{ b.benutzername }}" class="{{ 'zeile-neu' if not b.rollen and not immer }} {{ 'zeile-aus' if not b.aktiv }}">
+    <td>{{ b.name or "–" }}{% if not b.rollen and not immer %} <span class="badge b-warn">ohne Rolle</span>{% endif %}{% if not b.aktiv %} <span class="badge">deaktiviert</span>{% endif %}</td>
+    <td class="mono">{{ b.benutzername }}{% if not b.uid %} <span class="hint">(noch nicht angemeldet)</span>{% endif %}</td>
+    <td>{{ b.email or "–" }}</td>
+    <td class="mono">{{ (datum_text(b.letzte_anmeldung_ms) ~ " " ~ (b.letzte_anmeldung_ms|uhrzeit)[:5]) if b.letzte_anmeldung_ms else "–" }}</td>
+    <td><ul class="liste-schlicht">
+      {% if immer %}<li><span class="badge b-brand">Superadmin</span> <span class="hint">aus TAPTRIAL_SUPERADMINS</span></li>{% endif %}
+      {% for r in b.rollen %}<li>{{ rolle_text(r) }}
+        {% if darf_rolle(r) %}<form method="post" action="/admin/benutzer/{{ b.id }}/rolle/{{ r.id }}/entziehen" class="inline" data-bestaetigen="{{ rolle_text(r) }} von {{ b.benutzername }} entziehen?">
+          <input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit" class="btn btn-quiet btn-sm">Entziehen</button></form>{% endif %}</li>
+      {% endfor %}</ul></td>
+    <td>
+      <form method="post" action="/admin/benutzer/{{ b.id }}/rolle" class="btn-reihe rolle-vergeben">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <select name="rolle" aria-label="Rolle für {{ b.benutzername }}">
+          <option value="eventadmin">Event-Admin</option>
+          {% if person.superadmin %}<option value="vereinsadmin">Vereinsadmin</option><option value="superadmin">Superadmin</option>{% endif %}
+        </select>
+        <select name="veranstaltung" aria-label="Veranstaltung (nur Event-Admin)">
+          <option value="">– Veranstaltung –</option>
+          {% for v in veranstaltungen %}<option value="{{ v.id }}">{{ v.name }} ({{ v.datum.strftime('%d.%m.%Y') }})</option>{% endfor %}
+        </select>
+        {% if person.superadmin and vereine|length > 1 %}<select name="verein" aria-label="Verein (nur Vereinsadmin)">{% for x in vereine %}<option value="{{ x.id }}">{{ x.name }}</option>{% endfor %}</select>{% endif %}
+        <button type="submit" class="btn btn-secondary btn-sm">Vergeben</button>
+      </form>
+      {% if person.superadmin and b.id != person.benutzer_id %}
+      <form method="post" action="/admin/benutzer/{{ b.id }}/aktiv" class="inline">
+        <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="aktiv" value="{{ '0' if b.aktiv else '1' }}">
+        <button type="submit" class="btn btn-quiet btn-sm">{{ 'Deaktivieren' if b.aktiv else 'Aktivieren' }}</button></form>
+      {% endif %}
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="6"><div class="leer-zustand"><span>Noch keine Konten. Sie entstehen bei der ersten Anmeldung oder hier vorab.</span></div></td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+<section class="card stapel-eng" id="konto-anlegen">
+  <h2>Konto vorab anlegen</h2>
+  <p class="sub">Der Benutzername muss dem beim Anmeldedienst gleichen. Bei der ersten Anmeldung wird das Konto verknüpft und hat sofort seine Rollen.</p>
+  <form method="post" action="/admin/benutzer" class="formular">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="field"><label for="b-name">Benutzername</label><input id="b-name" name="benutzername" required maxlength="150" placeholder="vorname.nachname" autocomplete="off"></div>
+    <div class="field"><label for="b-anzeige">Name</label><input id="b-anzeige" name="name" maxlength="200" autocomplete="off"></div>
+    <div class="btn-reihe"><button type="submit" class="btn btn-primary">Anlegen</button> {{ abbrechen(abbruch_ziel(request, "/admin/benutzer")) }}</div>
+  </form>
+</section>
+<section class="card stapel-eng" id="konten-protokoll">
+  <h2>Protokoll</h2>
+  <p class="sub">Konten, Rollen und Anmeldungen ohne Rolle (neueste zuerst, höchstens 100).</p>
+  <div class="tbl-box tbl-box-kurz"><table class="tbl">
+    <thead><tr><th>Zeit</th><th>Wer</th><th>Aktion</th><th>Einzelheiten</th></tr></thead>
+    <tbody>
+    {% for a in aktionen %}
+    <tr><td class="zeit">{{ datum_text(a.zeit_ms) }} {{ (a.zeit_ms|uhrzeit)[:8] }}</td><td>{{ a.benutzer }}</td><td>{{ a.aktion }}</td><td>{{ a.text }}</td></tr>
+    {% else %}
+    <tr><td colspan="4" class="hint">Noch keine.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endblock %}

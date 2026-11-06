@@ -17,7 +17,7 @@ class Netze:
     netze: tuple
 
     @classmethod
-    def aus_text(cls, text: str) -> "Netze":
+    def aus_text(cls, text: str, name: str = "TAPTRIAL_VERTRAUTE_PROXYS") -> "Netze":
         netze = []
         for teil in (t.strip() for t in (text or "").split(",")):
             if not teil:
@@ -25,9 +25,7 @@ class Netze:
             try:
                 netze.append(ipaddress.ip_network(teil, strict=False))
             except ValueError as e:
-                raise ValueError(
-                    f"TAPTRIAL_VERTRAUTE_PROXYS: „{teil}“ ist keine IP-Adresse/kein Netz"
-                ) from e
+                raise ValueError(f"{name}: „{teil}“ ist keine IP-Adresse/kein Netz") from e
         return cls(tuple(netze))
 
     def enthaelt(self, adresse: str | None) -> bool:

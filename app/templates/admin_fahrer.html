@@ -169,14 +169,14 @@
 <section class="card stapel-eng" id="verlauf">
   <h2>Verlauf</h2>
   <div class="tbl-box tbl-box-kurz"><table class="tbl">
-    <thead><tr><th>Erfasst</th><th>Art</th><th>Zeit</th><th>Wert</th><th>Gerät</th><th>Notiz</th></tr></thead>
+    <thead><tr><th>Erfasst</th><th>Art</th><th>Zeit</th><th>Wert</th><th>Gerät / von</th><th>Notiz</th></tr></thead>
     <tbody>
     {% for e in ereignisse %}
     <tr class="{{ '' if e.uuid in gueltig else 'storniert' }}" data-art="{{ e.art }}">
       <td class="zeit">{{ e.erstellt_ms|uhrzeit }}</td><td>{{ ART_TEXT.get(e.art, e.art) }}</td>
       <td class="zeit">{{ e.zeit_ms|uhrzeit if e.zeit_ms else '' }}</td>
       <td>{% if e.art == 'ZEITKORREKTUR' and e.delta_ms %}{{ korrektur_text(e.delta_ms) }}{% else %}{{ e.wert or '' }}{% endif %}</td>
-      <td class="mono">{{ e.geraet }}</td><td class="notiz">{{ e.notiz or '' }}</td>
+      <td class="mono">{{ e.geraet }}{% if e.benutzer %}<div class="hint ausloeser">von {{ e.benutzer }}</div>{% endif %}</td><td class="notiz">{{ e.notiz or '' }}</td>
     </tr>
     {% else %}
     <tr><td colspan="6" class="hint">Noch keine Einträge.</td></tr>

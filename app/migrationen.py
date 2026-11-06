@@ -59,10 +59,32 @@ def _daten(conn: Connection, klassen_datei: str, wertungen: str) -> None:
         session.commit()
 
 
+def _benutzer(conn: Connection, _klassen_datei: str, _wertungen: str) -> None:
+    """Verein, Benutzer, Rollen, Protokoll der Admin-Aktionen. Alle Veranstaltungen
+    gehören dem einen Verein (Name aus der Installation)."""
+    from app import db, models
+
+    db.Basis.metadata.create_all(conn)  # neue Tabellen
+    db.schema_nachruesten(conn)  # neue Spalten (veranstaltung.verein_id, ereignis.benutzer)
+    verein = conn.exec_driver_sql("SELECT MIN(id) FROM verein").scalar()
+    if verein is None:
+        name = conn.exec_driver_sql(
+            "SELECT wert FROM app_einstellung WHERE schluessel = 'vereinsname'"
+        ).scalar()
+        verein = conn.exec_driver_sql(
+            "INSERT INTO verein (name) VALUES (?)",
+            ((name or "").strip() or models.STANDARD_VEREIN,),
+        ).lastrowid
+    conn.exec_driver_sql(
+        "UPDATE veranstaltung SET verein_id = ? WHERE verein_id IS NULL", (verein,)
+    )
+
+
 SCHEMA = 1  # bis hier reicht tabellen_anlegen(): nur Tabellen, ohne Einstellungen
 SCHRITTE: list[tuple[int, str, Callable[[Connection, str, str], None]]] = [
     (SCHEMA, "Tabellen und Spalten", _schema),
     (2, "Sätze und Strecken", _daten),
+    (3, "Verein, Benutzer und Rollen", _benutzer),
 ]
 AKTUELL = SCHRITTE[-1][0]
 

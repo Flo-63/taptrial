@@ -18,6 +18,7 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from app import admin_auth, rechte, saetze, strecken
 from app.admin import AdminDep, _seite, _veranstaltung, _zurueck
+from app.anmeldung import ausloeser
 from app.api import EreignisEin, jetzt_ms
 from app.auth import SessionDep
 from app.korrekturen import uhrzeit_text
@@ -175,7 +176,7 @@ async def uebernehmen(request: Request, vid: int, session: SessionDep, _a: Admin
                         "Nichts übernommen (zum Übernehmen bestätigen).")  # fmt: skip
     empfangen = jetzt_ms()
     zeilen = [{**e.model_dump(), "veranstaltung_id": v.id, "empfangen_ms": empfangen, "quelle": "datei",
-               "zugang": rechte.DATEI.kennung,
+               "zugang": rechte.DATEI.kennung, "benutzer": ausloeser(),
                "ort_id": p.ort_id if e.art.lower() == p.ort_art else None} for e in p.neu]  # fmt: skip
     if zeilen:
         for i in range(0, len(zeilen), ZEILEN_JE_INSERT):

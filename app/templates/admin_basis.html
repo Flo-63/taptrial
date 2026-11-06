@@ -18,13 +18,17 @@
   {% if csrf %}
   <nav class="top-nav" aria-label="Hauptbereiche">
     <a class="top-btn {{ 'top-on' if bereich != 'vorlagen' }}" href="/admin" id="nav-veranstaltungen">Veranstaltungen</a>
-    <a class="top-btn {{ 'top-on' if bereich == 'vorlagen' }}" href="/admin/saetze" id="nav-vorlagen">Vorlagen</a>
+    {% if darf(request, 'vorlagen') %}<a class="top-btn {{ 'top-on' if bereich == 'vorlagen' }}" href="/admin/saetze" id="nav-vorlagen">Vorlagen</a>{% endif %}
+    {% if darf(request, 'benutzer') %}<a class="top-btn {{ 'top-on' if bereich == 'benutzer' }}" href="/admin/benutzer" id="nav-benutzer">Benutzer</a>{% endif %}
   </nav>
   {% endif %}
   <div class="top-rechts">
     {% set hilfe_anker = hilfe or (reiter if v and reiter else ('vorlagen' if bereich == 'vorlagen' else ('einrichtung' if schritte else ('veranstaltungen' if csrf else 'anmelden')))) %}
     {% set hier = request.url.path ~ ('?' ~ request.url.query if request.url.query else '') %}
     <a class="top-btn" href="/hilfe/admin?zurueck={{ hier|urlencode }}#{{ hilfe_anker }}" id="nav-hilfe">Hilfe</a>
+    {% if csrf and request.state.person is defined %}
+    <span class="top-person" id="angemeldet" title="{{ request.state.person.rolle_text }}">{{ request.state.person.anzeige }} <small class="hint">{{ request.state.person.rolle_text }}</small></span>
+    {% endif %}
     {% if csrf %}
     <form method="post" action="/admin/abmelden" class="abmelden">
       <input type="hidden" name="csrf" value="{{ csrf }}">
@@ -47,7 +51,8 @@
                      ("protokoll", "Protokoll", b ~ "/protokoll", None)]),
       ("Auswertung", [("ergebnis", "Ergebnis", b ~ "/ergebnis", None),
                       ("drucken", "Drucken & Export", b ~ "/drucken", None)]),
-      ("Verwaltung", [("status", "Status & Datenschutz", b ~ "/status", None)])] %}
+      ("Verwaltung", [("status", "Status & Datenschutz", b ~ "/status", None)]
+                     + ([("admins", "Event-Admins", b ~ "/admins", None)] if darf(request, 'v_admins', v) else []))] %}
   {% else %}{% set gruppen = leiste.gruppen %}{% endif %}
   <aside class="seitenleiste" id="seitenleiste">
     <div class="sl-kopf">

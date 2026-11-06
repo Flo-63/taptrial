@@ -9,6 +9,9 @@
     <div class="field"><label for="vereinsname">Vereinsname</label>
       <input id="vereinsname" name="vereinsname" class="eingabe" maxlength="100" value="{{ werte.vereinsname }}">
       <p class="hint">Steht vorn: Startseite, Kopf der Ergebnisse („Verein · Veranstaltung“), Admin-Kopf, Zielmonitor, Druckansichten und Urkunden; „{{ APP_NAME }}“ nur noch klein. Leer: überall neutral „{{ APP_NAME }}“. Gilt sofort nach dem Speichern.</p></div>
+    <div class="field"><label for="zugang-kontakt">Kontakt für Zugangsanfragen</label>
+      <input id="zugang-kontakt" name="zugang_kontakt" class="eingabe" maxlength="200" value="{{ werte.zugang_kontakt }}" placeholder="z. B. die Rennleitung (Name, E-Mail)">
+      <p class="hint">Wer sich über den Anmeldedienst anmeldet und noch keine Rolle hat, sieht „Kein Zugriff – bitte an … wenden“. Leer: „die Turnierleitung“.</p></div>
     <p class="hint">Logo und Farben folgen später (Roadmap).</p>
     <div class="btn-reihe"><button type="submit" class="btn btn-primary" id="branding-speichern">Speichern</button> {{ abbrechen(abbruch_ziel(request, "/admin/saetze")) }}</div>
   </form>

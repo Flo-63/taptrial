@@ -12,6 +12,7 @@ from app import saetze as sz
 from app.admin import AdminDep, _seite, _zurueck
 from app.auth import SessionDep
 from app.models import Klassensatz, Veranstaltung, Wertungssatz
+from app.rechte_admin import INSTALLATION, darf
 from app.wertung import ARTEN
 
 router = APIRouter(prefix="/admin/saetze", include_in_schema=False)
@@ -60,19 +61,24 @@ def _eingefroren(session) -> int:
 # --- Übersicht ----------------------------------------------------------------------------
 
 
-def vorlagen_leiste(session) -> dict:
-    """Seitenleiste der Vorlagen im gleichen Aufbau wie in einer Veranstaltung (13)."""
-    return {"titel": "Vorlagen", "gruppen": [
+def vorlagen_leiste(session, installation: bool = True) -> dict:
+    """Seitenleiste der Vorlagen im gleichen Aufbau wie in einer Veranstaltung (13). Branding und
+    Rechtliches nur mit dem Recht „Installation“ (Superadmin)."""
+    gruppen = [
         ("Wertung", [("klassen", "Klassensätze", "/admin/saetze/klassen", len(sz.klassensaetze(session))),
                      ("wertung", "Wertungssätze", "/admin/saetze/wertung", len(sz.wertungssaetze(session)))]),
-        ("Gestaltung", [("branding", "Branding", "/admin/saetze/branding", None),
+        ("Gestaltung", [*([("branding", "Branding", "/admin/saetze/branding", None)] if installation else []),
                         ("urkunden", "Urkunden-Vorlagen", "/admin/saetze/urkunden", None)]),
-        ("Installation", [("rechtliches", "Impressum & Datenschutz", "/admin/saetze/rechtliches", None)]),
-    ]}  # fmt: skip
+    ]  # fmt: skip
+    if installation:
+        gruppen.append(("Installation", [("rechtliches", "Impressum & Datenschutz",
+                                          "/admin/saetze/rechtliches", None)]))  # fmt: skip
+    return {"titel": "Vorlagen", "gruppen": gruppen}
 
 
 def _vorlagen_seite(request, session, vorlage: str, reiter: str | None, **kontext):
-    return _seite(request, vorlage, bereich="vorlagen", leiste=vorlagen_leiste(session),
+    installation = darf(getattr(request.state, "person", None), INSTALLATION)
+    return _seite(request, vorlage, bereich="vorlagen", leiste=vorlagen_leiste(session, installation),
                   reiter=reiter, **kontext)  # fmt: skip
 
 
@@ -114,7 +120,10 @@ async def branding_speichern(request: Request, session: SessionDep, _a: AdminDep
     name = " ".join(str(form.get("vereinsname") or "").split())[
         : installation.MAX_LAENGE["vereinsname"]
     ]
-    installation.speichern(session, {"vereinsname": name})
+    kontakt = " ".join(str(form.get("zugang_kontakt") or "").split())[
+        : installation.MAX_LAENGE["zugang_kontakt"]
+    ]
+    installation.speichern(session, {"vereinsname": name, "zugang_kontakt": kontakt})
     return _zurueck("/admin/saetze/branding", ok="Branding gespeichert.")
 
 

@@ -5,19 +5,13 @@ TapTrial selbst steht unter der PolyForm Noncommercial License 1.0.0 (siehe [LIC
 ## Schrift
 
 | Bestandteil | Lizenz | Quelle |
-|---|---|---|
 | IBM Plex Sans und IBM Plex Mono (Dateien unter `app/static/fonts/`) | SIL Open Font License 1.1 (Text: `app/static/fonts/OFL.txt`) | https://github.com/IBM/plex |
-
-## Python-Abhängigkeiten (Laufzeit)
-
-Stand `uv.lock` (Version 0.1.0); alle über PyPI, im Docker-Image enthalten.
-
-| Paket | Version | Lizenz | Quelle |
-|---|---|---|---|
 | annotated-doc | 0.0.5 | MIT | https://github.com/fastapi/annotated-doc |
 | annotated-types | 0.8.0 | MIT | https://github.com/annotated-types/annotated-types |
 | anyio | 4.15.1 | MIT | https://github.com/agronholm/anyio |
+| cffi | 2.1.1 | MIT-0 | https://github.com/python-cffi/cffi |
 | click | 8.5.0 | BSD-3-Clause | https://github.com/pallets/click/ |
+| cryptography | 50.0.2 | Apache-2.0 OR BSD-3-Clause | https://github.com/pyca/cryptography |
 | fastapi | 0.142.2 | MIT | https://github.com/fastapi/fastapi |
 | h11 | 0.16.0 | MIT | https://github.com/python-hyper/h11 |
 | httptools | 0.8.0 | MIT | https://github.com/MagicStack/httptools |
@@ -25,8 +19,10 @@ Stand `uv.lock` (Version 0.1.0); alle über PyPI, im Docker-Image enthalten.
 | jinja2 | 3.1.6 | BSD-3-Clause | https://github.com/pallets/jinja/ |
 | markupsafe | 3.0.3 | BSD-3-Clause | https://github.com/pallets/markupsafe/ |
 | opentelemetry-api | 1.45.0 | Apache-2.0 | https://github.com/open-telemetry/opentelemetry-python |
+| pycparser | 3.12 | BSD-3-Clause | https://github.com/eliben/pycparser |
 | pydantic | 2.13.5 | MIT | https://github.com/pydantic/pydantic |
 | pydantic-core | 2.46.5 | MIT | https://github.com/pydantic/pydantic/tree/main/pydantic-core |
+| pyjwt | 2.15.1 | MIT | https://github.com/jpadilla/pyjwt |
 | python-dotenv | 1.2.4 | BSD-3-Clause | https://github.com/theskumar/python-dotenv |
 | python-multipart | 0.0.32 | Apache-2.0 | https://github.com/Kludex/python-multipart |
 | pyyaml | 6.0.3 | MIT | https://github.com/yaml/pyyaml |

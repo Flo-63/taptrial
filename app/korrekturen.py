@@ -16,6 +16,7 @@ from sqlalchemy import delete, func, select, text, update
 from sqlalchemy.orm import Session
 
 from app import saetze, strecken
+from app.anmeldung import ausloeser
 from app.auswertung import (
     DOPPELTIPP_GRUENDE,
     Art,
@@ -29,11 +30,13 @@ from app.auswertung import (
 )
 from app.klassen import GESCHLECHTER, KeineKlasseFehler, Klasse, klassifizieren
 from app.models import (
+    AdminAktion,
     Ereignis,
     GeloeschterToken,
     GeraetUhr,
     ImportEntwurf,
     Messpunkt,
+    Rollenzuweisung,
     Teilnehmer,
     Veranstaltung,
     aktive_veranstaltung,
@@ -213,6 +216,7 @@ def _admin_ereignis(session: Session, v: Veranstaltung, art: str, notiz: str, **
         art=art,
         geraet=GERAET_ADMIN,
         zugang=GERAET_ADMIN,
+        benutzer=ausloeser(),
         erstellt_ms=erstellt,
         empfangen_ms=jetzt,
         notiz=_notiz(notiz),
@@ -655,6 +659,8 @@ def loeschen(session: Session, v: Veranstaltung) -> None:
         session.execute(delete(Ereignis).where(Ereignis.veranstaltung_id == v.id))
         session.execute(delete(ImportEntwurf).where(ImportEntwurf.veranstaltung_id == v.id))
         session.execute(delete(GeraetUhr).where(GeraetUhr.veranstaltung_id == v.id))
+        session.execute(delete(Rollenzuweisung).where(Rollenzuweisung.veranstaltung_id == v.id))
+        session.execute(delete(AdminAktion).where(AdminAktion.veranstaltung_id == v.id))
         session.execute(delete(Teilnehmer).where(Teilnehmer.veranstaltung_id == v.id))
         for s in strecken.strecken_von(session, v):
             session.delete(s)

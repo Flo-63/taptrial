@@ -46,10 +46,21 @@ def _anonymisieren_default(context) -> date:
     return plus_monate(context.get_current_parameters()["datum"], ANONYMISIEREN_NACH_MONATEN)
 
 
+class Verein(Basis):
+    """Verein (Mandant). Zunächst genau einer, aus dem Vereinsnamen der Installation."""
+
+    __tablename__ = "verein"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(100))
+
+
 class Veranstaltung(Basis):
     __tablename__ = "veranstaltung"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    # Verein der Veranstaltung; ohne Angabe beim Anlegen der erste (siehe _verein_setzen)
+    verein_id: Mapped[int | None] = mapped_column(ForeignKey("verein.id"), nullable=True)
     name: Mapped[str] = mapped_column(String(200))
     datum: Mapped[date] = mapped_column(Date)
     stichtag_alter: Mapped[date] = mapped_column(Date, default=_stichtag_default)
@@ -107,6 +118,21 @@ class Veranstaltung(Basis):
     def freigegeben(self) -> bool:
         return not self.freigabe_fehlt
 
+
+@event.listens_for(Veranstaltung, "before_insert")
+def _verein_setzen(_mapper, verbindung, ziel: Veranstaltung) -> None:
+    """Neue Veranstaltung ohne Verein: der erste, bei leerer Tabelle ein neuer („Verein“)."""
+    if ziel.verein_id is not None:
+        return
+    vid = verbindung.scalar(select(Verein.id).order_by(Verein.id).limit(1))
+    if vid is None:
+        vid = verbindung.execute(
+            Verein.__table__.insert().values(name=STANDARD_VEREIN)
+        ).inserted_primary_key[0]
+    ziel.verein_id = vid
+
+
+STANDARD_VEREIN = "Verein"
 
 FREIGABE_SCHRITTE = {
     "einrichtung": "Einrichtung abschließen",
@@ -167,6 +193,9 @@ class Ereignis(Basis):
     # Zugang, mit dem das Ereignis ankam („start“, „ziel-4“, „posten-5“, „admin“, „datei“): vom
     # Server gesetzt, Grundlage für „nur eigene Einträge“ (app/rechte.py). Leer = ältere Einträge.
     zugang: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    # Wer ein Admin-Ereignis ausgelöst hat, als Text zum Zeitpunkt („Erika Muster (erika.muster)“,
+    # „Admin (Passphrase)“); Geräte-Ereignisse und ältere Einträge leer
+    benutzer: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
 
 for _aktion in ("UPDATE", "DELETE"):
@@ -364,3 +393,65 @@ class GeraetUhr(Basis):
     rolle: Mapped[str] = mapped_column(String(20))
     abweichung_ms: Mapped[int] = mapped_column(Integer)
     gemessen_ms: Mapped[int] = mapped_column(BigInteger)
+
+
+ROLLEN = ("superadmin", "vereinsadmin", "eventadmin")
+
+
+class Benutzer(Basis):
+    """Person im Admin-Bereich. Die Uid kommt vom Anmeldedienst und bleibt leer, bis sich
+    ein vorab angelegtes Konto zum ersten Mal anmeldet."""
+
+    __tablename__ = "benutzer"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    uid: Mapped[str | None] = mapped_column(String(200), unique=True, nullable=True)
+    benutzername: Mapped[str] = mapped_column(String(150), unique=True)  # klein geschrieben
+    email: Mapped[str] = mapped_column(String(200), default="")
+    name: Mapped[str] = mapped_column(String(200), default="")
+    aktiv: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
+    herkunft: Mapped[str] = mapped_column(String(20), default="proxy")  # später auch „lokal“
+    angelegt_ms: Mapped[int] = mapped_column(BigInteger)
+    letzte_anmeldung_ms: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    rollen: Mapped[list["Rollenzuweisung"]] = relationship(
+        back_populates="benutzer", cascade="all, delete-orphan"
+    )
+
+    @property
+    def anzeige(self) -> str:
+        """„Erika Muster (erika.muster)“ – so steht die Person im Protokoll."""
+        return f"{self.name} ({self.benutzername})" if self.name else self.benutzername
+
+
+class Rollenzuweisung(Basis):
+    """Rolle mit Geltungsbereich: Superadmin überall, Vereinsadmin im Verein, Event-Admin in einer
+    Veranstaltung."""
+
+    __tablename__ = "rollenzuweisung"
+    __table_args__ = (UniqueConstraint("benutzer_id", "rolle", "verein_id", "veranstaltung_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    benutzer_id: Mapped[int] = mapped_column(ForeignKey("benutzer.id"), index=True)
+    rolle: Mapped[str] = mapped_column(String(20))
+    verein_id: Mapped[int | None] = mapped_column(ForeignKey("verein.id"), nullable=True)
+    veranstaltung_id: Mapped[int | None] = mapped_column(
+        ForeignKey("veranstaltung.id"), nullable=True, index=True
+    )
+    benutzer: Mapped[Benutzer] = relationship(back_populates="rollen")
+
+
+class AdminAktion(Basis):
+    """Wer hat im Admin was geändert: jede erfolgreiche Änderung, Rollenänderungen und
+    Anmeldungen ohne Rolle. Keine Teilnehmerdaten im Text."""
+
+    __tablename__ = "admin_aktion"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    zeit_ms: Mapped[int] = mapped_column(BigInteger)
+    benutzer_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    benutzer: Mapped[str] = mapped_column(String(120))
+    veranstaltung_id: Mapped[int | None] = mapped_column(
+        ForeignKey("veranstaltung.id"), nullable=True, index=True
+    )
+    aktion: Mapped[str] = mapped_column(String(80))
+    text: Mapped[str] = mapped_column(String(300), default="")

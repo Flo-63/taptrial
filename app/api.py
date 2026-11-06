@@ -12,6 +12,7 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from app import rechte, saetze
+from app.anmeldung import PASSPHRASE
 from app.anzeigename import anzeigenamen
 from app.auswertung import (
     ERGEBNIS_WERTE,
@@ -235,7 +236,13 @@ def ereignisse_annehmen(session: Session, zugang: Zugang, batch: Batch) -> list[
                 zugang.ort.id if zugang.ort is not None and e.art in (Art.START, Art.ZIEL) else None
             )
             zeilen.append(
-                {**daten, "ort_id": ort, "zugang": akteur.kennung, "empfangen_ms": empfangen}
+                {
+                    **daten,
+                    "ort_id": ort,
+                    "zugang": akteur.kennung,
+                    "empfangen_ms": empfangen,
+                    "benutzer": PASSPHRASE if akteur.admin else None,
+                }
             )
     if zeilen:
         # idempotent: bereits vorhandene UUIDs werden ignoriert, nie überschrieben

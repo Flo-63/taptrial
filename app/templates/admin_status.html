@@ -3,6 +3,7 @@
 {% block titel %}Status & Datenschutz{% endblock %}
 {% block kopf %}{{ seitenkopf("Status & Datenschutz", "Lebenszyklus der Veranstaltung. Schritte nach „Abschließen“ sind nicht umkehrbar.") }}{% endblock %}
 {% block inhalt %}
+{% set verwalten = darf(request, 'v_verwalten', v) %}
 {% set stufe = 4 if v.zustand == 'anonymisiert' else (3 if v.zustand == 'abgeschlossen' else (1 if v.einrichtung_schritt else 2)) %}
 <ol class="schritte" id="lebenszyklus-schritte">
   {% for titel in ["Eingerichtet", "Läuft", "Abgeschlossen", "Anonymisiert"] %}
@@ -15,7 +16,7 @@
   {% if v.aktiv %}<div class="btn-reihe"><button type="button" class="btn btn-secondary" disabled>Ist aktiv</button>
     {% if v.laufend and startzeiten %}<button type="button" class="btn btn-quiet" id="deaktivieren" disabled>Nicht mehr aktiv setzen …</button>
     <span class="hint" id="deaktivieren-grund">Gesperrt: Es gibt bereits Startzeiten.</span>
-    {% elif v.laufend %}<form method="post" action="/admin/v/{{ v.id }}/deaktivieren" data-bestaetigen="„{{ v.name }}“ nicht mehr aktiv setzen? Sie erscheint dann nicht mehr öffentlich, und die Geräte sind wieder gesperrt („Zeitnahme noch nicht freigegeben“), bis du sie wieder aktiv setzt." data-bestaetigen-knopf="Nicht mehr aktiv setzen">
+    {% elif v.laufend and verwalten %}<form method="post" action="/admin/v/{{ v.id }}/deaktivieren" data-bestaetigen="„{{ v.name }}“ nicht mehr aktiv setzen? Sie erscheint dann nicht mehr öffentlich, und die Geräte sind wieder gesperrt („Zeitnahme noch nicht freigegeben“), bis du sie wieder aktiv setzt." data-bestaetigen-knopf="Nicht mehr aktiv setzen">
       <input type="hidden" name="csrf" value="{{ csrf }}">
       <button type="submit" class="btn btn-quiet" id="deaktivieren">Nicht mehr aktiv setzen …</button>
     </form>{% endif %}</div>
@@ -24,6 +25,7 @@
   {% elif laufende %}<div class="btn-reihe"><button type="button" class="btn btn-secondary" id="aktivieren" disabled>Als aktive Veranstaltung setzen …</button>
     <span class="hint" id="aktivieren-grund">Gesperrt: {{ verdraengen_text(laufende) }}</span>
     <a class="btn btn-quiet btn-sm" href="/admin/v/{{ laufende.id }}/status" id="zur-laufenden">Zu „{{ laufende.name }}“</a></div>
+  {% elif not verwalten %}<p class="hint" id="aktivieren-grund">Aktiv setzen kann nur ein Vereinsadmin oder Superadmin.</p>
   {% else %}
   <form method="post" action="/admin/v/{{ v.id }}/aktivieren" data-bestaetigen="„{{ v.name }}“ zur aktiven Veranstaltung machen? Die bisher aktive erscheint dann nicht mehr öffentlich." data-bestaetigen-knopf="Aktiv setzen">
     <input type="hidden" name="csrf" value="{{ csrf }}">
@@ -48,6 +50,9 @@
   </details>
 </div>
 {% endmacro %}
+{% if not verwalten %}
+<p class="hint" id="verwalten-hinweis">Abschließen, Anonymisieren und Löschen: nur Vereinsadmin oder Superadmin.</p>
+{% else %}
 <div class="danger-zone" id="lebenszyklus">
   <div class="dz-kopf"><h2>Gefahrenzone</h2><p class="sub">Nicht umkehrbar. Jede Aktion fragt zur Bestätigung nach dem Namen der Veranstaltung.</p></div>
   {{ gefahr("abschliessen", "abschliessen", "Abschließen", "Danach schreibgeschützt: keine Zeiten und Korrekturen mehr, Gerätelinks ungültig, die Handys löschen ihre Daten. Ergebnisse und Protokoll bleiben lesbar. Vorher Backup ziehen.", "Abschließen", v.laufend, "Die Veranstaltung ist bereits " ~ ZUSTAND_TEXT[v.zustand] ~ ".") }}
@@ -56,4 +61,5 @@
     {% if v.aktiv or v.laufend %}<div class="hint" id="loeschen-hinweis"><strong>Achtung: {% if v.aktiv %}Dies ist die aktive Veranstaltung – danach ist keine Veranstaltung aktiv, bis du eine andere aktivierst. {% endif %}{% if v.laufend %}Sie läuft noch und wird beendet: Geräte mit ihren Links melden „Veranstaltung gelöscht“ und löschen ihre Daten (nicht übertragene Einträge bleiben zum Export).{% endif %}</strong></div>{% endif %}
   {% endcall %}
 </div>
+{% endif %}
 {% endblock %}

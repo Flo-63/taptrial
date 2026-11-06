@@ -181,7 +181,7 @@ def protokoll_csv(v: Veranstaltung, ereignisse: list[Ereignis]) -> bytes:
     gueltig = {e.uuid for e in gueltige_ereignisse(ereignisse)}
     kopf = [
         "Erfasst (Gerät)", "Empfangen (Server)", "Art", "Startnummer", "Zeit", "Wert",
-        "Bezug", "Gerät", "Notiz", "Storniert", "UUID", "Quelle",
+        "Bezug", "Gerät", "Notiz", "Storniert", "UUID", "Quelle", "Ausgelöst von",
     ]  # fmt: skip
     zeilen = [kopf]
     for e in sorted(ereignisse, key=lambda e: (e.erstellt_ms, e.empfangen_ms, e.uuid)):
@@ -193,6 +193,7 @@ def protokoll_csv(v: Veranstaltung, ereignisse: list[Ereignis]) -> bytes:
                 korrektur_text(e.delta_ms) if getattr(e, "delta_ms", None) else e.wert or "",
                 e.bezug_uuid or "", e.geraet, e.notiz or "",
                 "" if e.uuid in gueltig else "ja", e.uuid, quelle_text(e),
+                getattr(e, "benutzer", None) or "",
             ]
         )  # fmt: skip
     return _csv(zeilen)

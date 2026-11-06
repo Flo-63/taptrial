@@ -16,8 +16,28 @@ from dataclasses import dataclass
 
 from fastapi import HTTPException, Request
 from fastapi.responses import Response
+from sqlalchemy.orm import Session
 
+from app.anmeldung import (
+    PASSPHRASE_PERSON,
+    AnmeldungFehlgeschlagen,
+    Person,
+    anmelden,
+    person_merken,
+    person_von,
+    proxy_identitaet,
+)
+from app.auth import SessionDep
+from app.models import Veranstaltung
 from app.proxy import absender, client_ip, ist_https
+from app.rechte_admin import (
+    OFFEN,
+    V_LESEN,
+    VERANSTALTUNGSRECHTE,
+    KeineBerechtigung,
+    darf,
+    recht_der_route,
+)
 
 log = logging.getLogger(__name__)
 
@@ -73,6 +93,26 @@ def angemeldet(request: Request) -> bool:
     return sitzung(request) is not None
 
 
+def vorschau_erlaubt(request: Request, session: Session, v: Veranstaltung) -> bool:
+    """Öffentliche Seiten: Admin-Vorschau nur für eine Sitzung, deren Person die Veranstaltung
+    sehen darf. `token`: Passphrase-Sitzung; `proxy`: Cookie mit der Benutzer-ID aus /admin."""
+    s = sitzung(request)
+    if s is None:
+        return False
+    einstellungen = request.app.state.einstellungen
+    if not einstellungen.proxy:
+        return s.rolle == ROLLE_ADMIN
+    nummer = s.rolle[1:]
+    if not (s.rolle.startswith("b") and nummer.isdigit() and len(nummer) < 10):
+        return False
+    from app.models import Benutzer
+
+    benutzer = session.get(Benutzer, int(nummer))
+    if benutzer is None:
+        return False
+    return darf(person_von(benutzer, einstellungen.superadmin_namen), V_LESEN, v)
+
+
 def sitzung_setzen(request: Request, antwort: Response, rolle: str = ROLLE_ADMIN) -> None:
     antwort.set_cookie(
         COOKIE,
@@ -91,7 +131,14 @@ def sitzung_loeschen(antwort: Response) -> None:
 
 
 def csrf_token(request: Request) -> str:
-    return _signatur(request, "csrf:" + request.cookies.get(COOKIE, ""))[:32]
+    """Im Modus `proxy` an die Uid der Person gebunden, sonst an das Sitzungs-Cookie."""
+    person = getattr(request.state, "person", None)
+    basis = (
+        person.csrf_basis
+        if person is not None and person.csrf_basis
+        else request.cookies.get(COOKIE, "")
+    )
+    return _signatur(request, "csrf:" + basis)[:32]
 
 
 def csrf_pruefen(request: Request, token: str | None) -> None:
@@ -142,3 +189,54 @@ def erfordere_admin(request: Request) -> Sitzung:
     if s is None or s.rolle != ROLLE_ADMIN:
         raise NichtAngemeldet()
     return s
+
+
+class KeinZugriff(HTTPException):
+    """403: angemeldet, aber ohne Rolle oder deaktiviert."""
+
+    def __init__(self):
+        super().__init__(403, "Kein Zugriff", headers={"X-TapTrial-Recht": "keine-rolle"})
+
+
+def angemeldete_person(request: Request, session: Session) -> Person:
+    """Person der Anfrage: Passphrase-Sitzung (`token`) oder geprüftes Token (`proxy`)."""
+    einstellungen = request.app.state.einstellungen
+    if not einstellungen.proxy:
+        s = sitzung(request)
+        if s is None or s.rolle != ROLLE_ADMIN:
+            raise NichtAngemeldet()
+        return PASSPHRASE_PERSON
+    try:
+        ident = proxy_identitaet(request)
+        benutzer = anmelden(session, ident)
+    except AnmeldungFehlgeschlagen as e:
+        log.warning("Admin-Anmeldung (proxy) abgelehnt: %s (Absender %s, %s)", e.grund,
+                    request.client.host if request.client else "?", request.url.path)  # fmt: skip
+        raise
+    return person_von(benutzer, einstellungen.superadmin_namen)
+
+
+def admin_pruefen(request: Request, session: SessionDep) -> Person:
+    """Abhängigkeit jeder Admin-Route: wer, mit welcher Rolle, darf er diese Route (für diese
+    Veranstaltung)? Recht aus app/rechte_admin.py; Route ohne Eintrag → abgewiesen."""
+    route = request.scope.get("route")
+    recht = recht_der_route(request.method, getattr(route, "path", ""))
+    if recht is None:
+        log.error("Admin-Route ohne Recht: %s %s", request.method, getattr(route, "path", "?"))
+        raise KeineBerechtigung()
+    person = angemeldete_person(request, session)
+    request.state.person = person
+    person_merken(person)
+    if recht == OFFEN:
+        return person
+    if not person.hat_rolle:
+        raise KeinZugriff()
+    v = None
+    if recht in VERANSTALTUNGSRECHTE:
+        vid = str(request.path_params.get("vid", ""))
+        v = session.get(Veranstaltung, int(vid)) if vid.isdigit() and len(vid) < 10 else None
+        if v is None and person.superadmin:
+            return person  # die Route meldet „nicht gefunden“
+    if not darf(person, recht, v):
+        raise KeineBerechtigung()
+    return person

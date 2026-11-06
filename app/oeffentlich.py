@@ -282,7 +282,7 @@ def _stand(
     if v is None:
         return None, None, None
     erg = k.ergebnis(session, v)
-    admin = admin_auth.angemeldet(request)
+    admin = admin_auth.vorschau_erlaubt(request, session, v)
     if not admin and not oeffentlich_sichtbar(v, erg):
         return None, None, None
     vorschau = admin and request.query_params.get("vorschau") == "1"  # Links aus dem Admin
